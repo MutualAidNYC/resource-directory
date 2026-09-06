@@ -105,6 +105,10 @@ The API is not hosted yet, so the dev site temporarily serves its data from a sn
 
 Set the project's Root Directory to `frontend`. Leave `NEXT_PUBLIC_API_URL` unset — if it is set on a deployment and points at localhost, the app raises an explicit error instead of loading nothing.
 
+#### Search engines are blocked
+
+Every page emits `<meta name="robots" content="noindex">`, set unconditionally in `layout.tsx`. This deployment serves snapshot data frozen at dump time and should not turn up in search results.
+
 #### Regenerating the snapshot
 
 Data is frozen at dump time. To refresh it, run the API locally, then:
@@ -132,9 +136,9 @@ Scaffolding with an expiry. Three files plus one branch in `fetchApi`:
 | `src/data/snapshot.json` | The committed dataset |
 | `src/lib/snapshot.ts` | Answers endpoint requests from that JSON |
 
-When the backend has a public URL: set `NEXT_PUBLIC_API_URL` to it, which
-switches deployments off the snapshot on its own, then delete all four files and the `USE_SNAPSHOT` block in `api.ts`. Do not build features on top of the
-snapshot layer.
+When the backend has a public URL: set `NEXT_PUBLIC_API_URL` to it, which switches deployments off the snapshot on its own, then delete all three files, the `USE_SNAPSHOT` block in `api.ts`, and the `robots` line in `layout.tsx` too.
+
+Do not build features on top of the snapshot layer.
 
 Known limits: search is a substring match over name and description rather than the real query, so it is fine for design review but not for judging search
 quality. Endpoints the app does not call are absent and return 404.

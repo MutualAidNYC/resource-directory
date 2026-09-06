@@ -23,7 +23,10 @@ export const metadata: Metadata = {
   },
   description:
     "Find food, housing, legal help, social services, and other community resources for New Yorkers. Free and low-cost, community-sourced and volunteer-curated.",
-    //TODO: add open graph metadata
+    // TODO: add open graph metadata
+  // TODO: Site under development should not be in search results. Delete this line when
+  // the site is in production at resources.mutualaidnyc.org.
+  robots: { index: false },
 };
 
 export default function RootLayout({
