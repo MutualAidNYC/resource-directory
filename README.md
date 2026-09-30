@@ -62,8 +62,8 @@ cd frontend
 ### 2. Set up the API (Python backend)
 
 ```bash
-# Create and activate virtual environment
-python3 -m venv venv
+# Create and activate virtual environment (Python 3.12+)
+python3.12 -m venv venv
 source venv/bin/activate  # Windows: venv\Scripts\activate
 
 # Install dependencies
@@ -121,8 +121,6 @@ npm install
 
 # Configure the API URL
 cp .env.example .env.local
-# Or create manually:
-echo "NEXT_PUBLIC_API_URL=http://localhost:8080" > .env.local
 
 # Start the dev server
 npm run dev
@@ -331,7 +329,7 @@ resource-directory/
 
 - **Missing `.env`**: Copy `.env.example` to `.env` and fill in your Airtable credentials
 - **Invalid Airtable PAT**: Ensure your token has `data.records:read` scope on the correct base
-- **Port conflict**: Change `PORT` in `.env` or use `--port` flag
+- **Port conflict**: Pass a different `--port` to uvicorn and point `NEXT_PUBLIC_API_URL` in `frontend/.env.local` at it. `PORT` in `.env` only applies to `python main.py`.
 
 ### No data after startup
 
