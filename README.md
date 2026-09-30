@@ -44,7 +44,7 @@ talk to yet:
 ## Prerequisites
 
 - **Python 3.12+**
-- **Node.js 18+** (for the frontend)
+- **Node.js 20+** (for the frontend)
 - An **Airtable** account with a base structured for HSDS data
 - An **Airtable Personal Access Token** strictly limited to the `data.records:read` scope. **Do not use a full-access API Key.**
 
@@ -94,7 +94,7 @@ PORT=8080                   # Server port (default: 8080)
 ### 4. Start the API
 
 ```bash
-uvicorn main:app --host 0.0.0.0 --port 8080 --reload
+uvicorn main:app --host 127.0.0.1 --port 8080 --reload
 ```
 
 On first launch, the API will sync all tables from Airtable (this takes 30-60 seconds depending on your data size). You'll see logs like:
@@ -239,8 +239,8 @@ Key fields per table:
 | `AIRTABLE_API_KEY` | *(required)* | Airtable Personal Access Token (must be read-only) |
 | `AIRTABLE_BASE_ID` | *(required)* | Airtable Base ID (`appXXXXXXXXX`) |
 | `SYNC_INTERVAL_MINUTES` | `15` | Minutes between background syncs |
-| `HOST` | `127.0.0.1` | API server bind address |
-| `PORT` | `8080` | API server port |
+| `HOST` | `127.0.0.1` | Bind address. Only read when running `python main.py` — the Dockerfile and the documented uvicorn command set it themselves. |
+| `PORT` | `8080` | Server port, same scope as `HOST`. In Docker, remap with docker-compose's `ports:` rather than changing this. |
 | `PUBLISHED_STATUS_VALUE` | `Published` | Only show services with this status (empty = show all) |
 | `FILTER_ORGS_WITHOUT_PUBLISHED_SERVICES` | `true` | Hide orgs with no published services |
 
@@ -281,7 +281,7 @@ Root Directory `frontend`, no environment variables. Full instructions, includin
 ## Project Structure
 
 ```
-at-to-hsds/
+resource-directory/
 ├── main.py                    # FastAPI app entry point + lifespan handler
 ├── config.py                  # Pydantic settings (loads from .env)
 ├── requirements.txt           # Python dependencies

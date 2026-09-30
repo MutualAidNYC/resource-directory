@@ -1,7 +1,7 @@
 /**
  * HSDS API Client
  * 
- * Provides typed access to the ATtoOR HSDS 3.0 API endpoints.
+ * Provides typed access to the Community Resources Library HSDS 3.0 API.
  * All methods handle pagination and error states.
  */
 
