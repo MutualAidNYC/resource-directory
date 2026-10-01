@@ -44,7 +44,7 @@ talk to yet:
 ## Prerequisites
 
 - **Python 3.12+**
-- **Node.js 18+** (for the frontend)
+- **Node.js 20+** (for the frontend)
 - An **Airtable** account with a base structured for HSDS data
 - An **Airtable Personal Access Token** strictly limited to the `data.records:read` scope. **Do not use a full-access API Key.**
 
@@ -62,8 +62,8 @@ cd frontend
 ### 2. Set up the API (Python backend)
 
 ```bash
-# Create and activate virtual environment
-python3 -m venv venv
+# Create and activate virtual environment (Python 3.12+)
+python3.12 -m venv venv
 source venv/bin/activate  # Windows: venv\Scripts\activate
 
 # Install dependencies
@@ -94,7 +94,7 @@ PORT=8080                   # Server port (default: 8080)
 ### 4. Start the API
 
 ```bash
-uvicorn main:app --host 0.0.0.0 --port 8080 --reload
+uvicorn main:app --host 127.0.0.1 --port 8080 --reload
 ```
 
 On first launch, the API will sync all tables from Airtable (this takes 30-60 seconds depending on your data size). You'll see logs like:
@@ -121,8 +121,6 @@ npm install
 
 # Configure the API URL
 cp .env.example .env.local
-# Or create manually:
-echo "NEXT_PUBLIC_API_URL=http://localhost:8080" > .env.local
 
 # Start the dev server
 npm run dev
@@ -224,244 +222,55 @@ Key fields per table:
 
 ## Configuration Reference
 
-All configuration is via environment variables (loaded from `.env`):
+### Which file is read when
+
+| File | Read by | Committed |
+|------|---------|-----------|
+| `.env` (repo root) | The API at startup. Also Docker Compose, for `${VAR}` substitution in `docker-compose.yml`. | No, holds your Airtable token |
+| `frontend/.env.local` | `npm run dev` and a local `npm run build`. Excluded from the Docker image. | No |
+| `docker-compose.yml` | Sets the frontend container's variables directly. | Yes |
+
+### API
 
 | Variable | Default | Description |
 |----------|---------|-------------|
-| `AIRTABLE_API_KEY` | *(required)* | Airtable Personal Access Token (Must be Read-Only) |
+| `AIRTABLE_API_KEY` | *(required)* | Airtable Personal Access Token (must be read-only) |
 | `AIRTABLE_BASE_ID` | *(required)* | Airtable Base ID (`appXXXXXXXXX`) |
 | `SYNC_INTERVAL_MINUTES` | `15` | Minutes between background syncs |
-| `HOST` | `0.0.0.0` | API server bind address |
-| `PORT` | `8080` | API server port |
+| `HOST` | `127.0.0.1` | Bind address. Only read when running `python main.py` — the Dockerfile and the documented uvicorn command set it themselves. |
+| `PORT` | `8080` | Server port, same scope as `HOST`. In Docker, remap with docker-compose's `ports:` rather than changing this. |
 | `PUBLISHED_STATUS_VALUE` | `Published` | Only show services with this status (empty = show all) |
 | `FILTER_ORGS_WITHOUT_PUBLISHED_SERVICES` | `true` | Hide orgs with no published services |
 
-Frontend environment (in `frontend/.env.local`):
+### Frontend
 
 | Variable | Default | Description |
 |----------|---------|-------------|
-| `NEXT_PUBLIC_API_URL` | `http://localhost:8080` | URL of the HSDS API |
+| `NEXT_PUBLIC_API_URL` | `http://localhost:8080` | API URL for browser-side requests. Baked in at build time. |
+| `INTERNAL_API_URL` | *(unset)* | API URL for server-side rendering, read at runtime. `http://api:8080` under Docker Compose. Takes precedence over `NEXT_PUBLIC_API_URL` on the server. |
+| `NEXT_PUBLIC_USE_SNAPSHOT` | *(unset)* | `1` serves data from the committed snapshot instead of an API. |
+| `NEXT_PUBLIC_BASEMAP_STYLE_URL` | OpenFreeMap bright | Map basemap style URL. |
+
+**`NEXT_PUBLIC_` variables are public.** Secrets go in the root `.env`, which only the API reads.
 
 ---
 
 ## Production Deployment
 
-### Option A: Systemd Services (Ubuntu/Debian)
+### Option A: Docker Compose
 
-This is the simplest production deployment for a single server.
-
-#### 1. Server setup
+`docker-compose.yml`, `Dockerfile`, and `frontend/Dockerfile` are in the repo.
 
 ```bash
-# On your server (Ubuntu 22.04+ recommended)
-sudo apt update && sudo apt install -y python3-venv python3-pip nginx nodejs npm
-
-# Create a dedicated, unprivileged system user for security
-sudo useradd -r -s /bin/false hsds_user
-
-# Create application directory
-sudo mkdir -p /opt/mutualaid
-sudo chown $USER:$USER /opt/mutualaid
-```
-
-#### 2. Deploy code
-
-```bash
-# Clone or copy the code
-cd /opt/mutualaid
-git clone https://github.com/MutualAidNYC/resource-directory.git .
-cd backend
-
-# Python setup
-python3 -m venv venv
-./venv/bin/pip install -r requirements.txt
-
-# Configure
-cp .env.example .env
-nano .env  # Add your Airtable credentials
-
-# Frontend setup
-cd frontend
-npm install --production
-echo "NEXT_PUBLIC_API_URL=https://yourdomain.com" > .env.local
-npm run build
-```
-
-#### 3. Create systemd services
-
-**API service** (`/etc/systemd/system/manyc-api.service`):
-
-```ini
-[Unit]
-Description=Mutual Aid NYC API
-After=network.target
-
-[Service]
-Type=simple
-User=hsds_user
-WorkingDirectory=/opt/mutualaid/backend
-ExecStart=/opt/mutualaid/backend/venv/bin/uvicorn main:app --host 127.0.0.1 --port 8300
-Restart=always
-RestartSec=5
-Environment=PYTHONUNBUFFERED=1
-
-[Install]
-WantedBy=multi-user.target
-```
-
-**Frontend service** (`/etc/systemd/system/manyc-web.service`):
-
-```ini
-[Unit]
-Description=Mutual Aid NYC Web
-After=network.target
-
-[Service]
-Type=simple
-User=hsds_user
-WorkingDirectory=/opt/mutualaid/frontend
-ExecStart=/usr/bin/node /opt/mutualaid/frontend/node_modules/.bin/next start -p 3100
-Restart=always
-RestartSec=5
-Environment=NODE_ENV=production
-Environment=PORT=3100
-
-[Install]
-WantedBy=multi-user.target
-```
-
-```bash
-# Transfer ownership to our secure service user
-sudo chown -R hsds_user:hsds_user /opt/mutualaid
-
-sudo systemctl daemon-reload
-sudo systemctl enable manyc-api manyc-web
-sudo systemctl start manyc-api manyc-web
-```
-
-#### 4. Configure Nginx reverse proxy
-
-Create `/etc/nginx/sites-available/hsds`:
-
-```nginx
-# Optional but recommended to prevent CPU exhaustion on wildcard SQLite searches
-# limit_req_zone $binary_remote_addr zone=hsds_api_limit:10m rate=5r/s;
-
-server {
-    listen 80;
-    server_name yourdomain.com;
-
-    # Frontend
-    location / {
-        proxy_pass http://127.0.0.1:3000;
-        proxy_http_version 1.1;
-        proxy_set_header Upgrade $http_upgrade;
-        proxy_set_header Connection 'upgrade';
-        proxy_set_header Host $host;
-        proxy_set_header X-Real-IP $remote_addr;
-        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-        proxy_set_header X-Forwarded-Proto $scheme;
-        proxy_cache_bypass $http_upgrade;
-    }
-
-    # API
-    location /api/ {
-        # limit_req zone=hsds_api_limit burst=10 nodelay;
-        proxy_pass http://127.0.0.1:8080/api/;
-        proxy_http_version 1.1;
-        proxy_set_header Host $host;
-        proxy_set_header X-Real-IP $remote_addr;
-        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-        proxy_set_header X-Forwarded-Proto $scheme;
-    }
-
-    # API direct access (docs, openapi, services, etc.)
-    location ~ ^/(docs|redoc|openapi\.json|services|organizations|taxonomies|taxonomy_terms|service_at_locations|locations|map)(/|$) {
-        proxy_pass http://127.0.0.1:8300;
-        proxy_http_version 1.1;
-        proxy_set_header Host $host;
-        proxy_set_header X-Real-IP $remote_addr;
-    }
-}
-```
-
-```bash
-sudo ln -sf /etc/nginx/sites-available/hsds /etc/nginx/sites-enabled/
-sudo rm -f /etc/nginx/sites-enabled/default
-sudo nginx -t && sudo systemctl reload nginx
-```
-
-#### 5. SSL with Certbot
-
-```bash
-sudo apt install -y certbot python3-certbot-nginx
-sudo certbot --nginx -d yourdomain.com
-```
-
-### Option B: Docker Compose
-
-Create a `docker-compose.yml` in the project root:
-
-```yaml
-version: "3.8"
-services:
-  api:
-    build:
-      context: .
-      dockerfile: Dockerfile
-    ports:
-      - "8080:8080"
-    env_file: .env
-    volumes:
-      - ./data:/app/data
-    restart: unless-stopped
-
-  frontend:
-    build:
-      context: ./frontend
-      dockerfile: Dockerfile
-    ports:
-      - "3000:3000"
-    environment:
-      - NEXT_PUBLIC_API_URL=http://api:8080
-    depends_on:
-      - api
-    restart: unless-stopped
-```
-
-**API Dockerfile** (project root):
-
-```dockerfile
-FROM python:3.12-slim
-WORKDIR /app
-COPY requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt
-COPY . .
-RUN mkdir -p data
-EXPOSE 8080
-CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8080"]
-```
-
-**Frontend Dockerfile** (`frontend/Dockerfile`):
-
-```dockerfile
-FROM node:18-alpine
-WORKDIR /app
-COPY package*.json ./
-RUN npm ci --production
-COPY . .
-RUN npm run build
-EXPOSE 3000
-CMD ["npm", "start"]
-```
-
-```bash
+cp .env.example .env        # add your Airtable credentials
 docker compose up -d --build
 ```
 
+API on `:8080`, frontend on `:3000`. The frontend reaches the API over the Compose network at `http://api:8080`, set as `INTERNAL_API_URL` at runtime. It waits on the API's healthcheck before starting. Fetched data is cached for 60 seconds.
+
 ---
 
-### Option C: Dev site with no backend (current)
+### Option B: Dev site with no backend (current)
 
 The backend is not hosted yet. Until we refactor and implement a deploy solution, the dev site on Vercel serves its data from a snapshot committed to the repo, with no API deployed and no secrets in Vercel.
 
@@ -470,7 +279,7 @@ Root Directory `frontend`, no environment variables. Full instructions, includin
 ## Project Structure
 
 ```
-at-to-hsds/
+resource-directory/
 ├── main.py                    # FastAPI app entry point + lifespan handler
 ├── config.py                  # Pydantic settings (loads from .env)
 ├── requirements.txt           # Python dependencies
@@ -520,7 +329,7 @@ at-to-hsds/
 
 - **Missing `.env`**: Copy `.env.example` to `.env` and fill in your Airtable credentials
 - **Invalid Airtable PAT**: Ensure your token has `data.records:read` scope on the correct base
-- **Port conflict**: Change `PORT` in `.env` or use `--port` flag
+- **Port conflict**: Pass a different `--port` to uvicorn and point `NEXT_PUBLIC_API_URL` in `frontend/.env.local` at it. `PORT` in `.env` only applies to `python main.py`.
 
 ### No data after startup
 

@@ -1,12 +1,19 @@
-version: "3.8"
 services:
   api:
     build:
       context: .
       dockerfile: Dockerfile
     env_file: .env
+    ports:
+      - "8080:8080"
     volumes:
       - ./data:/app/data
+    healthcheck:
+      test: ["CMD", "python", "-c",
+             "import urllib.request; urllib.request.urlopen('http://localhost:8080/')"]
+      timeout: 3s
+      start_period: 60s
+      start_interval: 2s
     restart: unless-stopped
 
   frontend:
@@ -14,7 +21,12 @@ services:
       context: ./frontend
       dockerfile: Dockerfile
       args:
-        NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL}
+        NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-http://localhost:8080}
+    environment:
+      INTERNAL_API_URL: http://api:8080
+    ports:
+      - "3000:3000"
     depends_on:
-      - api
+      api:
+        condition: service_healthy
     restart: unless-stopped

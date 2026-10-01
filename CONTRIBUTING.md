@@ -4,25 +4,8 @@ Thanks for your interest in contributing! This project bridges Airtable data to 
 
 ## Getting Started
 
-To run the full stack locally for development:
-
-1. Fork the repository
-2. Clone your fork locally (`git clone https://github.com/MutualAidNYC/resource-directory.git`)
-3. Copy `.env.example` to `.env` and add your Airtable credentials
-4. Start the backend API:
-   ```bash
-   python3 -m venv venv
-   source venv/bin/activate
-   pip install -r requirements.txt
-   uvicorn main:app --reload --port 8080
-   ```
-5. In a second terminal, start the Next.js frontend:
-   ```bash
-   cd frontend
-   npm install
-   echo "NEXT_PUBLIC_API_URL=http://localhost:8080" > .env.local
-   npm run dev
-   ```
+Fork the repository, clone your fork, then follow the
+[Quick Start](README.md#quick-start-local-development) in the README.
 
 ## How to Contribute
 
