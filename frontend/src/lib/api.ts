@@ -1,19 +1,19 @@
 /**
  * HSDS API Client
  * 
- * Provides typed access to the ATtoOR HSDS 3.0 API endpoints.
+ * Provides typed access to the Community Resources Library HSDS 3.0 API.
  * All methods handle pagination and error states.
  */
 
 /**
  * Resolve the correct API base URL.
  *
- * Server-side (SSR/RSC): use INTERNAL_API_URL to hit the FastAPI backend
- * directly without looping back through the public Nginx proxy, which avoids
- * DNS round-trips and prevents 504 timeouts on detail pages.
+ * Server-side (SSR/RSC): prefer INTERNAL_API_URL when the backend is reachable
+ * on a private network — http://api:8080 under Docker Compose — so rendering
+ * does not route out through a public URL and back.
  *
- * Client-side (browser): use NEXT_PUBLIC_API_URL (the public-facing URL that
- * goes through Nginx) because the browser cannot reach the internal server IP.
+ * Client-side: NEXT_PUBLIC_API_URL, since a browser can only use a public
+ * address. No client component fetches today; this is the fallback if one does.
  */
 const API_URL =
   typeof window === 'undefined'

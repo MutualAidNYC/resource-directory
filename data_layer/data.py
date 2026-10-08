@@ -2,11 +2,8 @@ from __future__ import annotations
 
 import builtins
 from abc import ABC, abstractmethod
-from typing import TypeVar
 
 from pydantic import BaseModel
-
-T = TypeVar('T', bound=BaseModel)
 
 class Table(BaseModel):
     name: str
@@ -46,7 +43,7 @@ class DataEntity[T](ABC):
     ) -> builtins.list[T]:
         ...
 
-class TestData(DataEntity[T]):
+class TestData[T](DataEntity[T]):
     def __init__(self, model_class: type[T], data: dict[str, T]):
         super().__init__(model_class)
         self.data = data
