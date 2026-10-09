@@ -67,7 +67,7 @@ def list_service_at_locations(
 
 
 def get_service_at_locations(
-    sal_id: int,
+    sal_id: str,
     service_at_locations_table: DataEntity[ServiceAtLocationResponse],
     locations_table: DataEntity[LocationResponse],
     addresses_table: DataEntity[AddressResponse],

@@ -241,6 +241,13 @@ Key fields per table:
 | `PORT` | `8080` | Server port, same scope as `HOST`. In Docker, remap with docker-compose's `ports:` rather than changing this. |
 | `PUBLISHED_STATUS_VALUE` | `Published` | Only show services with this status (empty = show all) |
 | `FILTER_ORGS_WITHOUT_PUBLISHED_SERVICES` | `true` | Hide orgs with no published services |
+| `AIRTABLE_CONFIG` | `airtable.toml` | Tables and fields the build requests. See below. |
+
+### Airtable tables and fields (`airtable.toml`)
+
+The build requests only the tables and fields listed in `airtable.toml`, so nothing else leaves Airtable and private internal fields stay private. A table's optional `filter` limits which records are pulled. The committed file is Mutual Aid NYC's: only fields that have data in its base and filters for records that aren't meant to be published.
+
+For a different base: copy the file, list your table ids (or leave `id` out to use the table name) and the fields you want, and update `AIRTABLE_CONFIG` in the `.env` file. Tables and fields you leave out are treated as empty.
 
 ### Frontend
 
@@ -284,6 +291,7 @@ resource-directory/
 ├── config.py                  # Pydantic settings (loads from .env)
 ├── requirements.txt           # Python dependencies
 ├── .env.example               # Template for environment variables
+├── airtable.toml              # Tables and fields the build requests (per deployment)
 │
 ├── airtable/                  # Airtable integration
 │   ├── client.py              # Async HTTP client with pagination + rate limiting
@@ -294,6 +302,14 @@ resource-directory/
 │
 ├── transform/
 │   └── mapper.py              # Airtable fields → HSDS Pydantic models
+│
+├── data_layer/                # Static build's data access (replacing airtable/ + db/)
+│   ├── airtable_config.py     # Reads and checks airtable.toml
+│   ├── loader.py              # One paced bulk pull per table, retries on 429
+│   ├── data.py                # DataEntity + InMemoryData (lookups after the pull)
+│   ├── ids.py                 # Public HSDS ids: uuid5 of table + record id
+│   ├── airtable.py            # AirtableData: per-request reads (being replaced by loader.py)
+│   └── dependency.py          # Table factories for the FastAPI routes
 │
 ├── models/
 │   └── hsds.py                # HSDS 3.0 Pydantic models + response types
