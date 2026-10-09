@@ -1,0 +1,62 @@
+# Airtable tables and fields this deployment reads (Mutual Aid NYC's base).
+#
+# The build requests only the fields listed here, so nothing else leaves
+# Airtable. List only fields the build uses. For another base, copy this file
+# and set AIRTABLE_CONFIG in `.env` to the copy's path. Tables or fields you
+# leave out are treated as empty.
+
+# Each [tables.<name>] is an HSDS table. `id` is the Airtable table id
+# (stable if the table is renamed); leave it out to use <name> as the
+# Airtable table name instead. Field names must match Airtable exactly.
+
+# Optional `filter` is an Airtable formula: only matching records are pulled.
+
+[tables.services]
+id = "tblUV34ri18xDgs64"
+filter = "{status} = 'Published'"
+fields = [
+  "name", "status", "description", "url", "email", "assured_date",
+  "needFocus", "communityFocus",
+  "organizations", "phones", "languages", "service_areas", "service_at_locations",
+]
+
+[tables.organizations]
+id = "tblSAotCxT28qpz5C"
+# Skips organizations marked "Do Not Publish". The build still shows a group only if it has a published service.
+filter = "{Publish Status} != 'Do Not Publish'"
+fields = ["name", "description", "email", "website", "phones", "locations"]
+
+[tables.service_at_location]
+id = "tbl6DuXeIQcMAf0lv"
+fields = ["services", "locations"]
+
+[tables.locations]
+id = "tbljfrAgraVmN3k4C"
+fields = ["name", "location_type", "latitude", "longitude", "addresses"]
+
+[tables.addresses]
+id = "tblj0cRXNX6cUvXl4"
+fields = [
+  "address_1", "address_2", "city", "state_province", "postal_code", "country",
+  "address_type",
+]
+
+[tables.phones]
+id = "tblkIMjWC53SogK0g"
+fields = ["number"]
+
+[tables.languages]
+id = "tblok7nshfDBjyygQ"
+fields = ["name", "code"]
+
+[tables.service_areas]
+id = "tblzmk5213aL7eelv"
+fields = ["name", "x-order"]  # x-order: display order in filters
+
+[tables.taxonomies]
+id = "tblA73lY0HxIRTgJn"
+fields = ["name", "description"]
+
+[tables.taxonomy_terms]
+id = "tblTBQcmbYH3xJK75"
+fields = ["name", "description", "taxonomy"]
