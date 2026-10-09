@@ -4,6 +4,9 @@ import pytest
 
 from data_layer.ids import NAMESPACE, attribute_id, hsds_id
 
+pytestmark = pytest.mark.unit
+
+
 def test_namespace_is_fixed():
     # Changing this changes every published id and URL.
     assert str(NAMESPACE) == "391e915f-a3b0-4edb-9fde-e6310dd1441b"
@@ -19,7 +22,7 @@ def test_hsds_id_is_uuid5():
     assert value.version == 5
 
 
-def test_same_record_id_in_two_tables_gives_different_ids():
+def test_hsds_id_differs_by_table():
     assert hsds_id("services", "recAAAAAAAAAAAAAA") != hsds_id(
         "organizations", "recAAAAAAAAAAAAAA"
     )
