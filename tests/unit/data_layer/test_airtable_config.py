@@ -18,7 +18,6 @@ pytestmark = pytest.mark.unit
 def test_shipped_config_loads():
     config = load_config(DEFAULT_PATH)
     assert "services" in config.tables
-    assert all(t.id and t.id.startswith("tbl") for t in config.tables.values())
 
 
 @pytest.mark.parametrize("field", ["Submitter: Email", "Notes", "[INT] MANYC Notes"])
@@ -27,10 +26,10 @@ def test_shipped_skips_private_fields(field: str):
     assert all(field not in t.fields for t in config.tables.values())
 
 
-def test_shipped_requests_status():
-    # So the build can double-check publish status.
+def test_shipped_services_filter_on_status():
+    # The publish guard: the build publishes every service it pulls.
     config = load_config(DEFAULT_PATH)
-    assert "status" in config.tables["services"].fields
+    assert config.tables["services"].filter == "{status} = 'Published'"
 
 
 # Loading

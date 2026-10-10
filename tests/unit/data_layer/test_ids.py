@@ -2,7 +2,8 @@ import uuid
 
 import pytest
 
-from data_layer.ids import NAMESPACE, attribute_id, hsds_id
+from data_layer.airtable_config import DEFAULT_PATH, load_config
+from data_layer.ids import NAMESPACE, TABLES, attribute_id, hsds_id
 
 pytestmark = pytest.mark.unit
 
@@ -32,13 +33,22 @@ def test_attribute_id_depends_on_both_records():
     a = attribute_id("recService0000001", "recTerm000000001")
     assert a != attribute_id("recService0000001", "recTerm000000002")
     assert a != attribute_id("recService0000002", "recTerm000000001")
-    assert a != hsds_id("attributes", "recService0000001")
 
 
-@pytest.mark.parametrize("table,record_id", [("", "rec1"), ("services", "")])
-def test_hsds_id_rejects_empty(table: str, record_id: str):
-    with pytest.raises(ValueError):
-        hsds_id(table, record_id)
+def test_tables_match_airtable_toml():
+    # Ids are made from these names, so they must be the config's section keys.
+    assert TABLES == set(load_config(DEFAULT_PATH).tables)
+
+
+@pytest.mark.parametrize("table", ["", "service"])
+def test_hsds_id_rejects_unknown_table(table: str):
+    with pytest.raises(ValueError, match="unknown table"):
+        hsds_id(table, "recAAAAAAAAAAAAAA")  # type: ignore[arg-type]
+
+
+def test_hsds_id_rejects_empty_record_id():
+    with pytest.raises(ValueError, match="record_id"):
+        hsds_id("services", "")
 
 
 @pytest.mark.parametrize("service,term", [("", "rec1"), ("rec1", "")])

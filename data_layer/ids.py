@@ -13,14 +13,34 @@ ids into a text field and read that instead.
 from __future__ import annotations
 
 import uuid
+from typing import Literal, get_args
 
 NAMESPACE = uuid.UUID("391e915f-a3b0-4edb-9fde-e6310dd1441b")
 
+# The airtable.toml section keys. A typo in a table name would silently make
+# new ids, so hsds_id accepts only these. Renaming one changes every id in
+# that table.
+Table = Literal[
+    "services",
+    "organizations",
+    "service_at_location",
+    "locations",
+    "addresses",
+    "phones",
+    "languages",
+    "service_areas",
+    "taxonomies",
+    "taxonomy_terms",
+]
+TABLES: frozenset[str] = frozenset(get_args(Table))
 
-def hsds_id(table: str, record_id: str) -> str:
+
+def hsds_id(table: Table, record_id: str) -> str:
     """Return the public id for an Airtable record in `table`."""
-    if not table or not record_id:
-        raise ValueError("table and record_id are required")
+    if table not in TABLES:
+        raise ValueError(f"unknown table {table!r}: must be an airtable.toml section key")
+    if not record_id:
+        raise ValueError("record_id is required")
     return str(uuid.uuid5(NAMESPACE, f"{table}/{record_id}"))
 
 

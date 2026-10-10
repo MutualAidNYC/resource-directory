@@ -201,12 +201,14 @@ class Url(ORUKBaseModel):
 
 
 class Attribute(ORUKBaseModel):
-    """Taxonomy-based attribute."""
+    """Links a record (here: a service) to a taxonomy term."""
     id: str
-    taxonomy_term_id: Optional[str] = None
+    link_id: str  # id of the linked record
+    taxonomy_term_id: str
+    link_entity: str  # table of the linked record, e.g. "service"
     link_type: Optional[str] = None
-    link_entity: Optional[str] = None
     value: Optional[str] = None
+    label: Optional[str] = None
 
 
 # ============================================================================
@@ -230,6 +232,7 @@ class TaxonomyTerm(ORUKBaseModel):
     description: Optional[str] = None
     parent_id: Optional[str] = None
     taxonomy: Optional[str] = None
+    taxonomy_id: Optional[str] = None
     taxonomy_detail: Optional[Taxonomy] = None
     language: Optional[str] = None
     term_uri: Optional[str] = None
@@ -254,7 +257,6 @@ class Location(ORUKBaseModel):
     external_identifier_type: Optional[str] = None
     addresses: Optional[List[Address]] = None
     phones: Optional[List[Phone]] = None
-    contacts: Optional[List[Contact]] = None
     accessibility: Optional[List[Accessibility]] = None
     languages: Optional[List[Language]] = None
     schedules: Optional[List[Schedule]] = None
@@ -286,7 +288,6 @@ class Organization(ORUKBaseModel):
     uri: Optional[str] = None
     parent_organization_id: Optional[str] = None
     phones: Optional[List[Phone]] = None
-    contacts: Optional[List[Contact]] = None
     locations: Optional[List[Location]] = None
     programs: Optional[List[Program]] = None
     funding: Optional[List[Funding]] = None
@@ -300,7 +301,6 @@ class ServiceAtLocation(ORUKBaseModel):
     description: Optional[str] = None
     location: Optional[Location] = None
     phones: Optional[List[Phone]] = None
-    contacts: Optional[List[Contact]] = None
     schedules: Optional[List[Schedule]] = None
     service_areas: Optional[List[ServiceArea]] = None
 
@@ -308,9 +308,9 @@ class ServiceAtLocation(ORUKBaseModel):
 class Service(ORUKBaseModel):
     """Full service details - ORUK compliant with required fields."""
     id: str
-    organization_id: str  # Required by ORUK
+    organization_id: Optional[str]  # None only if its organization isn't published
     name: str
-    status: str = "active"  # Required by ORUK
+    status: str = "active"  # Required by HSDS
     alternate_name: Optional[str] = None
     description: Optional[str] = None
     url: Optional[str] = None
@@ -323,7 +323,6 @@ class Service(ORUKBaseModel):
     minimum_age: Optional[int] = None
     maximum_age: Optional[int] = None
     assured_date: Optional[str] = None
-    assurer_email: Optional[str] = None
     alert: Optional[str] = None
     last_modified: Optional[str] = None
     
@@ -331,7 +330,6 @@ class Service(ORUKBaseModel):
     organization: Optional[OrganizationSummary] = None
     program: Optional[Program] = None
     phones: Optional[List[Phone]] = None
-    contacts: Optional[List[Contact]] = None
     schedules: Optional[List[Schedule]] = None
     service_areas: Optional[List[ServiceArea]] = None
     service_at_locations: Optional[List[ServiceAtLocation]] = None
@@ -339,6 +337,7 @@ class Service(ORUKBaseModel):
     funding: Optional[List[Funding]] = None
     cost_options: Optional[List[CostOption]] = None
     required_documents: Optional[List[RequiredDocument]] = None
+    attributes: Optional[List[Attribute]] = None  # taxonomy terms (categories)
     
     # Custom extension fields (non-HSDS standard)
     group_name: Optional[str] = None  # Organization/group name from Airtable
@@ -349,9 +348,9 @@ class Service(ORUKBaseModel):
 class ServiceSummary(ORUKBaseModel):
     """Minimal service info for list views - ORUK compliant."""
     id: str
-    organization_id: str  # Required by ORUK
+    organization_id: Optional[str]  # None only if its organization isn't published
     name: str
-    status: str = "active"  # Required by ORUK
+    status: str = "active"  # Required by HSDS
     alternate_name: Optional[str] = None
     description: Optional[str] = None
     url: Optional[str] = None
@@ -362,6 +361,11 @@ class ServiceSummary(ORUKBaseModel):
     # Taxonomy fields for category filtering
     need_focus: Optional[List[str]] = None
     community_focus: Optional[List[str]] = None
+
+
+class OrganizationListItem(OrganizationSummary):
+    """An organization in the organizations list."""
+    service_count: int  # published services linked to the organization
 
 
 # ============================================================================
