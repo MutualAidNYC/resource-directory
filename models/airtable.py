@@ -1,6 +1,28 @@
+"""Airtable records as the app reads them.
+
+Each model accepts fields as Airtable sends them (its names, lists for links
+and multi-selects) and exposes the names the app uses, so the build never
+special-cases Airtable shapes. `id` is always the Airtable record id.
+"""
+from typing import Annotated
+
+from pydantic import AliasChoices, BaseModel, BeforeValidator, Field
+
+def _first(value: object) -> object:
+    """Links and multi-selects arrive as lists; these fields hold one value."""
+    if isinstance(value, list):
+        return value[0] if value else None
+    return value
 
 
-from pydantic import BaseModel
+# A single value Airtable sends as a one-item list (a link or a multi-select).
+FirstOf = Annotated[str | None, BeforeValidator(_first)]
+
+
+def airtable_name(name: str, field: str) -> AliasChoices:
+    """Read `field` from Airtable's `name`, or from the app's own name."""
+    return AliasChoices(name, field)
+
 
 class OrganizationResponse(BaseModel):
     id: str
@@ -23,11 +45,11 @@ class OrganizationResponse(BaseModel):
 
 
 class ServiceResponse(BaseModel):
-    """Full service details - ORUK compliant with required fields."""
+    """A service record as read from Airtable."""
     id: str
     name: str
     organizations: list[str] | None = None
-    status: str = "active"  # Required by ORUK
+    status: str = "active"
     alternate_name: str | None = None
     description: str | None = None
     url: str | None = None
@@ -57,14 +79,20 @@ class ServiceResponse(BaseModel):
     required_documents: list[str] | None = None
 
     # Custom extension fields (non-HSDS standard)
-    group_name: str | None = None  # Organization/group name from Airtable
-    need_focus: list[str] | None = None  # Need categories
-    community_focus: list[str] | None = None  # Target communities
+    need_focus: list[str] | None = Field(  # Need categories
+        default=None, validation_alias=airtable_name("needFocus", "need_focus")
+    )
+    community_focus: list[str] | None = Field(  # Target communities
+        default=None, validation_alias=airtable_name("communityFocus", "community_focus")
+    )
 
 
 class ServiceAtLocationResponse(BaseModel):
     id: str
-    service_id: str | None = None
+    # Airtable links one service through `services`.
+    service_id: FirstOf = Field(
+        default=None, validation_alias=airtable_name("services", "service_id")
+    )
     locations: list[str] | None = None
     phones: list[str] | None = None
     contacts: list[str] | None = None
@@ -73,7 +101,7 @@ class ServiceAtLocationResponse(BaseModel):
 
 class LocationResponse(BaseModel):
     id: str
-    location_type: str | None = None
+    location_type: FirstOf = None  # multi-select in Airtable
     url: str | None = None
     name: str | None = None
     alternate_name: str | None = None
@@ -96,8 +124,39 @@ class AddressResponse(BaseModel):
     postal_code: str | None = None
     region: str | None = None
     country: str | None = None
-    address_type: str | None = None
+    address_type: FirstOf = None  # multi-select in Airtable
     attention: str | None = None
+
+
+class LanguageResponse(BaseModel):
+    id: str
+    name: str | None = None
+    code: str | None = None
+    note: str | None = None
+
+
+class ServiceAreaResponse(BaseModel):
+    """Who a service is for (e.g. a borough), not where it is."""
+    id: str
+    name: str | None = None
+    order: float | None = Field(  # display order in filters
+        default=None, validation_alias=airtable_name("x-order", "order")
+    )
+
+
+class TaxonomyResponse(BaseModel):
+    id: str
+    name: str
+    description: str | None = None
+
+
+class TaxonomyTermResponse(BaseModel):
+    id: str
+    name: str
+    description: str | None = None
+    taxonomy_id: FirstOf = Field(
+        default=None, validation_alias=airtable_name("taxonomy", "taxonomy_id")
+    )
 
 
 class AccessibilityResponse(BaseModel):
