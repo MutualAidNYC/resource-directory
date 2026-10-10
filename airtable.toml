@@ -15,7 +15,7 @@
 id = "tblUV34ri18xDgs64"
 filter = "{status} = 'Published'"
 fields = [
-  "name", "status", "description", "url", "email", "assured_date",
+  "name", "description", "url", "email", "assured_date",
   "needFocus", "communityFocus",
   "organizations", "phones", "languages", "service_areas", "service_at_locations",
 ]

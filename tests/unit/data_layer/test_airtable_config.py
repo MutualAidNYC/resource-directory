@@ -27,10 +27,10 @@ def test_shipped_skips_private_fields(field: str):
     assert all(field not in t.fields for t in config.tables.values())
 
 
-def test_shipped_requests_status():
-    # So the build can double-check publish status.
+def test_shipped_services_filter_on_status():
+    # The publish guard: the build publishes every service it pulls.
     config = load_config(DEFAULT_PATH)
-    assert "status" in config.tables["services"].fields
+    assert config.tables["services"].filter == "{status} = 'Published'"
 
 
 # Loading
