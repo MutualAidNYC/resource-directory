@@ -4,6 +4,8 @@ Powers the Mutual Aid NYC Community Resources Library. A FastAPI application tha
 
 Built for [Open Referral](https://openreferral.org/) and compatible with the [UK Open Referral (ORUK)](https://openreferraluk.org/) validator.
 
+Terms: code and the API use HSDS names, **service** and **organization**; the site calls them **resource** and **group**.
+
 ## Architecture
 
 ```
@@ -239,7 +241,7 @@ Key fields per table:
 | `SYNC_INTERVAL_MINUTES` | `15` | Minutes between background syncs |
 | `HOST` | `127.0.0.1` | Bind address. Only read when running `python main.py` — the Dockerfile and the documented uvicorn command set it themselves. |
 | `PORT` | `8080` | Server port, same scope as `HOST`. In Docker, remap with docker-compose's `ports:` rather than changing this. |
-| `PUBLISHED_STATUS_VALUE` | `Published` | Only show services with this status (empty = show all) |
+| `PUBLISHED_STATUS_VALUE` | `Published` | Old API only: show services with this status (empty = show all). The static build uses the `services` `filter` in `airtable.toml` instead. |
 | `FILTER_ORGS_WITHOUT_PUBLISHED_SERVICES` | `true` | Hide orgs with no published services |
 | `AIRTABLE_CONFIG` | `airtable.toml` | Tables and fields the build requests. See below. |
 
@@ -249,7 +251,7 @@ The build requests only the tables and fields listed in `airtable.toml`, so noth
 
 The `services` filter decides what is published: the build publishes every service it pulls, and an organization only when it has at least one of those services. Leave the filter out if your base has no publish status.
 
-For a different base: copy the file, name each `[tables.<name>]` section after your Airtable table (or add `id = "tbl…"` if the names differ) and list the fields you want, and update `AIRTABLE_CONFIG` in the `.env` file. Tables and fields you leave out are treated as empty.
+For a different base: copy the file, list your table ids (or leave `id` out to use the table name) and the fields you want, and update `AIRTABLE_CONFIG` in the `.env` file. Tables and fields you leave out are treated as empty.
 
 ### Frontend
 
@@ -315,6 +317,7 @@ resource-directory/
 │   └── dependency.py          # Table factories for the FastAPI routes
 │
 ├── application_layer/         # Static build's output, from the in-memory dataset
+│   ├── application_layer.py   # Old API's logic, per-request (removed with the FastAPI server)
 │   ├── publish.py             # What's published: pulled services and their organizations
 │   ├── services.py            # Services: list + detail
 │   ├── organizations.py       # Organizations: list, detail, an organization's services
