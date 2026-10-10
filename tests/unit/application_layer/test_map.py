@@ -7,11 +7,18 @@ from data_layer.ids import hsds_id
 from tests.unit.application_layer.sample_pull import (
     FRIDGE,
     HALL,
+    SAL_FRIDGE,
+    edit,
     pull,
+    rec,
     record_ids_in,
 )
 
 pytestmark = pytest.mark.unit
+
+ANNEX = "recLocAnnex000001"
+ANNEX_ADDRESS = "recAddressAnnex01"
+SAL_ANNEX = "recSalAnnex000001"
 
 
 def test_pin_comes_from_service_at_location(dataset: Dataset, published: Published):
@@ -27,16 +34,32 @@ def test_pin_comes_from_service_at_location(dataset: Dataset, published: Publish
     assert orphan.organization_name is None
 
 
-def test_address_falls_back_to_location_name():
+def test_location_without_an_address_has_none():
+    # No fallback to the location's name: incomplete data shows up as missing, not guessed.
     raw = pull()
-    for location in raw["locations"]:
-        if location["id"] == HALL:
-            location["fields"]["addresses"] = []
+    edit(raw, HALL, addresses=[])
     dataset = Dataset.from_pull(raw)
 
     fridge = map_data(dataset, select(dataset)).services[0]
 
-    assert fridge.address == "Community Hall"
+    assert (fridge.latitude, fridge.address) == (40.7, None)
+
+
+def test_pin_and_address_come_from_the_first_location_with_coordinates():
+    raw = pull()
+    edit(raw, HALL, latitude=None, longitude=None)
+    raw["addresses"].append(rec(ANNEX_ADDRESS, address_1="2 Side St", city="New York"))
+    raw["locations"].append(
+        rec(ANNEX, latitude=40.8, longitude=-73.8, addresses=[ANNEX_ADDRESS])
+    )
+    raw["service_at_location"].append(rec(SAL_ANNEX, services=[FRIDGE], locations=[ANNEX]))
+    edit(raw, FRIDGE, service_at_locations=[SAL_FRIDGE, SAL_ANNEX])
+    dataset = Dataset.from_pull(raw)
+
+    fridge = map_data(dataset, select(dataset)).services[0]
+
+    assert (fridge.latitude, fridge.longitude) == (40.8, -73.8)
+    assert fridge.address == "2 Side St, New York"  # not the hall's, which has no coordinates
 
 
 def test_service_areas_in_airtable_order(dataset: Dataset, published: Published):

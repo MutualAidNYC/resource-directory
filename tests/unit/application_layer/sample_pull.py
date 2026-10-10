@@ -118,6 +118,16 @@ def pull() -> dict[str, list[dict[str, Any]]]:
     }
 
 
+def edit(raw: dict[str, list[dict[str, Any]]], record_id: str, **fields: object) -> None:
+    """Set fields on one record of a pull, whichever table it is in."""
+    for records in raw.values():
+        for record in records:
+            if record["id"] == record_id:
+                record["fields"].update(fields)
+                return
+    raise KeyError(record_id)
+
+
 def record_ids_in(value: object) -> list[str]:
     """Airtable record ids anywhere in a dumped output (must be none)."""
     if isinstance(value, dict):

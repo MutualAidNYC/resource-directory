@@ -43,8 +43,8 @@ def select(dataset: Dataset) -> Published:
     counts: dict[str, int] = {}
     without_organization: list[str] = []
     for service in services:
-        # A service has one organization. If it links several, the first one in the pull
-        # wins and the others don't count it.
+        # A service has one organization. If it links several, the first one in its own
+        # list (that the pull kept) wins and the others don't count it.
         organization = next(
             (o for o in service.organizations or [] if dataset.organizations.get(o)), None
         )
