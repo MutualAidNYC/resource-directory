@@ -3,7 +3,7 @@ import pytest
 from pydantic import BaseModel
 
 from application_layer import application_layer
-from config import Settings, get_settings
+from config import Settings
 from data_layer.data import InMemoryData
 from models.airtable import (
     AccessibilityResponse,
@@ -363,7 +363,13 @@ def test_accessibilities_data(
 
 @pytest.fixture
 def test_settings() -> Settings:
-    return get_settings()
+    # Fixed values, not .env: unit tests must run without credentials.
+    return Settings(
+        airtable_api_key="test-key",
+        airtable_base_id="appTEST0000000000",
+        published_status_value="Published",
+        _env_file=None,  # type: ignore[call-arg]
+    )
 
 @pytest.mark.unit
 def test_list_service_at_locations_returns_only_published_services(
