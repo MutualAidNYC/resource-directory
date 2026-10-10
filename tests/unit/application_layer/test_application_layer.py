@@ -4,7 +4,7 @@ from pydantic import BaseModel
 
 from application_layer import application_layer
 from config import Settings, get_settings
-from data_layer.data import TestData
+from data_layer.data import InMemoryData
 from models.airtable import (
     AccessibilityResponse,
     AddressResponse,
@@ -277,8 +277,8 @@ def expected_service_at_location_with_no_locations_result(
 def _test_data(
     model_class: type[BaseModel],
     example_responses: list[BaseModel],
-) -> TestData:
-    return TestData(
+) -> InMemoryData:
+    return InMemoryData(
         model_class=model_class,
         data={
             resp.id: resp for resp in example_responses
@@ -289,7 +289,7 @@ def _test_data(
 def test_service_at_location_data(
     service_at_location_response_with_no_locations: ServiceAtLocationResponse,
     full_service_at_location_response: ServiceAtLocationResponse,
-) -> TestData[ServiceAtLocationResponse]:
+) -> InMemoryData[ServiceAtLocationResponse]:
     return _test_data(
         model_class=ServiceAtLocationResponse,
         example_responses=[
@@ -301,7 +301,7 @@ def test_service_at_location_data(
 @pytest.fixture
 def test_services_data(
     service_response: ServiceResponse,
-) -> TestData[ServiceResponse]:
+) -> InMemoryData[ServiceResponse]:
     return _test_data(
         model_class=ServiceResponse,
         example_responses=[service_response],
@@ -310,7 +310,7 @@ def test_services_data(
 @pytest.fixture
 def test_locations_data(
     base_location_response: LocationResponse,
-) -> TestData[LocationResponse]:
+) -> InMemoryData[LocationResponse]:
     return _test_data(
         model_class=LocationResponse,
         example_responses=[base_location_response],
@@ -319,7 +319,7 @@ def test_locations_data(
 @pytest.fixture
 def test_addresses_data(
     base_address_response: AddressResponse,
-) -> TestData[AddressResponse]:
+) -> InMemoryData[AddressResponse]:
     return _test_data(
         model_class=AddressResponse,
         example_responses=[base_address_response],
@@ -328,7 +328,7 @@ def test_addresses_data(
 @pytest.fixture
 def test_contacts_data(
     base_contact_response: ContactResponse,
-) -> TestData[ContactResponse]:
+) -> InMemoryData[ContactResponse]:
     return _test_data(
         model_class=ContactResponse,
         example_responses=[base_contact_response],
@@ -337,7 +337,7 @@ def test_contacts_data(
 @pytest.fixture
 def test_phones_data(
     base_phone_response: PhoneResponse,
-) -> TestData[PhoneResponse]:
+) -> InMemoryData[PhoneResponse]:
     return _test_data(
         model_class=PhoneResponse,
         example_responses=[base_phone_response],
@@ -346,7 +346,7 @@ def test_phones_data(
 @pytest.fixture
 def test_schedules_data(
     base_schedule_response: ScheduleResponse,
-) -> TestData[ScheduleResponse]:
+) -> InMemoryData[ScheduleResponse]:
     return _test_data(
         model_class=ScheduleResponse,
         example_responses=[base_schedule_response],
@@ -355,7 +355,7 @@ def test_schedules_data(
 @pytest.fixture
 def test_accessibilities_data(
     base_accessibility_response: AccessibilityResponse,
-) -> TestData[AccessibilityResponse]:
+) -> InMemoryData[AccessibilityResponse]:
     return _test_data(
         model_class=AccessibilityResponse,
         example_responses=[base_accessibility_response],
@@ -367,14 +367,14 @@ def test_settings() -> Settings:
 
 @pytest.mark.unit
 def test_list_service_at_locations_returns_only_published_services(
-    test_service_at_location_data: TestData[ServiceAtLocationResponse],
-    test_services_data: TestData[ServiceResponse],
-    test_locations_data: TestData[LocationResponse],
-    test_addresses_data: TestData[AddressResponse],
-    test_contacts_data: TestData[ContactResponse],
-    test_phones_data: TestData[PhoneResponse],
-    test_schedules_data: TestData[ScheduleResponse],
-    test_accessibilities_data: TestData[AccessibilityResponse],
+    test_service_at_location_data: InMemoryData[ServiceAtLocationResponse],
+    test_services_data: InMemoryData[ServiceResponse],
+    test_locations_data: InMemoryData[LocationResponse],
+    test_addresses_data: InMemoryData[AddressResponse],
+    test_contacts_data: InMemoryData[ContactResponse],
+    test_phones_data: InMemoryData[PhoneResponse],
+    test_schedules_data: InMemoryData[ScheduleResponse],
+    test_accessibilities_data: InMemoryData[AccessibilityResponse],
     test_settings: Settings,
     expected_service_at_location_with_locations_result: ServiceAtLocation,
     expected_service_at_location_with_no_locations_result: ServiceAtLocation,
@@ -408,13 +408,13 @@ def test_list_service_at_locations_returns_only_published_services(
 @pytest.mark.unit
 def test_get_service_at_locations_returns_service_at_location_with_no_locations(
     service_at_location_response_with_no_locations: ServiceAtLocationResponse,
-    test_service_at_location_data: TestData[ServiceAtLocationResponse],
-    test_locations_data: TestData[LocationResponse],
-    test_addresses_data: TestData[AddressResponse],
-    test_contacts_data: TestData[ContactResponse],
-    test_phones_data: TestData[PhoneResponse],
-    test_schedules_data: TestData[ScheduleResponse],
-    test_accessibilities_data: TestData[AccessibilityResponse],
+    test_service_at_location_data: InMemoryData[ServiceAtLocationResponse],
+    test_locations_data: InMemoryData[LocationResponse],
+    test_addresses_data: InMemoryData[AddressResponse],
+    test_contacts_data: InMemoryData[ContactResponse],
+    test_phones_data: InMemoryData[PhoneResponse],
+    test_schedules_data: InMemoryData[ScheduleResponse],
+    test_accessibilities_data: InMemoryData[AccessibilityResponse],
     expected_service_at_location_with_no_locations_result: ServiceAtLocation,
 ):
     result = application_layer.get_service_at_locations(
@@ -434,13 +434,13 @@ def test_get_service_at_locations_returns_service_at_location_with_no_locations(
 
 @pytest.mark.unit
 def test_get_sal_returns_service_at_location_when_location_is_not_found(
-    test_service_at_location_data: TestData[ServiceAtLocationResponse],
-    test_locations_data: TestData[LocationResponse],
-    test_addresses_data: TestData[AddressResponse],
-    test_contacts_data: TestData[ContactResponse],
-    test_phones_data: TestData[PhoneResponse],
-    test_schedules_data: TestData[ScheduleResponse],
-    test_accessibilities_data: TestData[AccessibilityResponse],
+    test_service_at_location_data: InMemoryData[ServiceAtLocationResponse],
+    test_locations_data: InMemoryData[LocationResponse],
+    test_addresses_data: InMemoryData[AddressResponse],
+    test_contacts_data: InMemoryData[ContactResponse],
+    test_phones_data: InMemoryData[PhoneResponse],
+    test_schedules_data: InMemoryData[ScheduleResponse],
+    test_accessibilities_data: InMemoryData[AccessibilityResponse],
     expected_service_at_location_with_no_locations_result: ServiceAtLocation,
 ):
     result = application_layer.get_service_at_locations(
@@ -459,13 +459,13 @@ def test_get_sal_returns_service_at_location_when_location_is_not_found(
 
 @pytest.mark.unit
 def test_get_service_at_locations_returns_none_when_service_at_location_id_is_not_found(
-    test_service_at_location_data: TestData[ServiceAtLocationResponse],
-    test_locations_data: TestData[LocationResponse],
-    test_addresses_data: TestData[AddressResponse],
-    test_contacts_data: TestData[ContactResponse],
-    test_phones_data: TestData[PhoneResponse],
-    test_schedules_data: TestData[ScheduleResponse],
-    test_accessibilities_data: TestData[AccessibilityResponse],
+    test_service_at_location_data: InMemoryData[ServiceAtLocationResponse],
+    test_locations_data: InMemoryData[LocationResponse],
+    test_addresses_data: InMemoryData[AddressResponse],
+    test_contacts_data: InMemoryData[ContactResponse],
+    test_phones_data: InMemoryData[PhoneResponse],
+    test_schedules_data: InMemoryData[ScheduleResponse],
+    test_accessibilities_data: InMemoryData[AccessibilityResponse],
 ):
     result = application_layer.get_service_at_locations(
         sal_id="nonexistent_id",

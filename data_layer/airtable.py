@@ -120,7 +120,7 @@ class AirtableData(DataEntity[T]):
 
     def get(
         self,
-        id: int,
+        id: str,
     ) -> T | None:
         results = self.list(
             filters=[Filter(key=col, value=id) for col in self.id_columns],
@@ -129,7 +129,7 @@ class AirtableData(DataEntity[T]):
 
     def get_bulk(
         self,
-        ids: builtins.list[int],
+        ids: builtins.list[str],
     ) -> builtins.list[T]:
         return [
             self.get(id=id) for id in ids

@@ -3,7 +3,7 @@ Configuration management for the HSDS API application.
 
 Loads settings from environment variables with sensible defaults.
 """
-from pydantic_settings import BaseSettings
+from pydantic_settings import BaseSettings, SettingsConfigDict
 from functools import lru_cache
 
 
@@ -13,6 +13,10 @@ class Settings(BaseSettings):
     # Airtable Configuration
     airtable_api_key: str
     airtable_base_id: str
+
+    # Tables and fields the static build requests; relative paths are from
+    # the repo root. See data_layer/airtable_config.py.
+    airtable_config: str = "airtable.toml"
     
     # Sync Settings
     sync_interval_minutes: int = 15
@@ -33,9 +37,7 @@ class Settings(BaseSettings):
     # If True, also hide organizations that have no published services
     filter_orgs_without_published_services: bool = True
     
-    class Config:
-        env_file = ".env"
-        env_file_encoding = "utf-8"
+    model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8")
 
 
 @lru_cache

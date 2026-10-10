@@ -25,7 +25,7 @@ Open an issue describing the feature and its use case.
 1. Create a feature branch from `main`
 2. Follow [PEP 8](https://peps.python.org/pep-0008/) for Python code
 3. Include docstrings for new functions
-4. Test your changes locally
+4. Test your changes locally: `pytest tests/unit` and `ruff check .`
 5. Submit a PR with a clear description
 
 ## Code Style
