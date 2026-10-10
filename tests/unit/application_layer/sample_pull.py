@@ -75,8 +75,8 @@ def pull() -> dict[str, list[dict[str, Any]]]:
             ),
         ],
         "service_at_location": [
-            rec(SAL_FRIDGE, services=[FRIDGE], locations=[HALL]),
-            rec(SAL_HOTLINE, services=[HOTLINE]),  # hotline: no location on purpose
+            rec(SAL_FRIDGE, locations=[HALL]),
+            rec(SAL_HOTLINE),  # hotline: no location on purpose
         ],
         "locations": [
             rec(

@@ -52,7 +52,7 @@ def test_pin_and_address_come_from_the_first_location_with_coordinates():
     raw["locations"].append(
         rec(ANNEX, latitude=40.8, longitude=-73.8, addresses=[ANNEX_ADDRESS])
     )
-    raw["service_at_location"].append(rec(SAL_ANNEX, services=[FRIDGE], locations=[ANNEX]))
+    raw["service_at_location"].append(rec(SAL_ANNEX, locations=[ANNEX]))
     edit(raw, FRIDGE, service_at_locations=[SAL_FRIDGE, SAL_ANNEX])
     dataset = Dataset.from_pull(raw)
 

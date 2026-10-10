@@ -28,7 +28,7 @@ fields = ["name", "description", "email", "website", "phones", "locations"]
 
 [tables.service_at_location]
 id = "tbl6DuXeIQcMAf0lv"
-fields = ["services", "locations"]
+fields = ["locations"]  # services link here via services.service_at_locations
 
 [tables.locations]
 id = "tbljfrAgraVmN3k4C"
