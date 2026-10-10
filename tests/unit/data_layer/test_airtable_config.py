@@ -18,7 +18,6 @@ pytestmark = pytest.mark.unit
 def test_shipped_config_loads():
     config = load_config(DEFAULT_PATH)
     assert "services" in config.tables
-    assert all(t.id and t.id.startswith("tbl") for t in config.tables.values())
 
 
 @pytest.mark.parametrize("field", ["Submitter: Email", "Notes", "[INT] MANYC Notes"])

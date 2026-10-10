@@ -308,7 +308,7 @@ class ServiceAtLocation(ORUKBaseModel):
 class Service(ORUKBaseModel):
     """Full service details - ORUK compliant with required fields."""
     id: str
-    organization_id: Optional[str]  # Required by HSDS; None only if its organization isn't published
+    organization_id: Optional[str]  # None only if its organization isn't published
     name: str
     status: str = "active"  # Required by HSDS
     alternate_name: Optional[str] = None
@@ -348,7 +348,7 @@ class Service(ORUKBaseModel):
 class ServiceSummary(ORUKBaseModel):
     """Minimal service info for list views - ORUK compliant."""
     id: str
-    organization_id: Optional[str]  # Required by HSDS; None only if its organization isn't published
+    organization_id: Optional[str]  # None only if its organization isn't published
     name: str
     status: str = "active"  # Required by HSDS
     alternate_name: Optional[str] = None
