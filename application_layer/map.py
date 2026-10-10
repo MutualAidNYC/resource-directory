@@ -11,10 +11,11 @@ from collections.abc import Callable
 
 from pydantic import BaseModel
 
+from application_layer import records
 from application_layer.publish import Published
 from data_layer.dataset import Dataset
 from data_layer.ids import hsds_id
-from models.airtable import ServiceAreaResponse, ServiceResponse
+from models.airtable import LocationResponse, ServiceAreaResponse, ServiceResponse
 from utils.address import format_address
 
 class MapService(BaseModel):
@@ -76,35 +77,38 @@ def _map_service(
     areas: dict[str, ServiceAreaResponse],
     area_order: AreaOrder,
 ) -> MapService:
-    latitude = longitude = address = None
-    for sal in dataset.service_at_location.list():
-        if sal.service_id != service.id:
-            continue
-        for place in dataset.locations.get_bulk(sal.locations or []):
-            found = dataset.addresses.get_bulk(place.addresses or [])
-            text = (format_address(found[0].model_dump()) if found else None) or place.name
-            if address is None and text:
-                address = text  # keep an address even without coordinates
-            if place.latitude is not None and place.longitude is not None:
-                latitude, longitude, address = place.latitude, place.longitude, text
-                break
-        if latitude is not None:
-            break
-
+    places = [place for _, place in records.service_places(dataset, service) if place]
+    pin = _first_with_coordinates(places)
     phone = next((p.number for p in dataset.phones.get_bulk(service.phones or [])), None)
-    organization = published.organizations.get(published.organization_of.get(service.id, ""))
+    organization = published.organization_for(service)
     names = [str(areas[a].name) for a in service.service_areas or [] if a in areas]
     return MapService(
         id=hsds_id("services", service.id),
         name=service.name,
         description=service.description,
-        address=address,
+        address=_address(dataset, pin) if pin else None,
         phone=phone,
         url=service.url,
         needFocus=service.need_focus or [],
         communityFocus=service.community_focus or [],
-        latitude=latitude,
-        longitude=longitude,
+        latitude=pin.latitude if pin else None,
+        longitude=pin.longitude if pin else None,
         organization_name=organization.name if organization else None,
         service_areas=sorted(names, key=area_order),
     )
+
+
+def _first_with_coordinates(places: list[LocationResponse]) -> LocationResponse | None:
+    """The location the pin goes on."""
+    for place in places:
+        if place.has_coordinates:
+            return place
+    return None
+
+
+def _address(dataset: Dataset, place: LocationResponse) -> str | None:
+    """The place's first address as one line. No address record means no address."""
+    found = dataset.addresses.get_bulk(place.addresses or [])
+    if not found:
+        return None
+    return format_address(found[0].model_dump()) or None

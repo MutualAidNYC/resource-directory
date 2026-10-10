@@ -41,7 +41,7 @@ def service_detail(
     service: ServiceResponse, dataset: Dataset, published: Published, terms: Terms
 ) -> Service:
     """One service with its phones, languages, locations and categories."""
-    organization = published.organizations.get(published.organization_of.get(service.id, ""))
+    organization = published.organization_for(service)
     return Service(
         id=hsds_id("services", service.id),
         organization_id=_organization_id(service, published),
@@ -62,23 +62,18 @@ def service_detail(
 
 
 def _organization_id(service: ServiceResponse, published: Published) -> str | None:
-    organization_id = published.organization_of.get(service.id)
-    return hsds_id("organizations", organization_id) if organization_id else None
+    organization = published.organization_for(service)
+    return hsds_id("organizations", organization.id) if organization else None
 
 
 def _service_at_locations(service: ServiceResponse, dataset: Dataset) -> list[ServiceAtLocation]:
     """Where the service is offered. Many services have none on purpose
     (hotlines, citywide); they never inherit their organization's address."""
-    out = []
-    for sal in dataset.service_at_location.list():
-        if sal.service_id != service.id:
-            continue
-        place = dataset.locations.get((sal.locations or [""])[0])
-        out.append(
-            ServiceAtLocation(
-                id=hsds_id("service_at_location", sal.id),
-                service_id=hsds_id("services", service.id),
-                location=records.location(dataset, place) if place else None,
-            )
+    return [
+        ServiceAtLocation(
+            id=hsds_id("service_at_location", sal.id),
+            service_id=hsds_id("services", service.id),
+            location=records.location(dataset, place) if place else None,
         )
-    return out
+        for sal, place in records.service_places(dataset, service)
+    ]

@@ -27,6 +27,10 @@ class Published:
     # Published services whose organizations the pull skipped: listed in the build report.
     without_organization: list[str] = field(default_factory=list)
 
+    def organization_for(self, service: ServiceResponse) -> OrganizationResponse | None:
+        """The service's published organization, or None if it has none."""
+        return self.organizations.get(self.organization_of.get(service.id, ""))
+
     def services_of(self, organization_id: str) -> list[ServiceResponse]:
         """The organization's published services, in pull order."""
         return [s for s in self.services if self.organization_of.get(s.id) == organization_id]
