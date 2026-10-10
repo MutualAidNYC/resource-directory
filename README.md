@@ -249,7 +249,7 @@ The build requests only the tables and fields listed in `airtable.toml`, so noth
 
 The `services` filter decides what is published: the build publishes every service it pulls, and an organization only when it has at least one of those services. Leave the filter out if your base has no publish status.
 
-For a different base: copy the file, list your table ids (or leave `id` out to use the table name) and the fields you want, and update `AIRTABLE_CONFIG` in the `.env` file. Tables and fields you leave out are treated as empty.
+For a different base: copy the file, name each `[tables.<name>]` section after your Airtable table (or add `id = "tbl…"` if the names differ) and list the fields you want, and update `AIRTABLE_CONFIG` in the `.env` file. Tables and fields you leave out are treated as empty.
 
 ### Frontend
 
