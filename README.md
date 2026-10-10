@@ -247,6 +247,8 @@ Key fields per table:
 
 The build requests only the tables and fields listed in `airtable.toml`, so nothing else leaves Airtable and private internal fields stay private. A table's optional `filter` limits which records are pulled. The committed file is Mutual Aid NYC's: only fields that have data in its base and filters for records that aren't meant to be published.
 
+The `services` filter decides what is published: the build publishes every service it pulls, and an organization only when it has at least one of those services. Leave the filter out if your base has no publish status.
+
 For a different base: copy the file, list your table ids (or leave `id` out to use the table name) and the fields you want, and update `AIRTABLE_CONFIG` in the `.env` file. Tables and fields you leave out are treated as empty.
 
 ### Frontend
@@ -307,11 +309,21 @@ resource-directory/
 │   ├── airtable_config.py     # Reads and checks airtable.toml
 │   ├── loader.py              # One paced bulk pull per table, retries on 429
 │   ├── data.py                # DataEntity + InMemoryData (lookups after the pull)
+│   ├── dataset.py             # Every pulled table in memory (missing tables are empty)
 │   ├── ids.py                 # Public HSDS ids: uuid5 of table + record id
 │   ├── airtable.py            # AirtableData: per-request reads (being replaced by loader.py)
 │   └── dependency.py          # Table factories for the FastAPI routes
 │
+├── application_layer/         # Static build's output, from the in-memory dataset
+│   ├── publish.py             # What's published: pulled services and their organizations
+│   ├── services.py            # Services: list + detail
+│   ├── organizations.py       # Organizations: list, detail, an organization's services
+│   ├── taxonomies.py          # Categories → HSDS taxonomy terms and attributes
+│   ├── map.py                 # Map page data
+│   └── records.py             # Phones, languages, locations, addresses
+│
 ├── models/
+│   ├── airtable.py            # Airtable records as the app reads them
 │   └── hsds.py                # HSDS 3.0 Pydantic models + response types
 │
 ├── routes/                    # FastAPI route handlers
