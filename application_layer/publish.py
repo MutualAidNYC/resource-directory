@@ -5,8 +5,8 @@ reaches the site or API unless it hangs off a published service:
 
 - Services: every pulled service. The services `filter` in airtable.toml
   decides which services the pull returns, so it is the publish guard.
-- Organizations: only those linked from a published service. Organizations the pull skipped
-  ("Do Not Publish") are absent from the dataset, so they never appear.
+- Organizations: only those linked from a published service. Organizations the
+  organizations `filter` in airtable.toml leaves out are never pulled, so they never appear.
 
 Ids here are Airtable record ids. Public ids are made at output time
 (data_layer/ids.py).

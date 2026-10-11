@@ -1,4 +1,4 @@
-"""Address formatting shared by the map and location endpoints."""
+"""Address formatting for the map data."""
 from typing import Any
 
 # HSDS address fields in display order. address_2 carries floor / suite detail
@@ -9,8 +9,9 @@ def format_address(fields: dict[str, Any]) -> str:
     """Join an Airtable address record's fields into one display string.
 
     Missing and empty parts are skipped. Values are whitespace-normalised
-    because `city`, `state_province` and `postal_code` are multilineText in the
-    base and can carry stray newlines that would break a one-line address.
+    because some address fields can be long-text fields in Airtable (in Mutual
+    Aid NYC's base: `city`, `state_province`, `postal_code`) and carry stray
+    newlines that would break a one-line address.
     """
     parts = []
     for key in _DISPLAY_PARTS:
