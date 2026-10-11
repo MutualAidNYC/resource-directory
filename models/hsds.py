@@ -298,6 +298,7 @@ class ServiceAtLocation(ORUKBaseModel):
     """Link between a service and a location."""
     id: str
     service_id: Optional[str] = None
+    location_id: Optional[str] = None
     description: Optional[str] = None
     location: Optional[Location] = None
     phones: Optional[List[Phone]] = None

@@ -73,6 +73,7 @@ def _service_at_locations(service: ServiceResponse, dataset: Dataset) -> list[Se
         ServiceAtLocation(
             id=hsds_id("service_at_location", sal.id),
             service_id=hsds_id("services", service.id),
+            location_id=hsds_id("locations", place.id) if place else None,
             location=records.location(dataset, place) if place else None,
         )
         for sal, place in records.service_places(dataset, service)
