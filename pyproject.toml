@@ -20,6 +20,8 @@ include = [
     "tests/**/*.py",
     "data_layer/**/*.py",
     "application_layer/**/*.py",
+    "static_build/**/*.py",
+    "build_dataset.py",
 ]
 
 [tool.ruff.lint]
@@ -27,7 +29,7 @@ include = [
 select = ["E", "F", "I", "B", "UP", "ANN", "W"]
 ignore = [
     "ANN204", # Ignore __init__ method missing type annotations
-] 
+]
 
 [tool.ruff.lint.isort]
 # Groups imports so your standard libs stay separate from third-party ones

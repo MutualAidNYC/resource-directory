@@ -132,6 +132,16 @@ npm run dev
 
 ---
 
+## Static build (in progress, replaces the API)
+
+```bash
+python build_dataset.py   # one pull from Airtable (uses .env), writes dist/api/
+```
+
+Writes the HSDS files to `dist/api/` and prints a build report listing what to fix in Airtable. It fails only if the pull fails or finds no published services. The HSDS version and its schemas: [`schemas/hsds/`](schemas/hsds/README.md).
+
+---
+
 ## Airtable Base Setup
 
 Your Airtable base needs tables matching the HSDS 3.0 schema. The API gets them by internal Airtable Table ID; the name-to-ID mapping is defined in `airtable/client.py`, and `airtable/sync.py` dictates which are pulled into the local cache.
@@ -405,4 +415,4 @@ Developed by [Sarapis](https://sarapis.org/) and maintained here by Mutual Aid N
 
 ## License
 
-[MIT](LICENSE)
+[MIT](LICENSE), except the vendored HSDS schemas in `schemas/hsds/`: © Open Referral, [CC BY-SA 4.0](https://creativecommons.org/licenses/by-sa/4.0/).

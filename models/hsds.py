@@ -1,7 +1,8 @@
 """
-HSDS 3.0 Pydantic Models with UK Open Referral (ORUK) Compliance.
+The HSDS objects the API publishes (Human Services Data Specification).
 
-Defines all data models conforming to the Human Services Data Specification.
+Fields without a value are left out of the output, not written as null:
+HSDS doesn't allow null.
 See: https://docs.openreferral.org/en/latest/hsds/schema_reference.html
 See: https://openreferraluk.org/developers/compliance
 """
@@ -9,6 +10,12 @@ from datetime import datetime
 from typing import Optional, List
 from pydantic import BaseModel, Field, ConfigDict
 from enum import Enum
+
+
+# The version of HSDS that the API's data follows. The build records it in
+# download.json and checks its files against this version's schemas in
+# schemas/hsds/<version>/. To move to a new version, see schemas/hsds/README.md.
+HSDS_VERSION = "3.3.1"
 
 
 class ORUKBaseModel(BaseModel):
