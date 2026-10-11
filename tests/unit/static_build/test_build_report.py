@@ -64,6 +64,19 @@ def test_location_without_address_is_reported():
     assert report_for(raw).partial_locations == [PartialLocation(FRIDGE, HALL, "address")]
 
 
+def test_location_without_coordinates_or_address_is_reported():
+    # No map pin and no address, so the location shows nowhere.
+    raw = pull()
+    edit(raw, HALL, latitude=None, longitude=None, addresses=[])
+
+    report = report_for(raw)
+
+    assert report.partial_locations == [
+        PartialLocation(FRIDGE, HALL, "coordinates or address")
+    ]
+    assert f"location {HALL} has no coordinates or address (service {FRIDGE}" in render(report)
+
+
 def test_rendered_report_names_records_but_no_contact_details():
     text = render(report_for(pull()))
 

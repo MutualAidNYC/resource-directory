@@ -22,7 +22,7 @@ from static_build.schema import SchemaProblem
 
 @dataclass(frozen=True)
 class PartialLocation:
-    """A published service's location missing coordinates or an address.
+    """A published service's location missing coordinates, an address, or both.
 
     Every location should have both: without coordinates there's no map pin,
     and the map shows an address only with its pin.
@@ -30,7 +30,7 @@ class PartialLocation:
 
     service: str  # service record id
     location: str  # location record id
-    missing: str  # "coordinates" or "address"
+    missing: str  # "coordinates", "address" or "coordinates or address" (both)
 
 
 @dataclass(frozen=True)
@@ -100,7 +100,7 @@ def _airtable_records(dataset: Dataset, public_ids: set[str]) -> dict[str, tuple
 
 
 def partial_locations(dataset: Dataset, published: Published) -> list[PartialLocation]:
-    """Published services' locations with coordinates but no address, or the reverse.
+    """Published services' locations missing coordinates, an address, or both.
 
     Services with no location, or a service_at_location without one, are left
     out: that's on purpose (hotlines, citywide).
@@ -111,10 +111,13 @@ def partial_locations(dataset: Dataset, published: Published) -> list[PartialLoc
             if place is None:
                 continue
             has_address = bool(dataset.addresses.get_bulk(place.addresses or []))
-            if place.has_coordinates and not has_address:
-                found.append(PartialLocation(service.id, place.id, "address"))
-            elif has_address and not place.has_coordinates:
-                found.append(PartialLocation(service.id, place.id, "coordinates"))
+            missing = []
+            if not place.has_coordinates:
+                missing.append("coordinates")
+            if not has_address:
+                missing.append("address")
+            if missing:
+                found.append(PartialLocation(service.id, place.id, " or ".join(missing)))
     return found
 
 
