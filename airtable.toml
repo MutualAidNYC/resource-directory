@@ -22,8 +22,9 @@ fields = [
 
 [tables.organizations]
 id = "tblSAotCxT28qpz5C"
-# Skips organizations marked "Do Not Publish". The build still shows a group only if it has a published service.
-filter = "{Publish Status} != 'Do Not Publish'"
+# Skips organizations marked "Do Not Publish" or with no Publish Status.
+# The build still shows a group only if it has a published service.
+filter = "AND({Publish Status} != '', {Publish Status} != 'Do Not Publish')"
 fields = ["name", "description", "email", "website", "phones", "locations"]
 
 [tables.service_at_location]
