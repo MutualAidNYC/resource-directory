@@ -4,6 +4,8 @@ Powers the Mutual Aid NYC Community Resources Library. A FastAPI application tha
 
 Built for [Open Referral](https://openreferral.org/) and compatible with the [UK Open Referral (ORUK)](https://openreferraluk.org/) validator.
 
+Terms: code and the API use HSDS names, **service** and **organization**; the site calls them **resource** and **group**.
+
 ## Architecture
 
 ```
@@ -130,6 +132,16 @@ npm run dev
 
 ---
 
+## Static build (in progress, replaces the API)
+
+```bash
+python build_dataset.py   # one pull from Airtable (uses .env), writes dist/api/
+```
+
+Writes the HSDS files to `dist/api/` and prints a build report listing what to fix in Airtable. It fails only if the pull fails or finds no published services. The HSDS version and its schemas: [`schemas/hsds/`](schemas/hsds/README.md).
+
+---
+
 ## Airtable Base Setup
 
 Your Airtable base needs tables matching the HSDS 3.0 schema. The API gets them by internal Airtable Table ID; the name-to-ID mapping is defined in `airtable/client.py`, and `airtable/sync.py` dictates which are pulled into the local cache.
@@ -239,7 +251,7 @@ Key fields per table:
 | `SYNC_INTERVAL_MINUTES` | `15` | Minutes between background syncs |
 | `HOST` | `127.0.0.1` | Bind address. Only read when running `python main.py` — the Dockerfile and the documented uvicorn command set it themselves. |
 | `PORT` | `8080` | Server port, same scope as `HOST`. In Docker, remap with docker-compose's `ports:` rather than changing this. |
-| `PUBLISHED_STATUS_VALUE` | `Published` | Only show services with this status (empty = show all) |
+| `PUBLISHED_STATUS_VALUE` | `Published` | Old API only: show services with this status (empty = show all). The static build uses the `services` `filter` in `airtable.toml` instead. |
 | `FILTER_ORGS_WITHOUT_PUBLISHED_SERVICES` | `true` | Hide orgs with no published services |
 | `AIRTABLE_CONFIG` | `airtable.toml` | Tables and fields the build requests. See below. |
 
@@ -249,7 +261,7 @@ The build requests only the tables and fields listed in `airtable.toml`, so noth
 
 The `services` filter decides what is published: the build publishes every service it pulls, and an organization only when it has at least one of those services. Leave the filter out if your base has no publish status.
 
-For a different base: copy the file, name each `[tables.<name>]` section after your Airtable table (or add `id = "tbl…"` if the names differ) and list the fields you want, and update `AIRTABLE_CONFIG` in the `.env` file. Tables and fields you leave out are treated as empty.
+For a different base: copy the file, list your table ids (or leave `id` out to use the table name) and the fields you want, and update `AIRTABLE_CONFIG` in the `.env` file. Tables and fields you leave out are treated as empty.
 
 ### Frontend
 
@@ -284,70 +296,6 @@ API on `:8080`, frontend on `:3000`. The frontend reaches the API over the Compo
 The backend is not hosted yet. Until we refactor and implement a deploy solution, the dev site on Vercel serves its data from a snapshot committed to the repo, with no API deployed and no secrets in Vercel.
 
 Root Directory `frontend`, no environment variables. Full instructions, including how to regenerate the snapshot, are in [`frontend/README.md`](frontend/README.md#vercel--dev-site-no-backend-current-setup).
-
-## Project Structure
-
-```
-resource-directory/
-├── main.py                    # FastAPI app entry point + lifespan handler
-├── config.py                  # Pydantic settings (loads from .env)
-├── requirements.txt           # Python dependencies
-├── .env.example               # Template for environment variables
-├── airtable.toml              # Tables and fields the build requests (per deployment)
-│
-├── airtable/                  # Airtable integration
-│   ├── client.py              # Async HTTP client with pagination + rate limiting
-│   └── sync.py                # Background sync loop (Airtable → SQLite)
-│
-├── db/
-│   └── database.py            # SQLite schema + CRUD operations (aiosqlite)
-│
-├── transform/
-│   └── mapper.py              # Airtable fields → HSDS Pydantic models
-│
-├── data_layer/                # Static build's data access (replacing airtable/ + db/)
-│   ├── airtable_config.py     # Reads and checks airtable.toml
-│   ├── loader.py              # One paced bulk pull per table, retries on 429
-│   ├── data.py                # DataEntity + InMemoryData (lookups after the pull)
-│   ├── dataset.py             # Every pulled table in memory (missing tables are empty)
-│   ├── ids.py                 # Public HSDS ids: uuid5 of table + record id
-│   ├── airtable.py            # AirtableData: per-request reads (being replaced by loader.py)
-│   └── dependency.py          # Table factories for the FastAPI routes
-│
-├── application_layer/         # Static build's output, from the in-memory dataset
-│   ├── publish.py             # What's published: pulled services and their organizations
-│   ├── services.py            # Services: list + detail
-│   ├── organizations.py       # Organizations: list, detail, an organization's services
-│   ├── taxonomies.py          # Categories → HSDS taxonomy terms and attributes
-│   ├── map.py                 # Map page data
-│   └── records.py             # Phones, languages, locations, addresses
-│
-├── models/
-│   ├── airtable.py            # Airtable records as the app reads them
-│   └── hsds.py                # HSDS 3.0 Pydantic models + response types
-│
-├── routes/                    # FastAPI route handlers
-│   ├── root.py                # GET / (API metadata)
-│   ├── services.py            # GET /services, /services/{id}
-│   ├── organizations.py       # GET /organizations, /organizations/{id}
-│   ├── taxonomies.py          # GET /taxonomies, /taxonomy_terms
-│   ├── service_at_locations.py
-│   └── map.py                 # GET /map/services
-│
-├── frontend/               # Next.js frontend
-│   ├── src/
-│   │   ├── app/               # App router pages
-│   │   │   ├── page.tsx       # Home (category grid)
-│   │   │   ├── services/      # Service list + detail + map
-│   │   │   └── organizations/ # Org list + detail
-│   │   ├── components/        # Reusable UI components
-│   │   └── lib/
-│   │       └── api.ts         # Typed API client
-│   └── package.json
-│
-├── LICENSE                    # MIT
-└── CONTRIBUTING.md
-```
 
 ---
 
@@ -402,4 +350,4 @@ Developed by [Sarapis](https://sarapis.org/) and maintained here by Mutual Aid N
 
 ## License
 
-[MIT](LICENSE)
+[MIT](LICENSE), except the vendored HSDS schemas in `schemas/hsds/`: © Open Referral, [CC BY-SA 4.0](https://creativecommons.org/licenses/by-sa/4.0/).

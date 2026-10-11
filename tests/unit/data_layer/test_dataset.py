@@ -31,7 +31,7 @@ def test_reads_airtable_shapes():
                 }
             ],
             "service_at_location": [
-                {"id": "recSal00000000001", "fields": {"services": ["recService0000001"]}}
+                {"id": "recSal00000000001", "fields": {"locations": ["recLocation000001"]}}
             ],
             "locations": [
                 {"id": "recLocation000001", "fields": {"location_type": ["physical"]}}
@@ -53,7 +53,7 @@ def test_reads_airtable_shapes():
     assert service is not None
     assert (service.need_focus, service.community_focus) == (["Food"], ["Youth"])
     sal = dataset.service_at_location.get("recSal00000000001")
-    assert sal is not None and sal.service_id == "recService0000001"
+    assert sal is not None and sal.location_id == "recLocation000001"
     location = dataset.locations.get("recLocation000001")
     assert location is not None and location.location_type == "physical"
     address = dataset.addresses.get("recAddress0000001")

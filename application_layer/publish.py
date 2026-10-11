@@ -5,8 +5,8 @@ reaches the site or API unless it hangs off a published service:
 
 - Services: every pulled service. The services `filter` in airtable.toml
   decides which services the pull returns, so it is the publish guard.
-- Organizations: only those linked from a published service. Organizations the pull skipped
-  ("Do Not Publish") are absent from the dataset, so they never appear.
+- Organizations: only those linked from a published service. Organizations the
+  organizations `filter` in airtable.toml leaves out are never pulled, so they never appear.
 
 Ids here are Airtable record ids. Public ids are made at output time
 (data_layer/ids.py).
@@ -27,6 +27,10 @@ class Published:
     # Published services whose organizations the pull skipped: listed in the build report.
     without_organization: list[str] = field(default_factory=list)
 
+    def organization_for(self, service: ServiceResponse) -> OrganizationResponse | None:
+        """The service's published organization, or None if it has none."""
+        return self.organizations.get(self.organization_of.get(service.id, ""))
+
     def services_of(self, organization_id: str) -> list[ServiceResponse]:
         """The organization's published services, in pull order."""
         return [s for s in self.services if self.organization_of.get(s.id) == organization_id]
@@ -39,8 +43,8 @@ def select(dataset: Dataset) -> Published:
     counts: dict[str, int] = {}
     without_organization: list[str] = []
     for service in services:
-        # A service has one organization. If it links several, the first one in the pull
-        # wins and the others don't count it.
+        # A service has one organization. If it links several, the first one in its own
+        # list (that the pull kept) wins and the others don't count it.
         organization = next(
             (o for o in service.organizations or [] if dataset.organizations.get(o)), None
         )

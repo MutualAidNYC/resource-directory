@@ -79,7 +79,7 @@ def test_detail_location(dataset: Dataset, published: Published, terms: Terms):
     assert sal.id == hsds_id("service_at_location", SAL_FRIDGE)
     assert sal.service_id == fridge.id
     assert sal.location is not None
-    assert sal.location.id == hsds_id("locations", HALL)
+    assert sal.location_id == sal.location.id == hsds_id("locations", HALL)
     assert sal.location.location_type == "physical"
     assert sal.location.addresses is not None
     [address] = sal.location.addresses
@@ -95,6 +95,7 @@ def test_detail_without_location_stays_without(
     [sal] = hotline.service_at_locations
     assert sal.id == hsds_id("service_at_location", SAL_HOTLINE)
     assert sal.location is None  # never the organization's address
+    assert sal.location_id is None
 
 
 def test_detail_without_published_organization(

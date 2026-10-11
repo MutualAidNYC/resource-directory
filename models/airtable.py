@@ -98,6 +98,11 @@ class ServiceAtLocationResponse(BaseModel):
     contacts: list[str] | None = None
     schedules: list[str] | None = None
 
+    @property
+    def location_id(self) -> str | None:
+        """The record's one location (Airtable links at most one), if it has any."""
+        return self.locations[0] if self.locations else None
+
 
 class LocationResponse(BaseModel):
     id: str
@@ -113,6 +118,11 @@ class LocationResponse(BaseModel):
     external_identifier_type: str | None = None
     addresses: list[str] | None = None
     accessibility: list[str] | None = None
+
+    @property
+    def has_coordinates(self) -> bool:
+        return self.latitude is not None and self.longitude is not None
+
 
 class AddressResponse(BaseModel):
     """Address details."""

@@ -9,8 +9,20 @@ from __future__ import annotations
 
 from data_layer.dataset import Dataset
 from data_layer.ids import hsds_id
-from models.airtable import LocationResponse
+from models.airtable import LocationResponse, ServiceAtLocationResponse, ServiceResponse
 from models.hsds import Address, Language, Location, Phone
+
+def service_places(
+    dataset: Dataset, service: ServiceResponse
+) -> list[tuple[ServiceAtLocationResponse, LocationResponse | None]]:
+    """The service's service_at_location records, each with its location.
+
+    Find where a service is offered. The location is None when the
+    record has none, which is intentional for hotlines and citywide services.
+    """
+    sals = dataset.service_at_location.get_bulk(service.service_at_locations or [])
+    return [(sal, dataset.locations.get(sal.location_id or "")) for sal in sals]
+
 
 def phones(dataset: Dataset, ids: list[str] | None) -> list[Phone]:
     """The linked phone records, in link order."""

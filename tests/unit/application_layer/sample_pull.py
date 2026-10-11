@@ -11,7 +11,7 @@ HOTLINE = "recHotline0000001"
 ORPHAN = "recOrphan00000001"  # its only organization was skipped by the pull
 ORG = "recOrgA0000000001"
 QUIET_ORG = "recQuietOrg000001"  # no published services
-SKIPPED_ORG = "recSkippedOrg0001"  # not in the pull ("Do Not Publish")
+SKIPPED_ORG = "recSkippedOrg0001"  # not in the pull ("Do Not Publish" or blank status)
 SAL_FRIDGE = "recSalFridge00001"
 SAL_HOTLINE = "recSalHotline0001"
 HALL = "recLocHall0000001"
@@ -75,8 +75,8 @@ def pull() -> dict[str, list[dict[str, Any]]]:
             ),
         ],
         "service_at_location": [
-            rec(SAL_FRIDGE, services=[FRIDGE], locations=[HALL]),
-            rec(SAL_HOTLINE, services=[HOTLINE]),  # hotline: no location on purpose
+            rec(SAL_FRIDGE, locations=[HALL]),
+            rec(SAL_HOTLINE),  # hotline: no location on purpose
         ],
         "locations": [
             rec(
@@ -116,6 +116,16 @@ def pull() -> dict[str, list[dict[str, Any]]]:
             rec(NOT_LISTED, name="-Not Listed"),
         ],
     }
+
+
+def edit(raw: dict[str, list[dict[str, Any]]], record_id: str, **fields: object) -> None:
+    """Set fields on one record of a pull, whichever table it is in."""
+    for records in raw.values():
+        for record in records:
+            if record["id"] == record_id:
+                record["fields"].update(fields)
+                return
+    raise KeyError(record_id)
 
 
 def record_ids_in(value: object) -> list[str]:
