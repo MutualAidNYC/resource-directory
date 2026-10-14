@@ -2,13 +2,15 @@
 
 Run from the repo root (needs .env, see README):
 
-    python build_dataset.py              # writes dist/api/
-    python build_dataset.py --out DIR    # writes DIR/api/
+    python build_dataset.py              # writes dist/api/ and dist/site-data/
+    python build_dataset.py --out DIR    # writes DIR/api/ and DIR/site-data/
 
 Writes DIR/api/ (see static_build/files.py), replacing what was there so no
-file outlives its record, then prints the build report. Exits 1 if the pull
-fails, if it has no published services (nothing is written), or if the build
-crashes; schema problems are reported, not fatal.
+file outlives its record, and DIR/site-data/map.json, the site's own data
+(application_layer/map.py; read when the site builds, not deployed). Then
+prints the build report. Exits 1 if the pull fails, if it has no published
+services (nothing is written), or if the build crashes; schema problems are
+reported, not fatal.
 """
 from __future__ import annotations
 
@@ -23,6 +25,7 @@ from typing import Any
 
 from pydantic import ValidationError
 
+from application_layer.map import MapData, map_data
 from application_layer.publish import select
 from application_layer.taxonomies import Terms
 from config import get_settings
@@ -34,6 +37,7 @@ from static_build.report import build_report, render
 from static_build.schema import SchemaProblem, SchemasNotInstalled, schema_problems
 
 DEFAULT_OUT = REPO_ROOT / "dist"
+SITE_DATA = Path("site-data") / "map.json"  # under the output folder; the site reads it
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -62,6 +66,7 @@ def main(argv: list[str] | None = None) -> int:
     terms = Terms.from_dataset(dataset)
     files = api_files(dataset, published, terms, built_at=datetime.now(UTC).isoformat())
     write(files, args.out)
+    write_site_data(map_data(dataset, published, terms), args.out)
 
     problems: list[SchemaProblem] = []
     note = None
@@ -113,13 +118,28 @@ def write(files: list[ApiFile], out: Path) -> None:
         )
 
 
+def write_site_data(data: MapData, out: Path) -> None:
+    """Write the site's own data (not HSDS, not deployed) to out/site-data/map.json."""
+    path = out / SITE_DATA
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(
+        json.dumps(
+            data.model_dump(mode="json", exclude_none=True),
+            ensure_ascii=False,
+            separators=(",", ":"),
+        ),
+        encoding="utf-8",
+    )
+
+
 def _parse(argv: list[str] | None) -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Build the static API files.")
     parser.add_argument(
         "--out",
         type=Path,
         default=DEFAULT_OUT,
-        help="output folder; its api/ folder is deleted and rewritten (default: dist)",
+        help="output folder; its api/ folder is deleted and rewritten, and "
+        "site-data/map.json written (default: dist)",
     )
     return parser.parse_args(argv)
 
