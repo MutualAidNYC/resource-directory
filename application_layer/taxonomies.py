@@ -4,6 +4,7 @@ Services hold their categories as plain names (`needFocus`, `communityFocus`
 in Airtable). Each name is matched exactly to a term in the taxonomy that
 CATEGORY_TAXONOMIES names for its field and published as an HSDS attribute.
 The taxonomy names are Mutual Aid NYC's; for another base, change CATEGORY_TAXONOMIES.
+The site shows the same matched terms as plain names (`Terms.names`, used by map.py).
 
 Only terms used by published services are published. Ids here are Airtable
 record ids; public ids are made at output time (data_layer/ids.py).
@@ -47,21 +48,33 @@ class Terms:
     def of(self, service: ServiceResponse) -> list[TaxonomyTermResponse]:
         """The service's category terms, in field then value order, each term once."""
         found: dict[str, TaxonomyTermResponse] = {}
-        for _, term in self._match(service):
+        for _, _, term in self._match(service):
             if term is not None:
                 found.setdefault(term.id, term)
         return list(found.values())
 
+    def names(self, service: ServiceResponse) -> dict[str, list[str]]:
+        """The service's category names by field (`need_focus`, `community_focus`), for the
+        site. Only names that match a term, each once, in value order: "-Not Listed" and
+        unmatched names are left out, so the site and the API's attributes always agree."""
+        found: dict[str, list[str]] = {field: [] for field in CATEGORY_TAXONOMIES}
+        for field, _, term in self._match(service):
+            if term is not None and term.name not in found[field]:
+                found[field].append(term.name)
+        return found
+
     def unmatched(self, service: ServiceResponse) -> list[str]:
         """The service's category names that match no term (build report)."""
-        return [name for name, term in self._match(service) if term is None]
+        return [name for _, name, term in self._match(service) if term is None]
 
-    def _match(self, service: ServiceResponse) -> Iterator[tuple[str, TaxonomyTermResponse | None]]:
-        """Each category name on the service with its term, or None if none matches."""
+    def _match(
+        self, service: ServiceResponse
+    ) -> Iterator[tuple[str, str, TaxonomyTermResponse | None]]:
+        """Each category name on the service with its field and term (None if none matches)."""
         for field, taxonomy in CATEGORY_TAXONOMIES.items():
             for name in getattr(service, field) or []:
                 if name != NOT_LISTED:
-                    yield name, self.by_name.get((taxonomy, name))
+                    yield field, name, self.by_name.get((taxonomy, name))
 
 
 def service_attributes(service: ServiceResponse, terms: Terms) -> list[Attribute]:

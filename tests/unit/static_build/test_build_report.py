@@ -39,7 +39,7 @@ def test_report_lists_what_needs_fixing():
     assert report.written == {
         "services": 3,
         "organizations": 1,
-        "service_at_locations": 2,
+        "service_at_locations": 1,  # the hotline's links no location, so it isn't written
         "taxonomies": 2,
         "taxonomy_terms": 2,
     }

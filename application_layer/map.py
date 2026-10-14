@@ -1,9 +1,12 @@
-"""The map page's data: every published service with a pin, plus filter values.
+"""The site's own data: every published service for the map and search, plus filter values.
 
-The site's own shape, not HSDS: categories stay plain name lists. Coordinates
-come only from locations linked through service_at_location; a service with
-none gets no pin (never its organization's address). Ids passed in are Airtable record
-ids; public ids are made here with data_layer.ids.hsds_id.
+Site-only, not HSDS and not part of the API: the build writes it to
+site-data/map.json (build_dataset.py). Categories are plain name lists, made from
+the matched taxonomy terms (Terms.names), so they always agree with the API's
+`attributes`. Coordinates come only from locations linked through
+service_at_location; a service with none gets no pin (never its organization's
+address). Ids passed in are Airtable record ids; public ids are made here with
+data_layer.ids.hsds_id.
 """
 from __future__ import annotations
 
@@ -13,6 +16,7 @@ from pydantic import BaseModel
 
 from application_layer import records
 from application_layer.publish import Published
+from application_layer.taxonomies import Terms
 from data_layer.dataset import Dataset
 from data_layer.ids import hsds_id
 from models.airtable import LocationResponse, ServiceAreaResponse, ServiceResponse
@@ -48,7 +52,7 @@ class MapData(BaseModel):
 AreaOrder = Callable[[str], tuple[int, float, str]]
 
 
-def map_data(dataset: Dataset, published: Published) -> MapData:
+def map_data(dataset: Dataset, published: Published, terms: Terms) -> MapData:
     """Published services in pull order, and the values the map filters on."""
     areas = {a.id: a for a in dataset.service_areas.list() if a.name}
     orders = {a.name: a.order for a in areas.values()}
@@ -58,7 +62,9 @@ def map_data(dataset: Dataset, published: Published) -> MapData:
         order = orders.get(name)
         return (0, order, name) if order is not None else (1, 0.0, name)
 
-    services = [_map_service(s, dataset, published, areas, area_order) for s in published.services]
+    services = [
+        _map_service(s, dataset, published, terms, areas, area_order) for s in published.services
+    ]
     needs = {n for s in services for n in s.needFocus}
     communities = {c for s in services for c in s.communityFocus}
     area_names = {a for s in services for a in s.service_areas}
@@ -74,14 +80,16 @@ def _map_service(
     service: ServiceResponse,
     dataset: Dataset,
     published: Published,
+    terms: Terms,
     areas: dict[str, ServiceAreaResponse],
     area_order: AreaOrder,
 ) -> MapService:
-    places = [place for _, place in records.service_places(dataset, service) if place]
+    places = [place for _, place in records.service_places(dataset, service)]
     pin = _first_with_coordinates(places)
     phone = next((p.number for p in dataset.phones.get_bulk(service.phones or [])), None)
     organization = published.organization_for(service)
     names = [str(areas[a].name) for a in service.service_areas or [] if a in areas]
+    categories = terms.names(service)
     return MapService(
         id=hsds_id("services", service.id),
         name=service.name,
@@ -89,8 +97,8 @@ def _map_service(
         address=_address(dataset, pin) if pin else None,
         phone=phone,
         url=service.url,
-        needFocus=service.need_focus or [],
-        communityFocus=service.community_focus or [],
+        needFocus=categories["need_focus"],
+        communityFocus=categories["community_focus"],
         latitude=pin.latitude if pin else None,
         longitude=pin.longitude if pin else None,
         organization_name=organization.name if organization else None,

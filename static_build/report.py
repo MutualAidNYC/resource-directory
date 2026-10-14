@@ -102,14 +102,12 @@ def _airtable_records(dataset: Dataset, public_ids: set[str]) -> dict[str, tuple
 def partial_locations(dataset: Dataset, published: Published) -> list[PartialLocation]:
     """Published services' locations missing coordinates, an address, or both.
 
-    Services with no location, or a service_at_location without one, are left
-    out: that's on purpose (hotlines, citywide).
+    Services with no location are left out: that's on purpose (hotlines, citywide).
+    A service_at_location without a location is skipped by the build (records.py).
     """
     found: list[PartialLocation] = []
     for service in published.services:
         for _, place in records.service_places(dataset, service):
-            if place is None:
-                continue
             has_address = bool(dataset.addresses.get_bulk(place.addresses or []))
             missing = []
             if not place.has_coordinates:

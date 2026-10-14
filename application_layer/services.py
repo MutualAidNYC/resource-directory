@@ -26,8 +26,6 @@ def service_summary(service: ServiceResponse, published: Published) -> ServiceSu
         description=service.description,
         url=service.url,
         email=service.email,
-        need_focus=service.need_focus,
-        community_focus=service.community_focus,
     )
 
 
@@ -41,7 +39,6 @@ def service_detail(
     service: ServiceResponse, dataset: Dataset, published: Published, terms: Terms
 ) -> Service:
     """One service with its phones, languages, locations and categories."""
-    organization = published.organization_for(service)
     return Service(
         id=hsds_id("services", service.id),
         organization_id=_organization_id(service, published),
@@ -55,9 +52,6 @@ def service_detail(
         languages=records.languages(dataset, service.languages),
         service_at_locations=_service_at_locations(service, dataset),
         attributes=service_attributes(service, terms),
-        group_name=organization.name if organization else None,
-        need_focus=service.need_focus,
-        community_focus=service.community_focus,
     )
 
 
@@ -67,14 +61,15 @@ def _organization_id(service: ServiceResponse, published: Published) -> str | No
 
 
 def _service_at_locations(service: ServiceResponse, dataset: Dataset) -> list[ServiceAtLocation]:
-    """Where the service is offered. Many services have none on purpose
-    (hotlines, citywide); they never inherit their organization's address."""
+    """Where the service is offered: only service_at_locations with a location. Many
+    services have none on purpose (hotlines, citywide); they never inherit their
+    organization's address."""
     return [
         ServiceAtLocation(
             id=hsds_id("service_at_location", sal.id),
             service_id=hsds_id("services", service.id),
-            location_id=hsds_id("locations", place.id) if place else None,
-            location=records.location(dataset, place) if place else None,
+            location_id=hsds_id("locations", place.id),
+            location=records.location(dataset, place),
         )
         for sal, place in records.service_places(dataset, service)
     ]

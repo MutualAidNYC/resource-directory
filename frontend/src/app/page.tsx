@@ -2,7 +2,7 @@ import fs from "node:fs";
 import path from "node:path";
 import Link from "next/link";
 import { SearchBar } from "@/components/ui/SearchBar";
-import { getServices, getOrganizations, getMapServices } from "@/lib/api";
+import { counts, getMapData } from "@/lib/data";
 
 /** Category icons live in the repo, not Airtable — see that folder's README. */
 const ICON_DIR = "icons/need_categories";
@@ -12,16 +12,14 @@ function iconSlug(name: string): string {
     return name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
 }
 
-
-/** Terms to exclude from the homepage grid. */
-const EXCLUDED_TERMS = new Set(["-Not Listed", "Not Listed"]);
-
 /**
  * Homepage based on mutualaid.nyc.
  */
-export default async function Home() {
-  let stats = { resources: 0, groups: 0 };
-  let categories: { name: string }[] = [];
+export default function Home() {
+  const published = counts();
+  const stats = { resources: published.services, groups: published.organizations };
+  // Category names come from matched taxonomy terms, so "-Not Listed" is never one.
+  const categories = getMapData().needCategories;
 
   // Which icons exist on disk, so a category without one falls back to the
   // placeholder dot instead of rendering a broken image.
@@ -29,22 +27,6 @@ export default async function Home() {
     fs.readdirSync(path.join(process.cwd(), "public", ICON_DIR))
       .filter((f) => f.endsWith(".png"))
   );
-
-  try {
-    const [servicesRes, orgsRes, mapData] = await Promise.all([
-      getServices(1, 1),
-      getOrganizations(1, 1),
-      getMapServices(),
-    ]);
-    stats = {
-      resources: servicesRes.total_items || 0,
-      groups: orgsRes.total_items || 0,
-    };
-    categories = (mapData.needCategories || [])
-    .filter((c: any) => !EXCLUDED_TERMS.has(c.name));
-  } catch (error) {
-    console.error("Failed to fetch homepage data:", error);
-  }
 
   return (
     <div className="flex flex-col">

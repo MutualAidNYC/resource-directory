@@ -44,6 +44,16 @@ def test_not_listed_is_not_a_category(dataset: Dataset, terms: Terms):
     assert "-Not Listed" not in [t.name for t in terms.of(fridge)]
 
 
+def test_names_are_the_matched_terms_by_field(dataset: Dataset, terms: Terms):
+    fridge = dataset.services.get(FRIDGE)
+    hotline = dataset.services.get(HOTLINE)
+    assert fridge is not None and hotline is not None
+
+    assert terms.names(fridge) == {"need_focus": ["Food"], "community_focus": ["Seniors"]}
+    # "Mystery" matches no term: left out, like "-Not Listed".
+    assert terms.names(hotline) == {"need_focus": [], "community_focus": []}
+
+
 def test_unknown_category_names_are_reported(published: Published, terms: Terms):
     assert unmatched_categories(published, terms) == {HOTLINE: ["Mystery"]}
 

@@ -1,11 +1,14 @@
-//TODO: the organization name and footer with addres are not showing up on the service cards. Need to debug why.
-// See /organizations/recrZzCIdgLxP26Q4 for an example of a service with an organization and address that should be showing up.
-
 import Link from 'next/link';
-import { Service } from '@/lib/api';
+import { formatAddress } from '@/lib/format';
+import type { Organization, ServiceAtLocation, ServiceSummary } from '@/lib/types';
 
 interface ServiceCardProps {
-    service: Service;
+    // Group pages pass list items, which carry no organization or locations, so the
+    // group line and address footer don't show yet.
+    service: ServiceSummary & {
+        organization?: Pick<Organization, 'name'>;
+        service_at_locations?: ServiceAtLocation[];
+    };
 }
 
 /**
@@ -51,8 +54,8 @@ export function ServiceCard({ service }: ServiceCardProps) {
                 const loc = service.service_at_locations?.find(s => s.location?.addresses?.length);
                 const addr = loc?.location?.addresses?.[0];
                 if (!addr) return null;
-                const parts = [addr.address_1, addr.city, addr.state_province].filter(Boolean);
-                if (parts.length === 0) return null;
+                const text = formatAddress(addr);
+                if (!text) return null;
                 return (
                     <div className="mt-4 pt-4 border-t border-[var(--card-border)]">
                         <p className="text-sm text-[var(--foreground)] flex items-center gap-1">
@@ -62,7 +65,7 @@ export function ServiceCard({ service }: ServiceCardProps) {
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
                                     d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
                             </svg>
-                            <span className="truncate">{parts.join(', ')}</span>
+                            <span className="truncate">{text}</span>
                         </p>
                     </div>
                 );

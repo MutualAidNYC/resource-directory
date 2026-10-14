@@ -76,7 +76,7 @@ def pull() -> dict[str, list[dict[str, Any]]]:
         ],
         "service_at_location": [
             rec(SAL_FRIDGE, locations=[HALL]),
-            rec(SAL_HOTLINE),  # hotline: no location on purpose
+            rec(SAL_HOTLINE),  # empty: links no location, so the build skips it
         ],
         "locations": [
             rec(

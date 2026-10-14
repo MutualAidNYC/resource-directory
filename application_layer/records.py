@@ -14,14 +14,16 @@ from models.hsds import Address, Language, Location, Phone
 
 def service_places(
     dataset: Dataset, service: ServiceResponse
-) -> list[tuple[ServiceAtLocationResponse, LocationResponse | None]]:
-    """The service's service_at_location records, each with its location.
+) -> list[tuple[ServiceAtLocationResponse, LocationResponse]]:
+    """The service's service_at_location records, each with its location, in link order.
 
-    Find where a service is offered. The location is None when the
-    record has none, which is intentional for hotlines and citywide services.
+    Find where a service is offered. A service_at_location without a location (none
+    linked, or not in the pull) says nothing about where, so it's skipped and never
+    published. A service with no location (hotlines, online resources) gets an empty list.
     """
     sals = dataset.service_at_location.get_bulk(service.service_at_locations or [])
-    return [(sal, dataset.locations.get(sal.location_id or "")) for sal in sals]
+    found = [(sal, dataset.locations.get(sal.location_id or "")) for sal in sals]
+    return [(sal, place) for sal, place in found if place is not None]
 
 
 def phones(dataset: Dataset, ids: list[str] | None) -> list[Phone]:

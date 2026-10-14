@@ -26,11 +26,6 @@ from application_layer.taxonomies import Terms, list_taxonomies, list_taxonomy_t
 from data_layer.dataset import Dataset
 from models.hsds import HSDS_VERSION
 
-# Service fields only the site reads (frontend/src/app/services/[id]/page.tsx). API
-# users get the same from `organization_id` and `attributes`, so the API leaves them out.
-SITE_ONLY = {"group_name", "need_focus", "community_focus"}
-
-
 @dataclass(frozen=True)
 class ApiFile:
     path: str  # relative to the output directory, e.g. "api/services/<id>.json"
@@ -81,7 +76,7 @@ def _one_per_record(folder: str, records: list[Any], schema: str) -> list[ApiFil
 
 
 def _dump(model: BaseModel, exclude: set[str] | None = None) -> dict[str, Any]:
-    return model.model_dump(mode="json", exclude_none=True, exclude=SITE_ONLY | (exclude or set()))
+    return model.model_dump(mode="json", exclude_none=True, exclude=exclude)
 
 
 def _dump_all(models: list[Any]) -> list[dict[str, Any]]:

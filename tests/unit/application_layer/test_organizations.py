@@ -28,7 +28,7 @@ def test_list_has_only_organizations_with_published_services(published: Publishe
     organizations = list_organizations(published)
 
     assert [o.id for o in organizations] == [hsds_id("organizations", ORG)]
-    assert organizations[0].service_count == 2
+    assert organizations[0].website == "https://org.example.org"
     assert hsds_id("organizations", QUIET_ORG) not in [o.id for o in organizations]
 
 

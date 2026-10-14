@@ -1,9 +1,12 @@
 'use client';
 
-import { useState, useMemo, useCallback, useEffect } from 'react';
-import { useSearchParams, useRouter } from 'next/navigation';
+import { useState, useMemo, useCallback, useEffect, useRef } from 'react';
+import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { TagLink } from '@/components/ui/TagLink';
+import { externalHref } from '@/lib/format';
+import { search, SERVICE_FIELDS } from '@/lib/search';
+import type { Category, MapService } from '@/lib/types';
 
 /** Haversine distance in miles between two lat/lng points. */
 function haversineDistance(lat1: number, lng1: number, lat2: number, lng2: number): number {
@@ -16,26 +19,8 @@ function haversineDistance(lat1: number, lng1: number, lat2: number, lng2: numbe
     return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
 }
 
-interface Service {
-    id: string;
-    name: string;
-    description?: string;
-    address?: string;
-    phone?: string;
-    url?: string;
-    needFocus?: string[];
-    communityFocus?: string[];
-    latitude?: number;
-    longitude?: number;
-    service_areas?: string[];
-}
-
-interface Category {
-    name: string;
-}
-
 interface MapPageClientProps {
-    services: Service[];
+    services: MapService[];
     needCategories: Category[];
     communityCategories: Category[];
     serviceAreas: string[];
@@ -55,7 +40,7 @@ export default function MapPageClient({
     serviceAreas
 }: MapPageClientProps) {
     const searchParams = useSearchParams();
-    const router = useRouter();
+    const searchInputRef = useRef<HTMLInputElement>(null);
 
     // Initialize state from URL query params
     const [searchQuery, setSearchQuery] = useState<string>(
@@ -100,6 +85,8 @@ export default function MapPageClient({
     /**
      * Push filter state into the browser URL so that filtered views are
      * bookmarkable and sharable (e.g. /services?category=Housing&q=food&area=Brooklyn).
+     * history.replaceState, not router.replace: the router would download the
+     * page's data again on every change; Next still updates useSearchParams.
      */
     const syncUrl = useCallback((query: string, need: string, community: string, area: string) => {
         const params = new URLSearchParams();
@@ -108,13 +95,15 @@ export default function MapPageClient({
         if (community) params.set('community', community);
         if (area) params.set('area', area);
         const qs = params.toString();
-        router.replace(qs ? `/services?${qs}` : '/services', { scroll: false });
-    }, [router]);
+        window.history.replaceState(null, '', qs ? `/services?${qs}` : '/services');
+    }, []);
 
-    // Handle search submit
+    // The list filters as you type and the URL is already up to date, so submitting
+    // (Enter, or the phone keyboard's Search key) only closes the keyboard on touch
+    // screens, so the results show. On a desktop, focus stays in the search box.
     const handleSearchSubmit = (e: React.FormEvent) => {
         e.preventDefault();
-        syncUrl(searchQuery, selectedNeed, selectedCommunity, selectedArea);
+        if (window.matchMedia('(pointer: coarse)').matches) searchInputRef.current?.blur();
     };
 
     // Handle need category change
@@ -168,74 +157,24 @@ export default function MapPageClient({
         syncUrl('', '', '', '');
     };
 
-    // Filter and rank services by relevance.
-    // Each search token earns points based on which field it matches:
-    //   Name match = 4pts, Tag match = 3pts, Address = 2pts, Description = 1pt.
-    // Results are sorted by total score (highest first).
+    // Dropdown filters first (pass/fail), then search (lib/search.ts): every word
+    // must match, best matches first.
     const filteredServices = useMemo(() => {
-        const STOP_WORDS = new Set(['in', 'the', 'a', 'an', 'and', 'or', 'for', 'of', 'to', 'at', 'on', 'near', 'by', 'with']);
-        const tokens = searchQuery
-            .toLowerCase()
-            .split(/\s+/)
-            .filter(t => t.length > 0 && !STOP_WORDS.has(t));
-
-        // Match at a word start, so "aid" doesn't hit "said". Still a prefix
-        // match, so "hous" finds "housing".
-        const patterns = tokens.map(t =>
-            new RegExp(`(?:^|[^a-z0-9])${t.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}`)
+        const filtered = services.filter(service =>
+            (!selectedNeed || service.needFocus.includes(selectedNeed)) &&
+            (!selectedCommunity || service.communityFocus.includes(selectedCommunity)) &&
+            (!selectedArea || service.service_areas.includes(selectedArea))
         );
+        const results = search(filtered, searchQuery, SERVICE_FIELDS);
 
-        const scored = services.map(service => {
-            // Apply dropdown filters first (pass/fail)
-            if (selectedNeed && !service.needFocus?.includes(selectedNeed)) return null;
-            if (selectedCommunity && !service.communityFocus?.includes(selectedCommunity)) return null;
-            if (selectedArea && !service.service_areas?.includes(selectedArea)) return null;
-
-            if (tokens.length === 0) return { service, score: 0 };
-
-            const nameLower = (service.name || '').toLowerCase();
-            const descLower = (service.description || '').toLowerCase();
-            const addrLower = (service.address || '').toLowerCase();
-            const tagsLower = [
-                ...(service.needFocus || []),
-                ...(service.communityFocus || []),
-            ].join(' ').toLowerCase();
-            const allText = `${nameLower} ${descLower} ${addrLower} ${tagsLower}`;
-
-            // Every token must appear somewhere (AND logic)
-            if (!patterns.every(p => p.test(allText))) return null;
-
-            // Score each token by best field match
-            let score = 0;
-            for (const pattern of patterns) {
-                if (pattern.test(nameLower)) score += 4;
-                else if (pattern.test(tagsLower)) score += 3;
-                else if (pattern.test(addrLower)) score += 2;
-                else if (pattern.test(descLower)) score += 1;
-            }
-            return { service, score };
-        });
-
-        const results = scored
-            .filter((s): s is { service: Service; score: number } => s !== null);
-
-        // Sort by distance if location is active, otherwise by relevance score
+        // With a location, nearest first; the sort is stable, so ties keep the search order.
         if (userLocation) {
-            results.sort((a, b) => {
-                const distA = (a.service.latitude && a.service.longitude)
-                    ? haversineDistance(userLocation.lat, userLocation.lng, a.service.latitude, a.service.longitude)
-                    : Infinity;
-                const distB = (b.service.latitude && b.service.longitude)
-                    ? haversineDistance(userLocation.lat, userLocation.lng, b.service.latitude, b.service.longitude)
-                    : Infinity;
-                if (distA !== distB) return distA - distB;
-                return b.score - a.score; // tie-break by relevance
-            });
-        } else {
-            results.sort((a, b) => b.score - a.score);
+            const distance = (s: MapService) => (s.latitude && s.longitude)
+                ? haversineDistance(userLocation.lat, userLocation.lng, s.latitude, s.longitude)
+                : Infinity;
+            results.sort((a, b) => distance(a) - distance(b));
         }
-
-        return results.map(s => s.service);
+        return results;
     }, [services, searchQuery, selectedNeed, selectedCommunity, selectedArea, userLocation]);
 
     // Get locations for map
@@ -249,7 +188,7 @@ export default function MapPageClient({
                 longitude: s.longitude!,
                 serviceName: s.name,
                 serviceId: s.id,
-                orgName: (s as any).organization_name,
+                orgName: s.organization_name,
             }));
             
         // Add jitter for overlapping coordinates (exact matches)
@@ -319,8 +258,9 @@ export default function MapPageClient({
                     <label htmlFor="search-resources" className="block text-sm font-medium text-[var(--foreground)] opacity-80 mb-2">
                         Search
                     </label>
-                    <form onSubmit={handleSearchSubmit}>
+                    <form role="search" onSubmit={handleSearchSubmit}>
                         <input
+                            ref={searchInputRef}
                             id="search-resources"
                             type="text"
                             value={searchQuery}
@@ -477,13 +417,14 @@ export default function MapPageClient({
  * Resource card component
  */
 function ResourceCard({ service, userLocation, onViewOnMap }: {
-    service: Service;
+    service: MapService;
     userLocation: { lat: number; lng: number } | null;
     onViewOnMap: (id: string) => void;
 }) {
     const distance = (userLocation && service.latitude && service.longitude)
         ? haversineDistance(userLocation.lat, userLocation.lng, service.latitude, service.longitude)
         : null;
+    const website = externalHref(service.url);
 
     return (
         <div
@@ -531,18 +472,18 @@ function ResourceCard({ service, userLocation, onViewOnMap }: {
                 </p>
             )}
 
-            {service.url && (
+            {website && (
                 <p className="text-sm text-[var(--foreground)] mb-2 flex items-center gap-2">
                     <svg className="w-4 h-4 flex-shrink-0" role="img" aria-label="website" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
                     </svg>
                     <a
-                        href={service.url.startsWith('http') ? service.url : `https://${service.url}`}
+                        href={website}
                         target="_blank"
                         rel="noopener noreferrer"
                         className="underline hover:no-underline text-[var(--primary)] truncate"
                     >
-                        {service.url.replace(/^https?:\/\//, '').split('/')[0]}
+                        {new URL(website).host}
                     </a>
                 </p>
             )}
