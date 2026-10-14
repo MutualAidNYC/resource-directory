@@ -12,19 +12,18 @@ from application_layer.services import service_summary
 from data_layer.dataset import Dataset
 from data_layer.ids import hsds_id
 from models.airtable import OrganizationResponse
-from models.hsds import Organization, OrganizationListItem, ServiceSummary
+from models.hsds import Organization, OrganizationSummary, ServiceSummary
 
-def list_organizations(published: Published) -> list[OrganizationListItem]:
-    """Published organizations with their service counts, sorted by name ignoring case."""
+def list_organizations(published: Published) -> list[OrganizationSummary]:
+    """Published organizations, sorted by name ignoring case."""
     organizations = sorted(published.organizations.values(), key=lambda o: o.name.lower())
     return [
-        OrganizationListItem(
+        OrganizationSummary(
             id=hsds_id("organizations", o.id),
             name=o.name,
             description=o.description,
             email=o.email,
             website=o.website,
-            service_count=published.service_counts[o.id],
         )
         for o in organizations
     ]

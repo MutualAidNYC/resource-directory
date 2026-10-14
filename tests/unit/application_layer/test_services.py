@@ -15,7 +15,6 @@ from tests.unit.application_layer.sample_pull import (
     ORPHAN,
     PHONE_FRIDGE,
     SAL_FRIDGE,
-    SAL_HOTLINE,
     SPANISH,
     record_ids_in,
 )
@@ -39,14 +38,11 @@ def test_list_item(published: Published):
     assert fridge.id == hsds_id("services", FRIDGE)
     assert fridge.organization_id == hsds_id("organizations", ORG)
     assert fridge.status == "active"
-    assert fridge.need_focus == ["Food", "-Not Listed"]
-    assert fridge.community_focus == ["Seniors"]
 
 
-def test_list_item_without_categories_or_organization(published: Published):
+def test_list_item_without_organization(published: Published):
     orphan = list_services(published)[2]
 
-    assert orphan.community_focus is None
     assert orphan.organization_id is None  # its organization isn't published
 
 
@@ -54,7 +50,7 @@ def test_detail(dataset: Dataset, published: Published, terms: Terms):
     fridge = detail(FRIDGE, dataset, published, terms)
 
     assert fridge.status == "active"
-    assert fridge.group_name == "org A"
+    assert fridge.organization_id == hsds_id("organizations", ORG)
     assert fridge.email == "fridge@example.org"
     assert fridge.assured_date == "2026-01-02"
     assert fridge.languages is not None
@@ -86,16 +82,14 @@ def test_detail_location(dataset: Dataset, published: Published, terms: Terms):
     assert (address.id, address.address_type) == (hsds_id("addresses", ADDRESS), "physical")
 
 
-def test_detail_without_location_stays_without(
+def test_service_at_location_without_a_location_is_skipped(
     dataset: Dataset, published: Published, terms: Terms
 ):
+    # The hotline's only service_at_location links no location: it isn't published,
+    # and the hotline never gets its organization's address instead.
     hotline = detail(HOTLINE, dataset, published, terms)
 
-    assert hotline.service_at_locations is not None
-    [sal] = hotline.service_at_locations
-    assert sal.id == hsds_id("service_at_location", SAL_HOTLINE)
-    assert sal.location is None  # never the organization's address
-    assert sal.location_id is None
+    assert hotline.service_at_locations == []
 
 
 def test_detail_without_published_organization(
@@ -104,7 +98,6 @@ def test_detail_without_published_organization(
     orphan = detail(ORPHAN, dataset, published, terms)
 
     assert orphan.organization_id is None
-    assert orphan.group_name is None
 
 
 def test_outputs_have_no_airtable_ids(dataset: Dataset, published: Published, terms: Terms):

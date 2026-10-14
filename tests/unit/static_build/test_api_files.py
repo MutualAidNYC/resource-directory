@@ -1,7 +1,13 @@
 import pytest
 
 from data_layer.ids import hsds_id
-from models.hsds import HSDS_VERSION
+from models.hsds import (
+    HSDS_VERSION,
+    Organization,
+    OrganizationSummary,
+    Service,
+    ServiceSummary,
+)
 from tests.unit.application_layer.sample_pull import (
     FRIDGE,
     HALL,
@@ -48,14 +54,29 @@ def test_service_without_organization_has_no_organization_id():
     assert listed[fridge]["organization_id"] == hsds_id("organizations", ORG)
 
 
-def test_site_only_fields_are_left_out():
+SITE_ONLY = {"group_name", "need_focus", "community_focus", "service_count"}
+
+
+def test_api_models_have_no_site_only_fields():
+    # The site's own fields live in site-data/map.json (application_layer/map.py).
+    for model in (Service, ServiceSummary, Organization, OrganizationSummary):
+        assert not SITE_ONLY & model.model_fields.keys(), model.__name__
+
+
+def test_api_files_have_no_site_only_fields():
     files = files_for(pull())
     fridge = files[f"api/services/{hsds_id('services', FRIDGE)}.json"].data
-    listed = files["api/services.json"].data
-    downloaded = files["api/download.json"].data["services"]
+    downloaded = files["api/download.json"].data
 
-    for service in [fridge, *listed, *downloaded]:
-        assert not {"group_name", "need_focus", "community_focus"} & service.keys()
+    records = [
+        fridge,
+        *files["api/services.json"].data,
+        *files["api/organizations.json"].data,
+        *downloaded["services"],
+        *downloaded["organizations"],
+    ]
+    for record in records:
+        assert not SITE_ONLY & record.keys()
     assert fridge["attributes"]  # the categories reach the API as attributes
 
 
@@ -73,12 +94,16 @@ def test_service_at_locations_name_their_location_by_id():
             "service_id": hsds_id("services", FRIDGE),
             "location_id": hsds_id("locations", HALL),
         },
-        # The hotline has no location on purpose.
-        {
-            "id": hsds_id("service_at_location", SAL_HOTLINE),
-            "service_id": hsds_id("services", HOTLINE),
-        },
     ]
+
+
+def test_service_at_location_without_a_location_is_never_published():
+    files = files_for(pull())
+    empty = hsds_id("service_at_location", SAL_HOTLINE)
+    hotline = files[f"api/services/{hsds_id('services', HOTLINE)}.json"].data
+
+    assert f"api/service_at_locations/{empty}.json" not in files
+    assert empty not in {sal["id"] for sal in hotline.get("service_at_locations", [])}
 
 
 def test_download_holds_every_published_record():
