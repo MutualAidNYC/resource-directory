@@ -1,7 +1,8 @@
 import { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { getService, getMapServices, searchOrganizationByName } from "@/lib/api";
+import { getMapService, getOrganization, getService, serviceIds } from "@/lib/data";
+import { externalHref, formatAddress } from "@/lib/format";
 import ServiceLocationMap from "./ServiceLocationMap";
 import { TagLink } from "@/components/ui/TagLink";
 
@@ -9,97 +10,69 @@ interface ServiceDetailPageProps {
     params: Promise<{ id: string }>;
 }
 
+/** One page per published resource; any other id is a 404. */
+export const dynamicParams = false;
+
+export function generateStaticParams() {
+    return serviceIds().map((id) => ({ id }));
+}
+
 /**
  * Generate dynamic metadata for service detail page.
  */
 export async function generateMetadata({ params }: ServiceDetailPageProps): Promise<Metadata> {
     const { id } = await params;
-    try {
-        const service = await getService(id);
-        return {
-            title: service.name,
-            description: service.description || `Details about ${service.name}`,
-        };
-    } catch {
-        return {
-            title: "Service Not Found",
-        };
-    }
+    const service = getService(id);
+    if (!service) return { title: "Service Not Found" };
+    return {
+        title: service.name,
+        description: service.description || `Details about ${service.name}`,
+    };
 }
 
 /**
  * Service detail page showing full service information.
  *
- * Coordinates are resolved from two sources:
- * 1. HSDS service_at_locations (if the service has linked locations with coords)
- * 2. Geocoded map data (/map/services) as a fallback
+ * The map pin is the first of the service's locations with coordinates (the same
+ * pin as on the main map). Categories come from the site's map data.
  */
 export default async function ServiceDetailPage({ params }: ServiceDetailPageProps) {
     const { id } = await params;
 
-    let service;
-    try {
-        service = await getService(id);
-    } catch (error) {
-        console.error("Failed to fetch service:", error);
-        notFound();
-    }
+    const service = getService(id);
+    if (!service) notFound();
 
-    // Resolve map coordinates from HSDS locations or geocoded map data.
+    const categories = getMapService(id);
+    const needFocus = categories?.needFocus ?? [];
+    const communityFocus = categories?.communityFocus ?? [];
+    const organization = service.organization_id
+        ? getOrganization(service.organization_id)
+        : undefined;
+    const website = externalHref(service.url);
+
+    // The Locations list: locations with a name or an address. (The build already
+    // leaves out service_at_locations that link no location.)
+    const places = (service.service_at_locations ?? []).flatMap((sal) => {
+        if (!sal.location) return [];
+        const addresses = (sal.location.addresses ?? [])
+            .map((address) => ({ id: address.id, text: formatAddress(address) }))
+            .filter((address) => address.text);
+        const name = sal.location.name;
+        return name || addresses.length > 0 ? [{ id: sal.id, name, addresses }] : [];
+    });
+
     let mapCoords: { latitude: number; longitude: number; name: string; address?: string } | null = null;
-
-    // Source 1: HSDS service_at_locations
-    if ((service.service_at_locations?.length ?? 0) > 0) {
-        const locWithCoords = service.service_at_locations!.find(
-            (sal: any) => sal.location?.latitude && sal.location?.longitude
-        );
-        if (locWithCoords?.location) {
-            const loc = locWithCoords.location as any;
-            const addr = loc.addresses?.[0];
-            mapCoords = {
-                latitude: loc.latitude,
-                longitude: loc.longitude,
-                name: loc.name || service.name,
-                address: addr
-                    ? [addr.address_1, addr.city, addr.state_province, addr.postal_code]
-                        .filter(Boolean)
-                        .join(", ")
-                    : undefined,
-            };
-        }
-    }
-
-    // Source 2: Geocoded map data (resolves Airtable location links)
-    if (!mapCoords) {
-        try {
-            const mapData = await getMapServices();
-            const mapService = mapData.services.find((s: any) => s.id === id);
-            if (mapService?.latitude && mapService?.longitude) {
-                mapCoords = {
-                    latitude: mapService.latitude,
-                    longitude: mapService.longitude,
-                    name: service.name,
-                    address: mapService.address || undefined,
-                };
-            }
-        } catch {
-            // Non-critical — page still renders without the map
-        }
-    }
-
-    // Resolve organization ID from group name for profile linking.
-    // Services often have organization_id=null but a groupName lookup field.
-    let resolvedOrgId: string | null = null;
-    const orgId = service.organization_id;
-    if (orgId && orgId !== 'unknown' && orgId !== 'None') {
-        resolvedOrgId = orgId;
-    } else if (service.group_name) {
-        try {
-            const org = await searchOrganizationByName(service.group_name);
-            if (org?.id) resolvedOrgId = org.id;
-        } catch {
-            // Non-critical
-        }
+    const pinned = service.service_at_locations?.find(
+        (sal) => sal.location?.latitude && sal.location?.longitude
+    )?.location;
+    if (pinned?.latitude && pinned.longitude) {
+        const addr = pinned.addresses?.[0];
+        mapCoords = {
+            latitude: pinned.latitude,
+            longitude: pinned.longitude,
+            name: pinned.name || service.name,
+            address: addr ? formatAddress(addr) || undefined : undefined,
+        };
     }
 
     return (
@@ -136,31 +109,27 @@ export default async function ServiceDetailPage({ params }: ServiceDetailPagePro
                             </h1>
                         </div>
 
-                        {/* Group/Organization Name - linked to org profile */}
-                        {(service.group_name || service.organization) && (
+                        {/* Group, linked to its page */}
+                        {organization && (
                             <p className="text-lg text-[var(--foreground)] mb-4">
                                 <span className="font-medium">Group:</span>{' '}
-                                {resolvedOrgId ? (
-                                    <Link
-                                        href={`/organizations/${resolvedOrgId}`}
-                                        className="text-[var(--primary)] hover:text-[var(--primary-hover)] underline hover:no-underline"
-                                    >
-                                        {service.group_name || service.organization?.name}
-                                    </Link>
-                                ) : (
-                                    <span>{service.group_name || service.organization?.name}</span>
-                                )}
+                                <Link
+                                    href={`/organizations/${organization.id}`}
+                                    className="text-[var(--primary)] hover:text-[var(--primary-hover)] underline hover:no-underline"
+                                >
+                                    {organization.name}
+                                </Link>
                             </p>
                         )}
 
                         {/* Need Categories */}
-                        {(service.need_focus?.length ?? 0) > 0 && (
+                        {needFocus.length > 0 && (
                             <div className="mb-4">
                                 <h3 className="text-sm font-semibold text-[var(--foreground)] opacity-70 mb-2 uppercase tracking-wide">
                                     Need Categories
                                 </h3>
                                 <div className="flex flex-wrap gap-2">
-                                    {service.need_focus!.map((need: string, index: number) => (
+                                    {needFocus.map((need, index) => (
                                         <TagLink
                                             key={`need-${index}`}
                                             href={`/services?category=${encodeURIComponent(need)}`}
@@ -174,13 +143,13 @@ export default async function ServiceDetailPage({ params }: ServiceDetailPagePro
                         )}
 
                         {/* Community Focus */}
-                        {(service.community_focus?.length ?? 0) > 0 && (
+                        {communityFocus.length > 0 && (
                             <div className="mb-4">
                                 <h3 className="text-sm font-semibold text-[var(--foreground)] opacity-70 mb-2 uppercase tracking-wide">
                                     Community Focus
                                 </h3>
                                 <div className="flex flex-wrap gap-2">
-                                    {service.community_focus!.map((community: string, index: number) => (
+                                    {communityFocus.map((community, index) => (
                                         <TagLink
                                             key={`community-${index}`}
                                             href={`/services?community=${encodeURIComponent(community)}`}
@@ -209,36 +178,28 @@ export default async function ServiceDetailPage({ params }: ServiceDetailPagePro
                     )}
 
                     {/* Locations */}
-                    {(service.service_at_locations?.length ?? 0) > 0 && (
+                    {places.length > 0 && (
                         <section>
                             <h2 className="text-xl font-semibold text-[var(--foreground)] mb-4">
                                 Locations
                             </h2>
                             <div className="space-y-4">
-                                {service.service_at_locations!.map((sal: any) => (
+                                {places.map(({ id, name, addresses }) => (
                                     <div
-                                        key={sal.id}
+                                        key={id}
                                         className="rounded-xl border border-[var(--card-border)] p-4"
                                     >
-                                        {sal.location && (
-                                            <>
-                                                {sal.location.name && (
-                                                    <h3 className="font-medium text-[var(--foreground)] mb-2">
-                                                        {sal.location.name}
-                                                    </h3>
-                                                )}
-                                                {sal.location.addresses?.length > 0 && (
-                                                    <div className="text-[var(--foreground)]">
-                                                        {sal.location.addresses.map((addr: any) => (
-                                                            <p key={addr.id}>
-                                                                {[addr.address_1, addr.address_2, addr.city, addr.state_province, addr.postal_code]
-                                                                    .filter(Boolean)
-                                                                    .join(", ")}
-                                                            </p>
-                                                        ))}
-                                                    </div>
-                                                )}
-                                            </>
+                                        {name && (
+                                            <h3 className="font-medium text-[var(--foreground)] mb-2">
+                                                {name}
+                                            </h3>
+                                        )}
+                                        {addresses.length > 0 && (
+                                            <div className="text-[var(--foreground)]">
+                                                {addresses.map((address) => (
+                                                    <p key={address.id}>{address.text}</p>
+                                                ))}
+                                            </div>
                                         )}
                                     </div>
                                 ))}
@@ -287,9 +248,9 @@ export default async function ServiceDetailPage({ params }: ServiceDetailPagePro
                             </h3>
 
                             <div className="space-y-4">
-                                {service.url && (
+                                {website && (
                                     <a
-                                        href={service.url}
+                                        href={website}
                                         target="_blank"
                                         rel="noopener noreferrer"
                                         className="flex items-center gap-3 text-[var(--primary)] hover:text-[var(--primary-hover)]"
@@ -315,7 +276,7 @@ export default async function ServiceDetailPage({ params }: ServiceDetailPagePro
                                     </a>
                                 )}
 
-                                {(service.phones?.length ?? 0) > 0 && service.phones!.map((phone: any) => (
+                                {service.phones?.map((phone) => (
                                     <div key={phone.id} className="flex items-center gap-3 text-[var(--foreground)]">
                                         <svg className="w-5 h-5 shrink-0" role="img" aria-label="phone" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
@@ -330,7 +291,7 @@ export default async function ServiceDetailPage({ params }: ServiceDetailPagePro
                                     </div>
                                 ))}
 
-                                {!service.url && !service.email && (!service.phones || service.phones.length === 0) && (
+                                {!website && !service.email && (service.phones?.length ?? 0) === 0 && (
                                     <p className="text-[var(--muted)] text-sm">
                                         No contact information available.
                                     </p>

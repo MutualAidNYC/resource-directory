@@ -1,7 +1,8 @@
 import { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { getOrganization, getOrganizationServices, getMapServices, Organization } from "@/lib/api";
+import { getMapData, getOrganization, organizationIds, servicesOf } from "@/lib/data";
+import { externalHref, formatAddress } from "@/lib/format";
 import { ServiceCard } from "@/components/services/ServiceCard";
 import OrgLocationsMap from "./OrgLocationsMap";
 
@@ -9,22 +10,34 @@ interface OrganizationDetailPageProps {
     params: Promise<{ id: string }>;
 }
 
+/** One page per published group; any other id is a 404. */
+export const dynamicParams = false;
+
+export function generateStaticParams() {
+    return organizationIds().map((id) => ({ id }));
+}
+
 /**
  * Generate dynamic metadata for group detail page.
  */
 export async function generateMetadata({ params }: OrganizationDetailPageProps): Promise<Metadata> {
     const { id } = await params;
-    try {
-        const organization = await getOrganization(id);
-        return {
-            title: organization.name,
-            description: organization.description || `Resources provided by ${organization.name}`,
-        };
-    } catch {
-        return {
-            title: "Group Not Found",
-        };
-    }
+    const organization = getOrganization(id);
+    if (!organization) return { title: "Group Not Found" };
+    return {
+        title: organization.name,
+        description: organization.description || `Resources provided by ${organization.name}`,
+    };
+}
+
+interface MapPin {
+    id: string;
+    name: string;
+    latitude: number;
+    longitude: number;
+    serviceName: string;
+    serviceId: string;
+    address?: string;
 }
 
 /**
@@ -34,74 +47,49 @@ export async function generateMetadata({ params }: OrganizationDetailPageProps):
 export default async function OrganizationDetailPage({ params }: OrganizationDetailPageProps) {
     const { id } = await params;
 
-    let organization: Organization;
-    let relatedServices: any[] = [];
+    const organization = getOrganization(id);
+    if (!organization) notFound();
 
-    try {
-        organization = await getOrganization(id);
-        const servicesResponse = await getOrganizationServices(id, 1, 100);
-        relatedServices = servicesResponse.contents || [];
-    } catch (error) {
-        console.error("Failed to fetch organization:", error);
-        notFound();
-    }
+    const relatedServices = servicesOf(id);
+    const website = externalHref(organization.website);
+    // The group's own addresses, listed as text in the contact card.
+    const addresses = (organization.locations ?? [])
+        .flatMap((loc) => loc.addresses ?? [])
+        .filter((address) => formatAddress(address));
 
-    // Collect all resource locations by matching related service IDs
-    // against the geocoded map data (which has lat/lng for each service).
-    interface MapPin {
-        id: string;
-        name: string;
-        latitude: number;
-        longitude: number;
-        serviceName: string;
-        serviceId: string;
-        address?: string;
-    }
-
-    let mapLocations: MapPin[] = [];
+    // Pins: the group's resources that have one on the main map.
+    const serviceIds = new Set(relatedServices.map((s) => s.id));
+    let mapLocations: MapPin[] = getMapData()
+        .services.filter((s) => serviceIds.has(s.id) && s.latitude && s.longitude)
+        .map((s) => ({
+            id: s.id,
+            name: s.address || s.name,
+            latitude: s.latitude!,
+            longitude: s.longitude!,
+            serviceName: s.name,
+            serviceId: s.id,
+            address: s.address,
+        }));
     let mapLocationLabel = "Resource Locations";
-    try {
-        const mapData = await getMapServices();
-        const serviceIds = new Set(relatedServices.map((s: any) => s.id));
-        mapLocations = mapData.services
-            .filter((s: any) => serviceIds.has(s.id) && s.latitude && s.longitude)
-            .map((s: any) => ({
-                id: s.id,
-                name: s.address || s.name,
-                latitude: s.latitude,
-                longitude: s.longitude,
-                serviceName: s.name,
-                serviceId: s.id,
-                address: s.address,
-            }));
-    } catch {
-        // Non-critical — page renders without map
-    }
 
-    // Fallback: if no service-level pins resolved, use the org's own locations.
-    // This covers orgs where the physical address is linked at the org level
-    // and not propagated down to each individual service record.
+    // Fallback: if none of its resources has a pin, pin the group's own locations.
+    // Only their address records: never the location's name as an address.
     if (mapLocations.length === 0 && organization.locations?.length) {
         mapLocations = organization.locations
-            .filter((loc: any) => loc.latitude && loc.longitude)
-            .map((loc: any) => ({
-                id: loc.id,
-                name: loc.addresses?.[0]
-                    ? [
-                          loc.addresses[0].address_1,
-                          loc.addresses[0].city,
-                          loc.addresses[0].state_province,
-                      ]
-                          .filter(Boolean)
-                          .join(", ")
-                    : loc.name,
-                latitude: loc.latitude,
-                longitude: loc.longitude,
-                serviceName: organization.name,
-                serviceId: "",
-                address: loc.addresses?.[0]?.address_1 || loc.name,
-            }));
-        // Pins came from the org's address, not a specific service site
+            .filter((loc) => loc.latitude && loc.longitude)
+            .map((loc) => {
+                const address = loc.addresses?.[0] ? formatAddress(loc.addresses[0]) : undefined;
+                return {
+                    id: loc.id,
+                    name: address || organization.name,
+                    latitude: loc.latitude!,
+                    longitude: loc.longitude!,
+                    serviceName: organization.name,
+                    serviceId: "",
+                    address,
+                };
+            });
+        // Pins came from the group's address, not a specific resource
         mapLocationLabel = "Group Locations";
     }
 
@@ -209,9 +197,9 @@ export default async function OrganizationDetailPage({ params }: OrganizationDet
                             </h3>
 
                             <div className="space-y-4">
-                                {organization.url && (
+                                {website && (
                                     <a
-                                        href={organization.url}
+                                        href={website}
                                         target="_blank"
                                         rel="noopener noreferrer"
                                         className="flex items-center gap-3 text-[var(--primary)] hover:text-[var(--primary-hover)]"
@@ -237,7 +225,19 @@ export default async function OrganizationDetailPage({ params }: OrganizationDet
                                     </a>
                                 )}
 
-                                {!organization.url && !organization.email && (
+                                {addresses.map((address) => (
+                                    <div key={address.id} className="flex items-start gap-3 text-[var(--foreground)]">
+                                        <svg className="w-5 h-5 shrink-0 mt-0.5" role="img" aria-label="address" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
+                                                d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
+                                                d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                                        </svg>
+                                        <address className="not-italic">{formatAddress(address)}</address>
+                                    </div>
+                                ))}
+
+                                {!website && !organization.email && addresses.length === 0 && (
                                     <p className="text-[var(--muted)] text-sm">
                                         No contact information available.
                                     </p>

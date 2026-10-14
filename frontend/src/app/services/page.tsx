@@ -1,6 +1,6 @@
 import { Suspense } from "react";
 import { Metadata } from "next";
-import { getMapServices } from "@/lib/api";
+import { getMapData } from "@/lib/data";
 import MapPageClient from "./MapPageClient";
 
 export const metadata: Metadata = {
@@ -12,33 +12,8 @@ export const metadata: Metadata = {
  * Services page — interactive map with filters, search, and proximity sorting.
  * Suspense boundary required because MapPageClient uses useSearchParams().
  */
-export default async function ServicesPage() {
-    let services: any[] = [];
-    let needCategories: any[] = [];
-    let communityCategories: any[] = [];
-    let serviceAreas: string[] = [];
-    let error = null;
-
-    try {
-        const data = await getMapServices();
-        services = data.services;
-        needCategories = data.needCategories;
-        communityCategories = data.communityCategories;
-        serviceAreas = data.serviceAreas ?? [];
-    } catch (e) {
-        error = e instanceof Error ? e.message : "Failed to load services";
-        console.error("Failed to fetch services:", e);
-    }
-
-    if (error) {
-        return (
-            <div className="container mx-auto px-4 py-8">
-                <div className="rounded-xl bg-[#fce8e5] border border-[var(--accent-border)] p-4">
-                    <p className="text-[var(--primary)]">{error}</p>
-                </div>
-            </div>
-        );
-    }
+export default function ServicesPage() {
+    const { services, needCategories, communityCategories, serviceAreas } = getMapData();
 
     return (
         <Suspense fallback={
