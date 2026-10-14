@@ -1,39 +1,26 @@
 # Mutual Aid NYC Resource Directory
 
-Powers the Mutual Aid NYC Community Resources Library. A FastAPI application that syncs data from an [Airtable](https://airtable.com) base and serves it through an [HSDS 3.0](https://docs.openreferral.org/) compliant REST API. Includes a Next.js search frontend with interactive maps.
+Powers the Mutual Aid NYC Community Resources Library. A build pulls data from an [Airtable](https://airtable.com) base and writes it as static [HSDS](https://docs.openreferral.org/) files: the API, and the data the site is built from. The site is a static Next.js export with search and interactive maps.
 
 Built for [Open Referral](https://openreferral.org/) and compatible with the [UK Open Referral (ORUK)](https://openreferraluk.org/) validator.
 
-Terms: code and the API use HSDS names, **service** and **organization**; the site calls them **resource** and **group**.
+Terms: code and the API use HSDS names, **service** and **organization**; the site calls them **resource** and **group**
+to better match a mutual aid ethos.
+
 
 ## Architecture
 
 ```
-┌──────────────┐   sync every 15 min   ┌──────────────┐
-│   Airtable   │ ────────────────────▶ │  SQLite DB   │
-│   (source)   │                       │   (cache)    │
-└──────────────┘                       └──────┬───────┘
-                                              │
-                                       ┌──────┴───────┐
-                                       │   FastAPI    │
-                                       │ HSDS 3.0 API │
-                                       │    :8080     │
-                                       └──────────────┘
-```
-
-The site is a static export (Next.js), built from the files the static build writes (see [Static build](#static-build-in-progress-replaces-the-api)):
-
-```
 ┌──────────────┐  build_dataset.py  ┌─────────────────────────────┐  npm run build  ┌──────────────┐
-│   Airtable   │ ─────────────────▶ │ dist/api/download.json      │ ──────────────▶ │   Next.js    │
+│   Airtable   │ ─────────────────▶ │ dist/api/  (HSDS)           │ ──────────────▶ │   Next.js    │
 │   (source)   │                    │ dist/site-data/map.json     │                 │ frontend/out │
 └──────────────┘                    └─────────────────────────────┘                 └──────────────┘
 ```
 
-**How the API works:**
-1. On startup, the API pulls all records from your Airtable base into a local SQLite database
-2. A background task re-syncs every 15 minutes (configurable)
-3. The API serves HSDS-formatted data from the fast local cache
+1. `python build_dataset.py` pulls the published records from Airtable once and writes the API as static HSDS files in `dist/api/` (one per record, plus lists and a full download), and the site's own data in `dist/site-data/map.json` (see [Static build](#static-build)).
+2. `npm run build` in `frontend/` builds the site from `dist/api/download.json` and `dist/site-data/map.json` into plain files in `frontend/out/`. Nothing runs on a server, and the site doesn't call the API.
+
+The old FastAPI server (`main.py`, Quick Start step 4) still runs, but the site doesn't use it. It is being removed as of October 2026.
 
 ## Prerequisites
 
@@ -50,7 +37,7 @@ The site is a static export (Next.js), built from the files the static build wri
 
 ```bash
 git clone https://github.com/MutualAidNYC/resource-directory.git
-cd frontend
+cd resource-directory
 ```
 
 ### 2. Set up the API (Python backend)
@@ -123,7 +110,7 @@ To check the static site as it will be deployed: `npm run build` (writes `fronte
 
 ---
 
-## Static build (in progress, replaces the API)
+## Static build
 
 ```bash
 python build_dataset.py   # one pull from Airtable (uses .env), writes dist/api/ and dist/site-data/
@@ -302,13 +289,13 @@ The site reads `dist/api/download.json` and `dist/site-data/map.json`. Run `pyth
 The map resolves coordinates by using `service_at_location` links → `locations` table (latitude/longitude fields in Airtable). There is no fallback: a service with no `service_at_location` link has no pin.
 
 - **Missing latitude/longitude on location records**: Coordinates are written by a button in Airtable that runs a script for a service or organization record in Airtable to geocode the address and stores the results on the linked `location`. Check the Airtable service or organization record and the locations table.
-- **No `service_at_location` links**: Check that services are linked to locations via the `service_at_location` junction table — this is the HSDS 3.0 standard.
+- **No `service_at_location` links**: Check that services are linked to locations via the `service_at_location` junction table, as HSDS specifies.
 
 ---
 
 ## Standards Compliance
 
-- [HSDS 3.0 Specification](https://docs.openreferral.org/en/latest/hsds/api_reference.html)
+- [HSDS Specification](https://docs.openreferral.org/en/latest/hsds/api_reference.html): the version is `HSDS_VERSION` in `models/hsds.py`; its schemas and how to upgrade are in [`schemas/hsds/`](schemas/hsds/README.md)
 - [Open Referral](https://openreferral.org/)
 - [ORUK Validator](https://openreferraluk.org/developers/validator) compatible
 
