@@ -18,30 +18,22 @@ Terms: code and the API use HSDS names, **service** and **organization**; the si
                                        │   FastAPI    │
                                        │ HSDS 3.0 API │
                                        │    :8080     │
-                                       └──────┬───────┘
-                                              │
-                                       ┌──────┴───────┐
-                                       │   Next.js    │
-                                       │  frontend/   │
-                                       │    :3000     │
                                        └──────────────┘
 ```
 
-The dev site on Vercel skips the backend entirely — there is nothing hosted to
-talk to yet:
+The site is a static export (Next.js), built from the files the static build writes (see [Static build](#static-build-in-progress-replaces-the-api)):
 
 ```
-┌──────────────────┐        ┌──────────────┐
-│  snapshot.json   │ ─────▶ │   Next.js    │
-│   (committed)    │        │  on Vercel   │
-└──────────────────┘        └──────────────┘
+┌──────────────┐  build_dataset.py  ┌─────────────────────────────┐  npm run build  ┌──────────────┐
+│   Airtable   │ ─────────────────▶ │ dist/api/download.json      │ ──────────────▶ │   Next.js    │
+│   (source)   │                    │ dist/site-data/map.json     │                 │ frontend/out │
+└──────────────┘                    └─────────────────────────────┘                 └──────────────┘
 ```
 
-**How it works:**
+**How the API works:**
 1. On startup, the API pulls all records from your Airtable base into a local SQLite database
 2. A background task re-syncs every 15 minutes (configurable)
 3. The API serves HSDS-formatted data from the fast local cache
-4. The frontend queries the API and renders services, organizations, and a map
 
 ## Prerequisites
 
@@ -115,30 +107,29 @@ INFO - Initial sync complete
 
 ### 5. Set up the frontend (Next.js)
 
+The site is built from the static build's files:
+
 ```bash
+python build_dataset.py   # repo root: writes dist/api/ and dist/site-data/
+
 cd frontend
-
-# Install dependencies
 npm install
-
-# Configure the API URL
-cp .env.example .env.local
-
-# Start the dev server
-npm run dev
+npm run dev               # http://localhost:3000
 ```
 
-**Verify:** Visit http://localhost:3000 to see the directory frontend.
+No `.env.local` is needed.
+
+To check the static site as it will be deployed: `npm run build` (writes `frontend/out/`), then `npx serve out`.
 
 ---
 
 ## Static build (in progress, replaces the API)
 
 ```bash
-python build_dataset.py   # one pull from Airtable (uses .env), writes dist/api/
+python build_dataset.py   # one pull from Airtable (uses .env), writes dist/api/ and dist/site-data/
 ```
 
-Writes the HSDS files to `dist/api/` and prints a build report listing what to fix in Airtable. It fails only if the pull fails or finds no published services. The HSDS version and its schemas: [`schemas/hsds/`](schemas/hsds/README.md).
+Writes the HSDS files to `dist/api/`, the site's own data to `dist/site-data/map.json` (map pins, category names; read when the site builds, not deployed), and prints a build report listing what to fix in Airtable. It fails only if the pull fails or finds no published services. The HSDS version and its schemas: [`schemas/hsds/`](schemas/hsds/README.md).
 
 ---
 
@@ -239,8 +230,7 @@ Key fields per table:
 | File | Read by | Committed |
 |------|---------|-----------|
 | `.env` (repo root) | The API at startup. Also Docker Compose, for `${VAR}` substitution in `docker-compose.yml`. | No, holds your Airtable token |
-| `frontend/.env.local` | `npm run dev` and a local `npm run build`. Excluded from the Docker image. | No |
-| `docker-compose.yml` | Sets the frontend container's variables directly. | Yes |
+| `frontend/.env.local` | `npm run dev` and a local `npm run build`. Optional. | No |
 
 ### API
 
@@ -267,35 +257,25 @@ For a different base: copy the file, list your table ids (or leave `id` out to u
 
 | Variable | Default | Description |
 |----------|---------|-------------|
-| `NEXT_PUBLIC_API_URL` | `http://localhost:8080` | API URL for browser-side requests. Baked in at build time. |
-| `INTERNAL_API_URL` | *(unset)* | API URL for server-side rendering, read at runtime. `http://api:8080` under Docker Compose. Takes precedence over `NEXT_PUBLIC_API_URL` on the server. |
-| `NEXT_PUBLIC_USE_SNAPSHOT` | *(unset)* | `1` serves data from the committed snapshot instead of an API. |
+| `SITE_DATA_DIR` | `../dist` | The static build's output folder, relative to `frontend/`. |
 | `NEXT_PUBLIC_BASEMAP_STYLE_URL` | OpenFreeMap bright | Map basemap style URL. |
 
-**`NEXT_PUBLIC_` variables are public.** Secrets go in the root `.env`, which only the API reads.
+**`NEXT_PUBLIC_` variables are public.** Secrets go in the root `.env`, which only the API and `build_dataset.py` read.
 
 ---
 
 ## Production Deployment
 
-### Option A: Docker Compose
+### Docker Compose
 
-`docker-compose.yml`, `Dockerfile`, and `frontend/Dockerfile` are in the repo.
+`docker-compose.yml` and `Dockerfile` run the API only; the site is a static export (see [Set up the frontend](#5-set-up-the-frontend-nextjs)).
 
 ```bash
 cp .env.example .env        # add your Airtable credentials
 docker compose up -d --build
 ```
 
-API on `:8080`, frontend on `:3000`. The frontend reaches the API over the Compose network at `http://api:8080`, set as `INTERNAL_API_URL` at runtime. It waits on the API's healthcheck before starting. Fetched data is cached for 60 seconds.
-
----
-
-### Option B: Dev site with no backend (current)
-
-The backend is not hosted yet. Until we refactor and implement a deploy solution, the dev site on Vercel serves its data from a snapshot committed to the repo, with no API deployed and no secrets in Vercel.
-
-Root Directory `frontend`, no environment variables. Full instructions, including how to regenerate the snapshot, are in [`frontend/README.md`](frontend/README.md#vercel--dev-site-no-backend-current-setup).
+API on `:8080`.
 
 ---
 
@@ -305,7 +285,7 @@ Root Directory `frontend`, no environment variables. Full instructions, includin
 
 - **Missing `.env`**: Copy `.env.example` to `.env` and fill in your Airtable credentials
 - **Invalid Airtable PAT**: Ensure your token has `data.records:read` scope on the correct base
-- **Port conflict**: Pass a different `--port` to uvicorn and point `NEXT_PUBLIC_API_URL` in `frontend/.env.local` at it. `PORT` in `.env` only applies to `python main.py`.
+- **Port conflict**: Pass a different `--port` to uvicorn. `PORT` in `.env` only applies to `python main.py`.
 
 ### No data after startup
 
@@ -313,11 +293,9 @@ Root Directory `frontend`, no environment variables. Full instructions, includin
 - Verify your `AIRTABLE_BASE_ID` matches your actual base
 - Ensure the Table IDs in `airtable/client.py` match your base (see [Connecting to your own base](#connecting-to-your-own-airtable-base))
 
-### Frontend can't reach API
+### Site build fails with "Site data not found"
 
-- Ensure the API is running on the URL specified in `NEXT_PUBLIC_API_URL`
-- Check CORS — the API allows all origins by default (`allow_origins=["*"]`)
-- In production, both services must be accessible to the browser
+The site reads `dist/api/download.json` and `dist/site-data/map.json`. Run `python build_dataset.py` from the repo root first.
 
 ### Map pins are missing
 
