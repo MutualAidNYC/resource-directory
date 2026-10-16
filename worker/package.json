@@ -3,7 +3,8 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "wrangler dev",
+    "assemble": "node scripts/assemble.mjs",
+    "dev": "npm run assemble && wrangler dev",
     "test": "vitest run",
     "typecheck": "tsc --noEmit"
   },

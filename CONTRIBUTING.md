@@ -1,39 +1,41 @@
-# Contributing to Mutual Aid NYC Resource Directory
+# Contributing
 
-Thanks for your interest in contributing! This project bridges Airtable data to the [Human Services Data Specification (HSDS)](https://docs.openreferral.org/) API format and presents it via a Next.js directory.
+This project turns Mutual Aid NYC's Airtable data into a static website and a read-only [HSDS](https://docs.openreferral.org/) API. See the [README](README.md) for how it works.
 
-## Getting Started
-
-Fork the repository, clone your fork, then follow the
-[Quick Start](README.md#quick-start-local-development) in the README.
-
-## How to Contribute
-
-### Bug Reports
+## Report a bug
 
 Open an issue with:
-- Steps to reproduce
-- Expected vs. actual behavior
-- Python version and OS
 
-### Feature Requests
+- the steps to reproduce it
+- what you expected and what happened
+- your OS, and your Python or Node version
 
-Open an issue describing the feature and its use case.
+Please report security problems privately to the maintainers, not in a public issue.
 
-### Pull Requests
+## Suggest a feature
 
-1. Create a feature branch from `main`
-2. Follow [PEP 8](https://peps.python.org/pep-0008/) for Python code
-3. Include docstrings for new functions
-4. Test your changes locally: `pytest tests/unit` and `ruff check .`
-5. Submit a PR with a clear description
+Open an issue that describes the feature and who it helps.
 
-## Code Style
+## Contribute code
 
-- **Python**: PEP 8, type hints where practical
-- **TypeScript** (resource-directory frontend): ESLint defaults
-- **Commits**: Use conventional commit messages (e.g., `feat:`, `fix:`, `docs:`)
+1. Fork the repository, clone your fork, then follow the [Quick Start](README.md#quick-start) in the README.
+2. In your fork, create a branch from `main`. Update your fork's `main` from MutualAidNYC/resource-directory first.
+3. Make your change, and update the README if it changes how something is set up or used.
+4. Run the checks for the parts you changed:
+   - Python: `pytest tests/unit` and `ruff check .`
+   - `worker/`: `npm test` and `npm run typecheck`
+   - `frontend/`: `npm run build`
+5. Push the branch to your fork, and open a pull request against `main` in MutualAidNYC/resource-directory that says what changed and why.
 
-## Questions?
+## Guidelines
 
-Open an issue or start a discussion. We're happy to help!
+- **Accessibility.** Frontend changes must meet [WCAG 2.2 AA](https://www.w3.org/TR/WCAG22/).
+- **Privacy.** Never commit `.env` files or tokens.
+- **Terms.** Code, the API and backend docs use HSDS's terms, **service** and **organization**. Site text uses **resource** and **group**.
+- **Python.** Follow [PEP 8](https://peps.python.org/pep-0008/), with type hints where practical, and give new functions a docstring.
+- **TypeScript.** In `frontend/`, follow the ESLint configuration.
+- **Commits.** Use [conventional commit](https://www.conventionalcommits.org/) prefixes, such as `feat:`, `fix:` and `docs:`.
+
+## Questions
+
+Open an issue.
