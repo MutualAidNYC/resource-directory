@@ -82,7 +82,7 @@ def build_report(
 
 
 def _record_files_per_folder(files: list[ApiFile]) -> dict[str, int]:
-    """e.g. {"services": 336, …}. Record files are api/<folder>/<id>.json; the lists
+    """e.g. {"services": 336, …}. Record files are api/<folder>/<id>; the lists
     and the download sit directly in api/, so they aren't counted."""
     folders = [f.path.split("/")[1] for f in files if f.path.count("/") == 2]
     return dict(Counter(folders))

@@ -1,6 +1,6 @@
 """The files the build writes under api/, which the API serves.
 
-- One file per record: `api/<table>/<id>.json` for services, organizations,
+- One file per record: `api/<table>/<id>` for services, organizations,
   service_at_locations, taxonomies and taxonomy_terms (fully nested, as HSDS
   returns them from `/<table>/{id}`).
 - One list per table: `api/<table>.json`, every record, unpaginated. The API
@@ -28,7 +28,7 @@ from models.hsds import HSDS_VERSION
 
 @dataclass(frozen=True)
 class ApiFile:
-    path: str  # relative to the output directory, e.g. "api/services/<id>.json"
+    path: str  # relative to the output directory, e.g. "api/services/<id>"
     data: Any  # ready for json.dump
     # Record files only: the HSDS schema it follows, as a path under schemas/hsds/<version>/
     # (see static_build/fetch_schemas.py). None for lists and the download: not checked.
@@ -72,7 +72,7 @@ def api_files(
 
 
 def _one_per_record(folder: str, records: list[Any], schema: str) -> list[ApiFile]:
-    return [ApiFile(f"api/{folder}/{r.id}.json", _dump(r), schema) for r in records]
+    return [ApiFile(f"api/{folder}/{r.id}", _dump(r), schema) for r in records]
 
 
 def _dump(model: BaseModel, exclude: set[str] | None = None) -> dict[str, Any]:

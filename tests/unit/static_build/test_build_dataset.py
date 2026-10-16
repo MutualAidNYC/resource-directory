@@ -30,7 +30,7 @@ def test_builds_from_one_pull(
 
     assert build_dataset.main(["--out", str(out)]) == 0
 
-    fridge = out / "api" / "services" / f"{hsds_id('services', FRIDGE)}.json"
+    fridge = out / "api" / "services" / hsds_id("services", FRIDGE)
     assert json.loads(fridge.read_text(encoding="utf-8"))["name"] == "Fridge"
     assert (out / "api" / "download.json").exists()
     assert not stale.exists()  # nothing outlives its record

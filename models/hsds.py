@@ -358,6 +358,7 @@ class ServiceSummary(ORUKBaseModel):
     description: Optional[str] = None
     url: Optional[str] = None
     email: Optional[str] = None
+    assured_date: Optional[str] = None
     last_modified: Optional[str] = None
     organization: Optional[OrganizationSummary] = None
     program: Optional[Program] = None

@@ -19,11 +19,11 @@ from static_build.schema import SCHEMA_DIR, SOURCE
 # Files in compiled/ already include everything they nest. The taxonomy files
 # don't, so metadata.json is included for them.
 SCHEMAS = [
-    "compiled/service.json",  # api/services/<id>.json
-    "compiled/organization.json",  # api/organizations/<id>.json
-    "compiled/service_at_location.json",  # api/service_at_locations/<id>.json
-    "taxonomy.json",  # api/taxonomies/<id>.json
-    "taxonomy_term.json",  # api/taxonomy_terms/<id>.json
+    "compiled/service.json",  # api/services/<id>
+    "compiled/organization.json",  # api/organizations/<id>
+    "compiled/service_at_location.json",  # api/service_at_locations/<id>
+    "taxonomy.json",  # api/taxonomies/<id>
+    "taxonomy_term.json",  # api/taxonomy_terms/<id>
     "metadata.json",  # needed by the two taxonomy files, not checked on its own
 ]
 
