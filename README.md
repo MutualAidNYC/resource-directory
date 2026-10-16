@@ -17,7 +17,7 @@ to better match a mutual aid ethos.
 └──────────────┘                    └─────────────────────────────┘                 └──────────────┘
 ```
 
-1. `python build_dataset.py` pulls the published records from Airtable once and writes the API as static HSDS files in `dist/api/` (one per record, plus lists and a full download), and the site's own data in `dist/site-data/map.json` (see [Static build](#static-build)).
+1. `python build_dataset.py` pulls the published records from Airtable once and writes the API as static HSDS files in `dist/api/` (one per record, plus a full download and the OpenAPI description), and the site's own data in `dist/site-data/map.json` (see [Static build](#static-build)).
 2. `npm run build` in `frontend/` builds the site from `dist/api/download.json` and `dist/site-data/map.json` into plain files in `frontend/out/`. Nothing runs on a server, and the site doesn't call the API.
 
 The old FastAPI server (`main.py`, Quick Start step 4) still runs, but the site doesn't use it. It is being removed as of October 2026.
@@ -113,10 +113,10 @@ To check the static site as it will be deployed: `npm run build` (writes `fronte
 ## Static build
 
 ```bash
-python build_dataset.py   # one pull from Airtable (uses .env), writes dist/api/ and dist/site-data/
+python build_dataset.py   # one pull from Airtable (uses .env), writes dist/api/, dist/site-data/ and dist/worker-data/
 ```
 
-Writes the HSDS files to `dist/api/`, the site's own data to `dist/site-data/map.json` (map pins, category names; read when the site builds, not deployed), and prints a build report listing what to fix in Airtable. It fails only if the pull fails or finds no published services. The HSDS version and its schemas: [`schemas/hsds/`](schemas/hsds/README.md).
+Writes the HSDS files to `dist/api/`, the site's own data to `dist/site-data/map.json` (map pins, category names; read when the site builds, not deployed), what the API's list routes (`worker/`) serve from memory to `dist/worker-data/data.json` (the lists, filters and search fields; built into their code, not deployed as a file), and prints a build report listing what to fix in Airtable. It fails only if the pull fails or finds no published services. The HSDS version and its schemas: [`schemas/hsds/`](schemas/hsds/README.md).
 
 ---
 

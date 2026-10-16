@@ -37,6 +37,12 @@ def test_builds_from_one_pull(
     site = json.loads((out / "site-data" / "map.json").read_text(encoding="utf-8"))
     assert site["services"][0]["needFocus"] == ["Food"]  # the site's data: matched names
     assert not (out / "api" / "map.json").exists()  # site-only, never in the API
+    worker = json.loads((out / "worker-data" / "data.json").read_text(encoding="utf-8"))
+    assert [s["name"] for s in worker["services"]] == ["Fridge", "Hotline", "Orphan"]
+    assert sorted(p.name for p in (out / "api").iterdir() if p.is_file()) == [
+        "download.json",
+        "openapi.json",
+    ]
     printed = capsys.readouterr().out
     assert "Build report" in printed
     assert f"{ORPHAN} (Orphan)" in printed  # the service with no published organization

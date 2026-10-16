@@ -1,10 +1,12 @@
 """The static build run on the application_layer sample pull."""
 from typing import Any
 
+from application_layer.map import map_data
 from application_layer.publish import Published, select
 from application_layer.taxonomies import Terms
 from data_layer.dataset import Dataset
 from static_build.files import ApiFile, api_files
+from static_build.worker_data import worker_data
 from tests.unit.application_layer.sample_pull import COMMUNITY, FOOD, SENIORS, edit, pull
 
 BUILT_AT = "2026-10-10T00:00:00+00:00"
@@ -23,6 +25,12 @@ def files_for(raw: Pull) -> dict[str, ApiFile]:
     """The build's files by path."""
     _dataset, _published, _terms, files = build(raw)
     return {f.path: f for f in files}
+
+
+def worker_data_for(raw: Pull) -> dict[str, Any]:
+    """What the build writes to worker-data/data.json."""
+    dataset, published, terms, _files = build(raw)
+    return worker_data(dataset, published, terms, map_data(dataset, published, terms))
 
 
 def complete_pull() -> Pull:
