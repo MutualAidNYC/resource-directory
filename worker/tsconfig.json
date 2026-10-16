@@ -1,8 +1,8 @@
 {
   "compilerOptions": {
     "target": "ES2022",
-    "lib": ["ES2022", "WebWorker", "WebWorker.Iterable"],
-    "types": [],
+    "lib": ["ES2022"],
+    "types": ["@cloudflare/workers-types"],
     "module": "ESNext",
     "moduleResolution": "Bundler",
     "resolveJsonModule": true,
