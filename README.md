@@ -315,4 +315,4 @@ Developed by [Sarapis](https://sarapis.org/) and maintained here by Mutual Aid N
 
 ## License
 
-[MIT](LICENSE), except the vendored HSDS schemas in `schemas/hsds/`: © Open Referral, [CC BY-SA 4.0](https://creativecommons.org/licenses/by-sa/4.0/).
+[MIT](LICENSE), except the vendored HSDS schemas in `schemas/hsds/` and `static_build/openapi.json` (adapted from HSDS's OpenAPI description): © Open Referral, [CC BY-SA 4.0](https://creativecommons.org/licenses/by-sa/4.0/).

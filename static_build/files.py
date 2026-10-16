@@ -6,6 +6,8 @@
 - One list per table: `api/<table>.json`, every record, unpaginated. The API
   pages and filters it.
 - The full download: `api/download.json`, every published record in one file.
+- The OpenAPI description: `api/openapi.json`, a copy of static_build/openapi.json
+  (adapted from HSDS's; edit it by hand when the API's routes or parameters change).
 
 Everything comes from `Published` (see application_layer/publish.py). Fields
 with no value are left out, never written as null: HSDS types them as strings,
@@ -14,7 +16,9 @@ on a service with no published organization.
 """
 from __future__ import annotations
 
+import json
 from dataclasses import dataclass
+from pathlib import Path
 from typing import Any
 
 from pydantic import BaseModel
@@ -25,6 +29,8 @@ from application_layer.services import list_services, service_detail
 from application_layer.taxonomies import Terms, list_taxonomies, list_taxonomy_terms
 from data_layer.dataset import Dataset
 from models.hsds import HSDS_VERSION
+
+OPENAPI = Path(__file__).with_name("openapi.json")
 
 @dataclass(frozen=True)
 class ApiFile:
@@ -68,6 +74,7 @@ def api_files(
         ApiFile("api/taxonomy_terms.json", _dump_all(taxonomy_terms)),
         *_one_per_record("taxonomy_terms", taxonomy_terms, "taxonomy_term.json"),
         ApiFile("api/download.json", download),
+        ApiFile("api/openapi.json", json.loads(OPENAPI.read_text(encoding="utf-8"))),
     ]
 
 

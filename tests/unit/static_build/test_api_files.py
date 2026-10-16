@@ -1,3 +1,6 @@
+import json
+import re
+
 import pytest
 
 from data_layer.ids import hsds_id
@@ -28,7 +31,8 @@ def test_one_file_per_published_record_and_one_list_per_table():
     files = files_for(pull())
 
     lists = ["services", "organizations", "service_at_locations", "taxonomies", "taxonomy_terms"]
-    assert {f"api/{name}.json" for name in lists} | {"api/download.json"} <= files.keys()
+    others = {"api/download.json", "api/openapi.json"}
+    assert {f"api/{name}.json" for name in lists} | others <= files.keys()
     assert sorted(p for p in files if p.startswith("api/services/")) == sorted(
         f"api/services/{hsds_id('services', s)}" for s in (FRIDGE, HOTLINE, ORPHAN)
     )
@@ -126,3 +130,10 @@ def test_download_holds_every_published_record():
     assert download["services"][0] == files[f"api/services/{fridge}"].data
     assert [o["id"] for o in download["organizations"]] == [hsds_id("organizations", ORG)]
     assert len(download["taxonomy_terms"]) == 2
+
+
+def test_openapi_links_name_the_hsds_version():
+    spec = files_for(pull())["api/openapi.json"].data
+    links = re.findall(r"specification/([^/]+)/schema/", json.dumps(spec))
+
+    assert links and set(links) == {f"v{HSDS_VERSION}"}
