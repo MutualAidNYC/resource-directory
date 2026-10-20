@@ -8,7 +8,7 @@
  * - GET and HEAD only (405 otherwise); OPTIONS answers CORS preflights.
  */
 import type { Lists } from './lists';
-import { parseQuery, type ListRoute } from './query';
+import { isListRoute, parseQuery } from './query';
 import type { ApiInfo } from './types';
 
 export interface Api {
@@ -18,13 +18,6 @@ export interface Api {
     assets: (request: Request) => Promise<Response>;
 }
 
-const LISTS = new Set<string>([
-    'services',
-    'organizations',
-    'service_at_locations',
-    'taxonomies',
-    'taxonomy_terms',
-]);
 const METHODS = 'GET, HEAD';
 // Until launch: keep the dev site out of search engines (also in _headers).
 const NOINDEX = { 'X-Robots-Tag': 'noindex' };
@@ -57,11 +50,10 @@ export async function handle(request: Request, api: Api): Promise<Response> {
     if (name === '') {
         return json({ ...api.info, openapi_url: `${url.origin}/api/openapi.json` }, 200, head);
     }
-    if (LISTS.has(name)) {
-        const route = name as ListRoute;
-        const parsed = parseQuery(route, url.searchParams);
+    if (isListRoute(name)) {
+        const parsed = parseQuery(name, url.searchParams);
         if (!parsed.ok) return json({ error: parsed.error }, 400, head);
-        return json(api.lists[route](parsed.query), 200, head);
+        return json(api.lists[name](parsed.query), 200, head);
     }
     return json({ error: 'Not found. The API: /api/openapi.json.' }, 404, head);
 }

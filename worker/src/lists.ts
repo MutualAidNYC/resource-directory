@@ -13,15 +13,8 @@ import {
     search,
     type SearchField,
 } from '../../frontend/src/lib/search';
-import type { Query } from './query';
-import type {
-    OrganizationItem,
-    ServiceAtLocationItem,
-    ServiceItem,
-    TaxonomyItem,
-    TaxonomyTermItem,
-    WorkerData,
-} from './types';
+import type { ListRoute, Query } from './query';
+import type { ListItems, ServiceItem, WorkerData } from './types';
 
 /** HSDS's `Page`, with `contents`. */
 export interface Page<T> {
@@ -35,13 +28,7 @@ export interface Page<T> {
     contents: T[];
 }
 
-export interface Lists {
-    services(query: Query): Page<ServiceItem>;
-    organizations(query: Query): Page<OrganizationItem>;
-    service_at_locations(query: Query): Page<ServiceAtLocationItem>;
-    taxonomies(query: Query): Page<TaxonomyItem>;
-    taxonomy_terms(query: Query): Page<TaxonomyTermItem>;
-}
+export type Lists = { [R in ListRoute]: (query: Query) => Page<ListItems[R]> };
 
 const NAME_FIELDS: readonly SearchField<{ name: string; description?: string }>[] = [
     { get: (r) => r.name, weight: 4 },

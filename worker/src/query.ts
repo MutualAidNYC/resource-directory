@@ -11,12 +11,20 @@ export const PER_PAGE_DEFAULT = 50;
 export const PER_PAGE_MAX = 1000;
 export const SEARCH_MAX_LENGTH = 200;
 
-export type ListRoute =
-    | 'services'
-    | 'organizations'
-    | 'service_at_locations'
-    | 'taxonomies'
-    | 'taxonomy_terms';
+/** The lists, each at /api/<name>. Also in wrangler.jsonc's run_worker_first (test/routes.test.ts checks). */
+export const LIST_ROUTES = [
+    'services',
+    'organizations',
+    'service_at_locations',
+    'taxonomies',
+    'taxonomy_terms',
+] as const;
+
+export type ListRoute = (typeof LIST_ROUTES)[number];
+
+export function isListRoute(name: string): name is ListRoute {
+    return (LIST_ROUTES as readonly string[]).includes(name);
+}
 
 const PAGING = ['search', 'page', 'per_page'];
 const TERMS = ['taxonomy_term_id', 'taxonomy_id'];

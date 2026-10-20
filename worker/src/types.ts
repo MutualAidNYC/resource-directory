@@ -1,5 +1,5 @@
 /** The shape of worker-data/data.json (static_build/worker_data.py). */
-import type { MapService } from '../../frontend/src/lib/types';
+import type { ServiceSearchRecord } from '../../frontend/src/lib/search';
 
 export interface ServiceItem {
     id: string;
@@ -46,15 +46,19 @@ export interface ApiInfo {
     publisher?: { name: string; website?: string };
 }
 
-export interface WorkerData {
+/** Each list's item type, by route (src/query.ts LIST_ROUTES). */
+export interface ListItems {
+    services: ServiceItem;
+    organizations: OrganizationItem;
+    service_at_locations: ServiceAtLocationItem;
+    taxonomies: TaxonomyItem;
+    taxonomy_terms: TaxonomyTermItem;
+}
+
+export type WorkerData = { [R in keyof ListItems]: ListItems[R][] } & {
     info: ApiInfo;
-    services: ServiceItem[];
-    organizations: OrganizationItem[];
-    service_at_locations: ServiceAtLocationItem[];
-    taxonomies: TaxonomyItem[];
-    taxonomy_terms: TaxonomyTermItem[];
     /** Service id → its taxonomy term ids. */
     service_terms: Record<string, string[]>;
     /** Each service's search fields, from the site's map data. */
-    service_search: MapService[];
-}
+    service_search: ServiceSearchRecord[];
+};

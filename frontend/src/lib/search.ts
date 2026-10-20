@@ -20,8 +20,26 @@ export interface SearchField<T> {
     weight: number;
 }
 
+/**
+ * The map data's fields that resources are searched on. The build sends the API's
+ * search only these (SEARCH_FIELDS in static_build/worker_data.py; a test checks),
+ * so SERVICE_FIELDS can't read a field without it being listed here.
+ */
+export const SERVICE_SEARCH_KEYS = [
+    'id',
+    'name',
+    'description',
+    'address',
+    'needFocus',
+    'communityFocus',
+    'organization_name',
+    'service_areas',
+] as const;
+
+export type ServiceSearchRecord = Pick<MapService, (typeof SERVICE_SEARCH_KEYS)[number]>;
+
 /** Resources (the map data): name, then categories and group, then places, then description. */
-export const SERVICE_FIELDS: readonly SearchField<MapService>[] = [
+export const SERVICE_FIELDS: readonly SearchField<ServiceSearchRecord>[] = [
     { get: (s) => s.name, weight: 4 },
     { get: (s) => [...s.needFocus, ...s.communityFocus], weight: 3 },
     { get: (s) => s.organization_name, weight: 3 },

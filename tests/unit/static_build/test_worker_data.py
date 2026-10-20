@@ -1,7 +1,11 @@
+import re
+
 import pytest
 
+from data_layer.airtable_config import REPO_ROOT
 from data_layer.ids import hsds_id
 from models.hsds import HSDS_VERSION
+from static_build.worker_data import SEARCH_FIELDS
 from tests.unit.application_layer.sample_pull import (
     FRIDGE,
     HALL,
@@ -73,6 +77,15 @@ def test_service_search_has_the_sites_search_fields():
 
     assert fridge["needFocus"] == ["Food"]  # matched names: no "-Not Listed"
     assert "latitude" not in fridge and "phone" not in fridge
+
+
+def test_search_fields_match_the_sites():
+    # The keys SERVICE_FIELDS may read (frontend/src/lib/search.ts).
+    source = (REPO_ROOT / "frontend" / "src" / "lib" / "search.ts").read_text(encoding="utf-8")
+    keys = re.search(r"SERVICE_SEARCH_KEYS = \[(.*?)\] as const", source, re.DOTALL)
+
+    assert keys, "SERVICE_SEARCH_KEYS not found in search.ts"
+    assert set(re.findall(r"'(\w+)'", keys.group(1))) == SEARCH_FIELDS
 
 
 def test_info():
