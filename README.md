@@ -49,8 +49,10 @@ python3.12 -m venv venv
 source venv/bin/activate  # Windows: venv\Scripts\activate
 
 # Install dependencies
-pip install -r requirements.txt
+pip install -r requirements.txt -r requirements-dev.txt
 ```
+
+Versions are pinned. To add or upgrade a package, edit `requirements.in` or `requirements-dev.in`, then run `pip-compile requirements.in && pip-compile requirements-dev.in` and commit the `.in` and `.txt` files.
 
 ### 3. Add your Airtable settings
 
