@@ -39,6 +39,10 @@ omit = [
     "data_layer/dependency.py",
 ]
 
+[tool.coverage.report]
+# A little under the current total (96%), so small changes don't fail it.
+fail_under = 94
+
 [tool.ruff]
 # Target the Python version you are using
 target-version = "py312"
