@@ -3,6 +3,7 @@
     "name": "resource-directory",
     "main": "src/index.ts",
     "compatibility_date": "2026-10-01",
+    "preview_urls": false,
     // The list data the build writes (static_build/worker_data.py), built into the code.
     "alias": { "worker-data": "../dist/worker-data/data.json" },
     "assets": {
