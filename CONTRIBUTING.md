@@ -24,7 +24,7 @@ Open an issue that describes the feature and who it helps.
 4. Run the checks for the parts you changed:
    - Python: `pytest tests/unit` and `ruff check .`
    - `worker/`: `npm test` and `npm run typecheck`
-   - `frontend/`: `npm run build`
+   - `frontend/`: `npm run lint` and `npm run build`
 5. Push the branch to your fork, and open a pull request against `main` in MutualAidNYC/resource-directory that says what changed and why.
 
 ## Guidelines

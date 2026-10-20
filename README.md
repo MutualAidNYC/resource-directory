@@ -1,6 +1,6 @@
 # Mutual Aid NYC Resource Directory
 
-Powers the the Mutual Aid NYC Community Resources Library. A build pulls the directory's data from an [Airtable](https://airtable.com) base and turns it into a static website and a read-only [HSDS](https://docs.openreferral.org/) API.
+Powers the Mutual Aid NYC Community Resources Library. A build pulls the directory's data from an [Airtable](https://airtable.com) base and turns it into a static website and a read-only [HSDS](https://docs.openreferral.org/) API.
 
 It follows core HSDS ([Open Referral](https://openreferral.org/)), and the build checks every record against HSDS's JSON Schemas.
 
@@ -28,7 +28,7 @@ Cloudflare serves `dist/public/` as static files. Code in `worker/` answers the 
 ## Prerequisites
 
 - Python 3.12+
-- Node.js 22+
+- Node.js 22+ (`.nvmrc`)
 - An Airtable base with the tables described in [Airtable base](#airtable-base)
 - An Airtable personal access token with only the `data.records:read` scope. Don't use a token with write access.
 
@@ -84,7 +84,9 @@ npm install
 npm run dev               # http://localhost:8787: the site, and the API at /api
 ```
 
-`npm run dev` writes `dist/public/` and serves it the way Cloudflare does. It needs no Cloudflare account. To run the tests: `npm test` and `npm run typecheck` in `worker/`.
+`npm run dev` writes `dist/public/` and serves it the way Cloudflare does. It needs no Cloudflare account.
+
+To check your changes: `npm run lint` in `frontend/`, and `npm test` and `npm run typecheck` in `worker/`.
 
 ### 6. Optional: work on the site with live reload
 
@@ -191,7 +193,15 @@ The build requests only the tables and fields listed here, so nothing else leave
 
 ## Deployment
 
-The site and the API deploy together to Cloudflare as a Worker (`worker/wrangler.jsonc`) that serves `dist/public/`. `docker-compose.yml` and `Dockerfile` run only the old server and will be removed with it.
+The site and the API deploy together to Cloudflare as a Worker (`worker/wrangler.jsonc`) that serves `dist/public/`. See [`worker/`](worker/README.md). `docker-compose.yml` and `Dockerfile` run only the old server and will be removed with it.
+
+## Before launch
+
+Until the site launches, it asks search engines not to index it. To launch, remove that from all three places:
+
+- `frontend/src/app/layout.tsx`: `robots: { index: false }`
+- `worker/_headers`: the `X-Robots-Tag: noindex` rule
+- `worker/src/handler.ts`: `NOINDEX`, and the `x-robots-tag` check in `worker/test/handler.test.ts`
 
 ## Troubleshooting
 
