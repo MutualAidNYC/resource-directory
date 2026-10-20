@@ -86,7 +86,7 @@ npm run dev               # http://localhost:8787: the site, and the API at /api
 
 `npm run dev` writes `dist/public/` and serves it the way Cloudflare does. It needs no Cloudflare account.
 
-To check changes: `pytest tests/unit` and `ruff check .` at the repo root (with the venv active), `npm run lint` in `frontend/`, and `npm test` and `npm run typecheck` in `worker/`.
+To check changes: `pytest tests/unit`, `ruff check .` and `pyright` at the repo root (with the venv active), `npm run lint` in `frontend/`, and `npm test` and `npm run typecheck` in `worker/`. Pull requests run the same checks in GitHub Actions (`.github/workflows/checks.yml`).
 
 ### 6. Optional: work on the site with live reload
 

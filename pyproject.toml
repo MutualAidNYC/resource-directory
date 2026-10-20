@@ -10,6 +10,35 @@ markers = [
   "smoke: calls the old FastAPI routes",
 ]
 
+[tool.pyright]
+pythonVersion = "3.12"
+typeCheckingMode = "standard"
+# The static build's code and unit tests. Skips the old FastAPI code, which is being removed.
+include = [
+    "models/airtable.py",
+    "tests/unit",
+    "data_layer",
+    "application_layer",
+    "static_build",
+    "build_dataset.py",
+]
+exclude = [
+    "**/__pycache__",
+    "application_layer/application_layer.py",
+    "data_layer/airtable.py",
+    "data_layer/dependency.py",
+    "tests/unit/application_layer/test_application_layer.py",
+    "tests/unit/scripts",
+]
+
+[tool.coverage.run]
+source = ["data_layer", "application_layer", "static_build", "build_dataset"]
+omit = [
+    "application_layer/application_layer.py",
+    "data_layer/airtable.py",
+    "data_layer/dependency.py",
+]
+
 [tool.ruff]
 # Target the Python version you are using
 target-version = "py312"

@@ -22,10 +22,10 @@ Open an issue that describes the feature and who it helps.
 2. In your fork, create a branch from `main`. Update your fork's `main` from MutualAidNYC/resource-directory first.
 3. Make your change, and update the README if it changes how something is set up or used.
 4. Run the checks for the parts you changed:
-   - Python: `pytest tests/unit` and `ruff check .`
+   - Python: `pytest tests/unit`, `ruff check .` and `pyright`
    - `worker/`: `npm test` and `npm run typecheck`
    - `frontend/`: `npm run lint` and `npm run build`
-5. Push the branch to your fork, and open a pull request against `main` in MutualAidNYC/resource-directory that says what changed and why.
+5. Push the branch to your fork, and open a pull request against `main` in MutualAidNYC/resource-directory that says what changed and why. GitHub Actions runs the checks above, except `npm run build`.
 
 ## Guidelines
 
