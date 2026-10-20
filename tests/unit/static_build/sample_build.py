@@ -6,6 +6,7 @@ from application_layer.publish import Published, select
 from application_layer.taxonomies import Terms
 from data_layer.dataset import Dataset
 from static_build.files import ApiFile, api_files
+from static_build.records import Records
 from static_build.worker_data import worker_data
 from tests.unit.application_layer.sample_pull import COMMUNITY, FOOD, SENIORS, edit, pull
 
@@ -15,10 +16,8 @@ Pull = dict[str, list[dict[str, Any]]]
 
 
 def build(raw: Pull) -> tuple[Dataset, Published, Terms, list[ApiFile]]:
-    dataset = Dataset.from_pull(raw)
-    published = select(dataset)
-    terms = Terms.from_dataset(dataset)
-    return dataset, published, terms, api_files(dataset, published, terms, BUILT_AT)
+    dataset, published, terms, records = _records(raw)
+    return dataset, published, terms, api_files(records, BUILT_AT)
 
 
 def files_for(raw: Pull) -> dict[str, ApiFile]:
@@ -29,8 +28,15 @@ def files_for(raw: Pull) -> dict[str, ApiFile]:
 
 def worker_data_for(raw: Pull) -> dict[str, Any]:
     """What the build writes to worker-data/data.json."""
-    dataset, published, terms, _files = build(raw)
-    return worker_data(dataset, published, terms, map_data(dataset, published, terms))
+    dataset, published, terms, records = _records(raw)
+    return worker_data(records, published, terms, map_data(dataset, published, terms))
+
+
+def _records(raw: Pull) -> tuple[Dataset, Published, Terms, Records]:
+    dataset = Dataset.from_pull(raw)
+    published = select(dataset)
+    terms = Terms.from_dataset(dataset)
+    return dataset, published, terms, Records.build(dataset, published, terms)
 
 
 def complete_pull() -> Pull:

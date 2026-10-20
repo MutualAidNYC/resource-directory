@@ -16,17 +16,12 @@ from typing import Any
 from application_layer.map import MapData
 from application_layer.organizations import list_organizations
 from application_layer.publish import Published
-from application_layer.services import list_services, service_detail
-from application_layer.taxonomies import (
-    Terms,
-    list_taxonomies,
-    list_taxonomy_terms,
-    service_attributes,
-)
-from data_layer.dataset import Dataset
+from application_layer.services import list_services
+from application_layer.taxonomies import Terms, service_attributes
 from data_layer.ids import hsds_id
 from models.hsds import HSDS_VERSION
 from static_build.files import dump, dump_all
+from static_build.records import Records
 
 INFO = {
     "version": HSDS_VERSION,
@@ -46,18 +41,18 @@ SEARCH_FIELDS = {
 
 
 def worker_data(
-    dataset: Dataset, published: Published, terms: Terms, map_data: MapData
+    records: Records, published: Published, terms: Terms, map_data: MapData
 ) -> dict[str, Any]:
-    details = [service_detail(s, dataset, published, terms) for s in published.services]
-    places = [sal for s in details for sal in s.service_at_locations or []]
     return {
         "info": INFO,
         "services": dump_all(list_services(published)),
         "organizations": dump_all(list_organizations(published)),
         # List items name their location by location_id instead of nesting it.
-        "service_at_locations": [dump(sal, exclude={"location"}) for sal in places],
-        "taxonomies": dump_all(list_taxonomies(published, terms)),
-        "taxonomy_terms": dump_all(list_taxonomy_terms(published, terms)),
+        "service_at_locations": [
+            dump(sal, exclude={"location"}) for sal in records.service_at_locations
+        ],
+        "taxonomies": dump_all(records.taxonomies),
+        "taxonomy_terms": dump_all(records.taxonomy_terms),
         "service_terms": {
             hsds_id("services", s.id): [a.taxonomy_term_id for a in service_attributes(s, terms)]
             for s in published.services

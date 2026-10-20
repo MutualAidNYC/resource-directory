@@ -42,6 +42,7 @@ from data_layer.airtable_config import REPO_ROOT, load_config
 from data_layer.dataset import Dataset
 from data_layer.loader import AirtableLoadError, load_tables
 from static_build.files import ApiFile, api_files
+from static_build.records import Records
 from static_build.report import build_report, render
 from static_build.schema import SchemaProblem, SchemasNotInstalled, schema_problems
 from static_build.worker_data import worker_data
@@ -75,11 +76,12 @@ def main(argv: list[str] | None = None) -> int:
         )
         return 1
     terms = Terms.from_dataset(dataset)
-    files = api_files(dataset, published, terms, built_at=datetime.now(UTC).isoformat())
+    records = Records.build(dataset, published, terms)
+    files = api_files(records, built_at=datetime.now(UTC).isoformat())
     write(files, args.out)
     site = map_data(dataset, published, terms)
     write_site_data(site, args.out)
-    write_worker_data(worker_data(dataset, published, terms, site), args.out)
+    write_worker_data(worker_data(records, published, terms, site), args.out)
 
     problems: list[SchemaProblem] = []
     note = None

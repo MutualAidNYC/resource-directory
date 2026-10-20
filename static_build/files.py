@@ -24,12 +24,8 @@ from typing import Any
 
 from pydantic import BaseModel
 
-from application_layer.organizations import organization_detail
-from application_layer.publish import Published
-from application_layer.services import service_detail
-from application_layer.taxonomies import Terms, list_taxonomies, list_taxonomy_terms
-from data_layer.dataset import Dataset
 from models.hsds import HSDS_VERSION
+from static_build.records import Records
 
 OPENAPI = Path(__file__).with_name("openapi.json")
 
@@ -42,30 +38,25 @@ class ApiFile:
     schema: str | None = None
 
 
-def api_files(
-    dataset: Dataset, published: Published, terms: Terms, built_at: str
-) -> list[ApiFile]:
+def api_files(records: Records, built_at: str) -> list[ApiFile]:
     """Every file under api/. `built_at` (ISO 8601) goes in the full download."""
-    services = [service_detail(s, dataset, published, terms) for s in published.services]
-    organizations = [organization_detail(o, dataset) for o in published.organizations.values()]
-    places = [sal for s in services for sal in s.service_at_locations or []]
-    taxonomies = list_taxonomies(published, terms)
-    taxonomy_terms = list_taxonomy_terms(published, terms)
-
+    r = records
     download = {
         "hsds_version": HSDS_VERSION,
         "built_at": built_at,
-        "services": dump_all(services),
-        "organizations": dump_all(organizations),
-        "taxonomies": dump_all(taxonomies),
-        "taxonomy_terms": dump_all(taxonomy_terms),
+        "services": dump_all(r.services),
+        "organizations": dump_all(r.organizations),
+        "taxonomies": dump_all(r.taxonomies),
+        "taxonomy_terms": dump_all(r.taxonomy_terms),
     }
     return [
-        *_one_per_record("services", services, "compiled/service.json"),
-        *_one_per_record("organizations", organizations, "compiled/organization.json"),
-        *_one_per_record("service_at_locations", places, "compiled/service_at_location.json"),
-        *_one_per_record("taxonomies", taxonomies, "taxonomy.json"),
-        *_one_per_record("taxonomy_terms", taxonomy_terms, "taxonomy_term.json"),
+        *_one_per_record("services", r.services, "compiled/service.json"),
+        *_one_per_record("organizations", r.organizations, "compiled/organization.json"),
+        *_one_per_record(
+            "service_at_locations", r.service_at_locations, "compiled/service_at_location.json"
+        ),
+        *_one_per_record("taxonomies", r.taxonomies, "taxonomy.json"),
+        *_one_per_record("taxonomy_terms", r.taxonomy_terms, "taxonomy_term.json"),
         ApiFile("api/download.json", download),
         ApiFile("api/openapi.json", json.loads(OPENAPI.read_text(encoding="utf-8"))),
     ]
