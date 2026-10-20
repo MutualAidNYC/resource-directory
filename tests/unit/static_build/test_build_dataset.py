@@ -56,9 +56,9 @@ def test_no_published_services_fails_the_build_and_keeps_the_last_output(
     raw["services"] = []
     airtable_returns(monkeypatch, raw)
     out = tmp_path / "dist"
-    last_build = out / "api" / "services.json"
+    last_build = out / "api" / "download.json"
     last_build.parent.mkdir(parents=True)
-    last_build.write_text("[]")
+    last_build.write_text("{}")
 
     assert build_dataset.main(["--out", str(out)]) == 1
     assert "no published services" in capsys.readouterr().err
