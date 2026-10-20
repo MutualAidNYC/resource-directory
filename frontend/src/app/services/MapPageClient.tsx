@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo, useCallback, useEffect, useRef } from 'react';
+import { useState, useMemo, useCallback, useRef } from 'react';
 import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { TagLink } from '@/components/ui/TagLink';
@@ -69,8 +69,11 @@ export default function MapPageClient({
     const [isFiltersOpen, setIsFiltersOpen] = useState(false);
     const [viewMode, setViewMode] = useState<'map' | 'list'>('list');
 
-    // Sync state when URL params change (e.g. header SearchBar navigation)
-    useEffect(() => {
+    // Sync state when URL params change (e.g. header SearchBar navigation). Done
+    // while rendering, not in an effect, so the page never renders with stale filters
+    const [prevSearchParams, setPrevSearchParams] = useState(searchParams);
+    if (searchParams !== prevSearchParams) {
+        setPrevSearchParams(searchParams);
         setSearchQuery(searchParams.get('q') || '');
         setSelectedNeed(searchParams.get('category') || '');
         setSelectedCommunity(searchParams.get('community') || '');
@@ -80,7 +83,7 @@ export default function MapPageClient({
         if (lat && lng) {
             setUserLocation({ lat: parseFloat(lat), lng: parseFloat(lng) });
         }
-    }, [searchParams]);
+    }
 
     /**
      * Push filter state into the browser URL so that filtered views are
