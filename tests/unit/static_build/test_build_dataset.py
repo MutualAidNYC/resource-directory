@@ -30,13 +30,19 @@ def test_builds_from_one_pull(
 
     assert build_dataset.main(["--out", str(out)]) == 0
 
-    fridge = out / "api" / "services" / f"{hsds_id('services', FRIDGE)}.json"
+    fridge = out / "api" / "services" / hsds_id("services", FRIDGE)
     assert json.loads(fridge.read_text(encoding="utf-8"))["name"] == "Fridge"
     assert (out / "api" / "download.json").exists()
     assert not stale.exists()  # nothing outlives its record
     site = json.loads((out / "site-data" / "map.json").read_text(encoding="utf-8"))
     assert site["services"][0]["needFocus"] == ["Food"]  # the site's data: matched names
     assert not (out / "api" / "map.json").exists()  # site-only, never in the API
+    worker = json.loads((out / "worker-data" / "data.json").read_text(encoding="utf-8"))
+    assert [s["name"] for s in worker["services"]] == ["Fridge", "Hotline", "Orphan"]
+    assert sorted(p.name for p in (out / "api").iterdir() if p.is_file()) == [
+        "download.json",
+        "openapi.json",
+    ]
     printed = capsys.readouterr().out
     assert "Build report" in printed
     assert f"{ORPHAN} (Orphan)" in printed  # the service with no published organization
@@ -50,9 +56,9 @@ def test_no_published_services_fails_the_build_and_keeps_the_last_output(
     raw["services"] = []
     airtable_returns(monkeypatch, raw)
     out = tmp_path / "dist"
-    last_build = out / "api" / "services.json"
+    last_build = out / "api" / "download.json"
     last_build.parent.mkdir(parents=True)
-    last_build.write_text("[]")
+    last_build.write_text("{}")
 
     assert build_dataset.main(["--out", str(out)]) == 1
     assert "no published services" in capsys.readouterr().err

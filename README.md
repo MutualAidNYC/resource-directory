@@ -1,35 +1,36 @@
 # Mutual Aid NYC Resource Directory
 
-Powers the Mutual Aid NYC Community Resources Library. A build pulls data from an [Airtable](https://airtable.com) base and writes it as static [HSDS](https://docs.openreferral.org/) files: the API, and the data the site is built from. The site is a static Next.js export with search and interactive maps.
+Powers the Mutual Aid NYC Community Resources Library. A build pulls the directory's data from an [Airtable](https://airtable.com) base and turns it into a static website and a read-only [HSDS](https://docs.openreferral.org/) API.
 
-Built for [Open Referral](https://openreferral.org/) and compatible with the [UK Open Referral (ORUK)](https://openreferraluk.org/) validator.
+It follows core HSDS ([Open Referral](https://openreferral.org/)), and the build checks every record against HSDS's JSON Schemas.
 
-Terms: code and the API use HSDS names, **service** and **organization**; the site calls them **resource** and **group**
-to better match a mutual aid ethos.
+Code and the API use HSDS's terms, **service** and **organization**. The site calls them **resource** and **group**, to better match a mutual aid ethos.
 
-
-## Architecture
+## How it works
 
 ```
-┌──────────────┐  build_dataset.py  ┌─────────────────────────────┐  npm run build  ┌──────────────┐
-│   Airtable   │ ─────────────────▶ │ dist/api/  (HSDS)           │ ──────────────▶ │   Next.js    │
-│   (source)   │                    │ dist/site-data/map.json     │                 │ frontend/out │
-└──────────────┘                    └─────────────────────────────┘                 └──────────────┘
+Airtable
+   │  1. python build_dataset.py     (repo root)
+   ▼
+dist/            the API's files, and the data the site and the API's code need
+   │  2. npm run build               (frontend/)
+   ▼
+frontend/out/    the website
+   │  3. npm run assemble            (worker/)
+   ▼
+dist/public/     the website and the API's files, ready to serve
 ```
 
-1. `python build_dataset.py` pulls the published records from Airtable once and writes the API as static HSDS files in `dist/api/` (one per record, plus lists and a full download), and the site's own data in `dist/site-data/map.json` (see [Static build](#static-build)).
-2. `npm run build` in `frontend/` builds the site from `dist/api/download.json` and `dist/site-data/map.json` into plain files in `frontend/out/`. Nothing runs on a server, and the site doesn't call the API.
+Cloudflare serves `dist/public/` as static files. Code in `worker/` answers the API's lists (`/api/services` and others), which need paging and search. To run everything locally, see [Quick Start](#quick-start).
 
-The old FastAPI server (`main.py`, Quick Start step 4) still runs, but the site doesn't use it. It is being removed as of October 2026.
+`main.py` and the folders it uses (`routes/`, `airtable/` and others) are an old server that nothing uses. They will be removed in November 2026.
 
 ## Prerequisites
 
-- **Python 3.12+**
-- **Node.js 20+** (for the frontend)
-- An **Airtable** account with a base structured for HSDS data
-- An **Airtable Personal Access Token** strictly limited to the `data.records:read` scope. **Do not use a full-access API Key.**
-
----
+- Python 3.12+
+- Node.js 22+ (`.nvmrc`)
+- An Airtable base with the tables described in [Airtable base](#airtable-base)
+- An Airtable personal access token with only the `data.records:read` scope. Don't use a token with write access.
 
 ## Quick Start (Local Development)
 
@@ -40,7 +41,7 @@ git clone https://github.com/MutualAidNYC/resource-directory.git
 cd resource-directory
 ```
 
-### 2. Set up the API (Python backend)
+### 2. Set up Python
 
 ```bash
 # Create and activate virtual environment (Python 3.12+)
@@ -51,268 +52,191 @@ source venv/bin/activate  # Windows: venv\Scripts\activate
 pip install -r requirements.txt
 ```
 
-### 3. Configure environment
+### 3. Add your Airtable settings
 
 ```bash
 cp .env.example .env
 ```
 
-Edit `.env` with your Airtable credentials:
+Set these in `.env` (create a token at https://airtable.com/create/tokens):
 
 ```env
-# Required — get these from https://airtable.com/create/tokens
 AIRTABLE_API_KEY=pat...your_personal_access_token
 AIRTABLE_BASE_ID=app...your_base_id
-
-# Optional
-SYNC_INTERVAL_MINUTES=15    # How often to re-sync (default: 15)
-HOST=0.0.0.0                # Server host (default: 0.0.0.0)
-PORT=8080                   # Server port (default: 8080)
 ```
 
-> **Finding your Base ID:** Open your Airtable base in a browser. The URL will be `https://airtable.com/appXXXXXXXXX/...` — the `appXXXXXXXXX` part is your Base ID.
+The base id is the `app…` part of the base's URL: `https://airtable.com/appXXXXXXXXX/…`.
 
-### 4. Start the API
+### 4. Build the data
 
 ```bash
-uvicorn main:app --host 127.0.0.1 --port 8080 --reload
+python build_dataset.py   # repo root: pulls Airtable, writes dist/
 ```
 
-On first launch, the API will sync all tables from Airtable (this takes 30-60 seconds depending on your data size). You'll see logs like:
-
-```
-INFO - Starting HSDS API...
-INFO - Database initialized
-INFO - Running initial Airtable sync...
-INFO - Syncing table: organizations
-INFO - Synced 42 records from organizations
-...
-INFO - Initial sync complete
-```
-
-**Verify:** Visit http://localhost:8080/docs to see the interactive API documentation.
-
-### 5. Set up the frontend (Next.js)
-
-The site is built from the static build's files:
+### 5. Run the site and the API
 
 ```bash
-python build_dataset.py   # repo root: writes dist/api/ and dist/site-data/
-
 cd frontend
 npm install
-npm run dev               # http://localhost:3000
+npm run build             # writes frontend/out/
+cd ../worker
+npm install
+npm run dev               # http://localhost:8787: the site, and the API at /api
 ```
 
-No `.env.local` is needed.
+`npm run dev` writes `dist/public/` and serves it the way Cloudflare does. It needs no Cloudflare account.
 
-To check the static site as it will be deployed: `npm run build` (writes `frontend/out/`), then `npx serve out`.
+To check changes: `pytest tests/unit` and `ruff check .` at the repo root (with the venv active), `npm run lint` in `frontend/`, and `npm test` and `npm run typecheck` in `worker/`.
 
----
+### 6. Optional: work on the site with live reload
+
+```bash
+cd frontend
+npm run dev               # http://localhost:3000; reloads as you edit; no API
+```
+
+To pick up new data from Airtable, rerun step 4.
 
 ## Static build
 
 ```bash
-python build_dataset.py   # one pull from Airtable (uses .env), writes dist/api/ and dist/site-data/
+python build_dataset.py   # pulls Airtable once (uses .env), writes dist/
 ```
 
-Writes the HSDS files to `dist/api/`, the site's own data to `dist/site-data/map.json` (map pins, category names; read when the site builds, not deployed), and prints a build report listing what to fix in Airtable. It fails only if the pull fails or finds no published services. The HSDS version and its schemas: [`schemas/hsds/`](schemas/hsds/README.md).
+It writes:
 
----
+- `dist/api/`: the API's static files (one per record, the full download, the OpenAPI description).
+- `dist/site-data/map.json`: the site's map pins and category names. Read when the site builds; not deployed.
+- `dist/worker-data/data.json`: the lists, filters and search fields the API's code serves. Built into that code; not deployed as a file.
 
-## Airtable Base Setup
+It then prints a build report of what to fix in Airtable. The build fails only if the pull fails or finds no published services. For the HSDS version and its schemas, see [`schemas/hsds/`](schemas/hsds/README.md).
 
-Your Airtable base needs tables matching the HSDS 3.0 schema. The API gets them by internal Airtable Table ID; the name-to-ID mapping is defined in `airtable/client.py`, and `airtable/sync.py` dictates which are pulled into the local cache.
+## Airtable base
 
-`/map/services` fetches the tables marked below on every request. The rest are read only through the HSDS endpoints, from the synced
-cache.
+The build reads only the tables and fields listed in `airtable.toml` (see [Airtable tables and fields](#airtable-tables-and-fields-airtabletoml)). Field names must match Airtable exactly.
 
-| Airtable Table | HSDS Entity | Required by `/map/services` |
-|---------------|-------------|----------------------------|
-| `organizations` | Organizations | **Yes** |
-| `services` | Services | **Yes** |
-| `locations` | Locations | **Yes** |
-| `addresses` | Addresses | **Yes** |
-| `service_at_location` | Service to Location links | **Yes** |
-| `service_areas` | Service Areas | **Yes** |
-| `phones` | Phones | **Yes** |
-| `contacts` | Contacts | No |
-| `schedules` | Schedules | No |
-| `languages` | Languages | No |
-| `taxonomies` | Taxonomies | No |
-| `taxonomy_terms` | Taxonomy Terms | No |
-| `programs` | Programs | No |
-| `funding` | Funding | No |
-| `cost_option` | Cost Options | No |
-| `required_document` | Required Documents | No |
-| `accessibility` | Accessibility | No |
+The base needs:
 
-### Connecting to your own Airtable base
+- **Publishing.** The `services` filter in `airtable.toml` decides which services are published (Mutual Aid NYC's: `{status} = 'Published'`). Without a filter, every service is published. An organization is shown only if it has a published service. The `organizations` filter can exclude more (Mutual Aid NYC's excludes "Do Not Publish").
+- **Categories.** Services' category fields are matched by name to `taxonomy_terms` in two taxonomies. The fields (`needFocus`, `communityFocus`) are read in `models/airtable.py`, and the taxonomy names ("MANYC Need", "MANYC Community Focus") are set in `application_layer/taxonomies.py`.
+- **Locations.** Services link to locations only through `service_at_location`. Coordinates are on `locations` (`latitude`, `longitude`). This app doesn't geocode: add coordinates in Airtable.
+- **Service areas** are the areas a service is for, not where it is located (specified in the `service_areas` field).
+- **Ids.** Public ids (UUIDs) are made from Airtable record ids, so no id field is needed. Moving records to another base or table changes their ids.
 
-The Airtable Table IDs in `airtable/client.py` are specific to the original base. To connect your own base:
+### Connecting your own base
 
-1. Open your Airtable base
-2. Go to **Help → API documentation** (or visit `https://airtable.com/appYOUR_BASE_ID/api/docs`)
-3. Note the Table IDs for each table (they look like `tblXXXXXXXXXX`)
-4. Update the `TABLE_IDS` dictionary in `airtable/client.py`:
+1. Copy `airtable.toml`. For each table, set `id` to its Airtable table id (`tbl…`, under **Help → API documentation**), or leave `id` out to use the table's name. List the fields to read and set the filters. If your category fields or taxonomies have other names, see **Categories** above.
+2. In `.env`, set `AIRTABLE_BASE_ID`, and `AIRTABLE_CONFIG` to your copy's path.
+3. Run `python build_dataset.py` and fix what the build report lists.
 
-```python
-TABLE_IDS = {
-    "organizations": "tblYOUR_ORG_TABLE_ID",
-    "services": "tblYOUR_SVC_TABLE_ID",
-    "locations": "tblYOUR_LOC_TABLE_ID",
-    # ... etc
-}
-```
+## API
 
-### Field mapping
+A read-only [HSDS](https://docs.openreferral.org/en/latest/hsds/api_reference.html) API at `/api`. Records, the full download and the OpenAPI description are static files. Code in `worker/` answers `/api` and the lists.
 
-Each Airtable table should have an `id` formula field that generates a consistent HSDS-compatible ID. The mapper in `transform/mapper.py` handles the field name translation between Airtable and HSDS.
+| Endpoint | Served as | Returns |
+|----------|-----------|---------|
+| `/api` | code | API info: HSDS version, publisher, `openapi_url` |
+| `/api/services`, `/api/organizations`, `/api/service_at_locations`, `/api/taxonomies`, `/api/taxonomy_terms` | code | An HSDS list, paginated |
+| `/api/<list>/{id}` | static file | One record, fully nested |
+| `/api/download.json` | static file | Every published record |
+| `/api/openapi.json` | static file | The OpenAPI description |
 
-Key fields per table:
+`/api/organizations/{id}` includes the organization's locations and phones but not its services. For those, use `/api/services?organization_id={id}`.
 
-- **services**: `name`, `description`, `url`, `email`, `status`, `organization` (linked), `service_at_locations` (linked)
-- **organizations**: `name`, `description`, `website`, `email`, `logo`
-- **locations**: `name`, `latitude`, `longitude`, `addresses` (linked)
-- **addresses**: `address_1`, `address_2`, `city`, `state_province`, `postal_code`
+### List parameters
 
----
+| Parameter | Lists | Notes |
+|-----------|-------|-------|
+| `page`, `per_page` | all | 50 per page by default; at most 1,000 |
+| `search` | all | Search returns the records that contain every word you search for |
+| `organization_id` | services, service_at_locations | |
+| `taxonomy_term_id`, `taxonomy_id` | services, organizations, service_at_locations | For organizations: those with a matching service |
+| `taxonomy_id`, `parent_id`, `top_only` | taxonomy_terms | |
 
-## API Endpoints
 
-### Core (HSDS Required)
+Errors return JSON: `{"error": "…"}`. A request gets a 400 if it uses an HSDS parameter this API doesn't support (`modified_after`, `minimal`, `full`, `full_service`, `postcode`, `proximity`, or `format` other than `json`), has a bad value, or repeats a parameter. To get everything, use `/api/download.json`. Parameters HSDS doesn't define are ignored. Only GET and HEAD are allowed.
 
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| `GET` | `/` | API metadata (version, profile, OpenAPI URL) |
-| `GET` | `/services` | Paginated service list (supports `?search=`, `?per_page=`, `?page=`) |
-| `GET` | `/services/{id}` | Full service detail with nested relations |
 
-### Additional
+## Configuration
 
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| `GET` | `/organizations` | Paginated organization list (supports `?search=`) |
-| `GET` | `/organizations/{id}` | Organization detail with services, contacts, locations |
-| `GET` | `/organizations/{id}/services` | Services for a specific organization |
-| `GET` | `/taxonomies` | List taxonomies |
-| `GET` | `/taxonomy_terms` | List taxonomy terms |
-| `GET` | `/service_at_locations` | Service-location links |
-| `GET` | `/map/services` | Services with coordinates and filter categories |
-
-### Documentation
-
-| URL | Description |
-|-----|-------------|
-| `/docs` | Swagger UI (interactive) |
-| `/redoc` | ReDoc (reference) |
-| `/openapi.json` | OpenAPI 3.0 schema |
-
----
-
-## Configuration Reference
-
-### Which file is read when
+### Files
 
 | File | Read by | Committed |
 |------|---------|-----------|
-| `.env` (repo root) | The API at startup. Also Docker Compose, for `${VAR}` substitution in `docker-compose.yml`. | No, holds your Airtable token |
-| `frontend/.env.local` | `npm run dev` and a local `npm run build`. Optional. | No |
+| `.env` (repo root) | `build_dataset.py` | No: it holds your Airtable token |
+| `airtable.toml` | `build_dataset.py` | Yes |
+| `frontend/.env.local` | `npm run dev` and `npm run build` in `frontend/`. Optional. | No |
+| `worker/wrangler.jsonc` | wrangler: `npm run dev` in `worker/`, and deploys | Yes |
 
-### API
+### Build settings (`.env`)
 
 | Variable | Default | Description |
 |----------|---------|-------------|
-| `AIRTABLE_API_KEY` | *(required)* | Airtable Personal Access Token (must be read-only) |
-| `AIRTABLE_BASE_ID` | *(required)* | Airtable Base ID (`appXXXXXXXXX`) |
-| `SYNC_INTERVAL_MINUTES` | `15` | Minutes between background syncs |
-| `HOST` | `127.0.0.1` | Bind address. Only read when running `python main.py` — the Dockerfile and the documented uvicorn command set it themselves. |
-| `PORT` | `8080` | Server port, same scope as `HOST`. In Docker, remap with docker-compose's `ports:` rather than changing this. |
-| `PUBLISHED_STATUS_VALUE` | `Published` | Old API only: show services with this status (empty = show all). The static build uses the `services` `filter` in `airtable.toml` instead. |
-| `FILTER_ORGS_WITHOUT_PUBLISHED_SERVICES` | `true` | Hide orgs with no published services |
-| `AIRTABLE_CONFIG` | `airtable.toml` | Tables and fields the build requests. See below. |
+| `AIRTABLE_API_KEY` | *(required)* | Airtable personal access token (read-only) |
+| `AIRTABLE_BASE_ID` | *(required)* | Airtable base id (`appXXXXXXXXX`) |
+| `AIRTABLE_CONFIG` | `airtable.toml` | The tables and fields to read (see below) |
+
+`SYNC_INTERVAL_MINUTES`, `HOST`, `PORT`, `PUBLISHED_STATUS_VALUE` and `FILTER_ORGS_WITHOUT_PUBLISHED_SERVICES` are read only by the old server and will be removed with it.
 
 ### Airtable tables and fields (`airtable.toml`)
 
-The build requests only the tables and fields listed in `airtable.toml`, so nothing else leaves Airtable and private internal fields stay private. A table's optional `filter` limits which records are pulled. The committed file is Mutual Aid NYC's: only fields that have data in its base and filters for records that aren't meant to be published.
+The build requests only the tables and fields listed here, so nothing else leaves Airtable and private fields stay private. A table's optional `filter` limits which records are pulled. Tables and fields left out are treated as empty. The committed file is Mutual Aid NYC's. To use another base, see [Connecting your own base](#connecting-your-own-base).
 
-The `services` filter decides what is published: the build publishes every service it pulls, and an organization only when it has at least one of those services. Leave the filter out if your base has no publish status.
-
-For a different base: copy the file, list your table ids (or leave `id` out to use the table name) and the fields you want, and update `AIRTABLE_CONFIG` in the `.env` file. Tables and fields you leave out are treated as empty.
-
-### Frontend
+### Frontend settings
 
 | Variable | Default | Description |
 |----------|---------|-------------|
-| `SITE_DATA_DIR` | `../dist` | The static build's output folder, relative to `frontend/`. |
-| `NEXT_PUBLIC_BASEMAP_STYLE_URL` | OpenFreeMap bright | Map basemap style URL. |
+| `SITE_DATA_DIR` | `../dist` | The build's output folder, relative to `frontend/` |
+| `NEXT_PUBLIC_BASEMAP_STYLE_URL` | OpenFreeMap bright | The map's basemap style URL |
 
-**`NEXT_PUBLIC_` variables are public.** Secrets go in the root `.env`, which only the API and `build_dataset.py` read.
+`NEXT_PUBLIC_` variables are public. Put secrets only in the root `.env`.
 
----
+## Deployment
 
-## Production Deployment
+The site and the API deploy together to Cloudflare as a Worker (`worker/wrangler.jsonc`) that serves `dist/public/`. See [`worker/`](worker/README.md). `docker-compose.yml` and `Dockerfile` run only the old server and will be removed with it.
 
-### Docker Compose
+## Before launch
 
-`docker-compose.yml` and `Dockerfile` run the API only; the site is a static export (see [Set up the frontend](#5-set-up-the-frontend-nextjs)).
+Until the site launches, it asks search engines not to index it. To launch, remove that from all three places:
 
-```bash
-cp .env.example .env        # add your Airtable credentials
-docker compose up -d --build
-```
-
-API on `:8080`.
-
----
+- `frontend/src/app/layout.tsx`: `robots: { index: false }`
+- `worker/_headers`: the `X-Robots-Tag: noindex` rule
+- `worker/src/handler.ts`: `NOINDEX`, and the `x-robots-tag` check in `worker/test/handler.test.ts`
 
 ## Troubleshooting
 
-### API won't start
+### The build fails
 
-- **Missing `.env`**: Copy `.env.example` to `.env` and fill in your Airtable credentials
-- **Invalid Airtable PAT**: Ensure your token has `data.records:read` scope on the correct base
-- **Port conflict**: Pass a different `--port` to uvicorn. `PORT` in `.env` only applies to `python main.py`.
+The build prints the reason:
 
-### No data after startup
+- **`missing or invalid settings: …`**: set the named variables in `.env` (see [step 3](#3-add-your-airtable-settings)).
+- **`Airtable config not found: …`**: `AIRTABLE_CONFIG` points to a file that doesn't exist.
+- **`Airtable request failed (401, 403 or 404 …)`**: check that the token is valid, has the `data.records:read` scope and access to the base in `AIRTABLE_BASE_ID`, and that the table ids in `airtable.toml` belong to that base (see [Connecting your own base](#connecting-your-own-base)).
+- **`no published services in the pull`**: the `services` filter in `airtable.toml` matches no records. Check it against the status values in Airtable.
 
-- Check the console logs for sync errors
-- Verify your `AIRTABLE_BASE_ID` matches your actual base
-- Ensure the Table IDs in `airtable/client.py` match your base (see [Connecting to your own base](#connecting-to-your-own-airtable-base))
-
-### Site build fails with "Site data not found"
+### The site build fails with "Site data not found"
 
 The site reads `dist/api/download.json` and `dist/site-data/map.json`. Run `python build_dataset.py` from the repo root first.
 
 ### Map pins are missing
 
-The map resolves coordinates by using `service_at_location` links → `locations` table (latitude/longitude fields in Airtable). There is no fallback: a service with no `service_at_location` link has no pin.
+A service gets a pin from its first location with coordinates, found through `service_at_location`. There is no fallback.
 
-- **Missing latitude/longitude on location records**: Coordinates are written by a button in Airtable that runs a script for a service or organization record in Airtable to geocode the address and stores the results on the linked `location`. Check the Airtable service or organization record and the locations table.
-- **No `service_at_location` links**: Check that services are linked to locations via the `service_at_location` junction table, as HSDS specifies.
+- **The location has no coordinates.** Add `latitude` and `longitude` to the location in Airtable. The build report lists locations with an address but no coordinates.
+- **The service has no location.** Link it to a location through `service_at_location`.
 
----
+## Standards
 
-## Standards Compliance
-
-- [HSDS Specification](https://docs.openreferral.org/en/latest/hsds/api_reference.html): the version is `HSDS_VERSION` in `models/hsds.py`; its schemas and how to upgrade are in [`schemas/hsds/`](schemas/hsds/README.md)
-- [Open Referral](https://openreferral.org/)
-- [ORUK Validator](https://openreferraluk.org/developers/validator) compatible
+- [HSDS](https://docs.openreferral.org/en/latest/hsds/api_reference.html): the version is `HSDS_VERSION` in `models/hsds.py`. Its schemas, and how to upgrade, are in [`schemas/hsds/`](schemas/hsds/README.md).
 
 ## Contributing
 
-We welcome contributions! To get started:
-1. **Fork** the repository and clone it to your local machine.
-2. **Follow the Quick Start setup** above to get your local development environment running.
-3. **Commit** your changes on a feature branch.
-4. **Open a Pull Request** against our `main` branch.
-
-See [CONTRIBUTING.md](CONTRIBUTING.md) for full contribution guidelines.
+See [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines.
 
 ## Credits
 
-Developed by [Sarapis](https://sarapis.org/) and maintained here by Mutual Aid NYC. Sarapis also maintains an implementation at [sarapis/hsd](https://github.com/sarapis/hsd).
+Developed by [Sarapis](https://sarapis.org/) and maintained by Mutual Aid NYC. Sarapis also maintains an implementation at [sarapis/hsd](https://github.com/sarapis/hsd).
 
 ## License
 
-[MIT](LICENSE), except the vendored HSDS schemas in `schemas/hsds/`: © Open Referral, [CC BY-SA 4.0](https://creativecommons.org/licenses/by-sa/4.0/).
+[MIT](LICENSE), except the vendored HSDS schemas in `schemas/hsds/` and `static_build/openapi.json` (adapted from HSDS's OpenAPI description): © Open Referral, [CC BY-SA 4.0](https://creativecommons.org/licenses/by-sa/4.0/).

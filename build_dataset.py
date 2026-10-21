@@ -1,16 +1,25 @@
-"""Build the static API files from one Airtable pull.
+"""Build the API, the site's data and the API's list data from one Airtable pull.
 
 Run from the repo root (needs .env, see README):
 
-    python build_dataset.py              # writes dist/api/ and dist/site-data/
-    python build_dataset.py --out DIR    # writes DIR/api/ and DIR/site-data/
+    python build_dataset.py              # writes dist/api/, dist/site-data/, dist/worker-data/
+    python build_dataset.py --out DIR    # writes DIR/api/, DIR/site-data/, DIR/worker-data/
 
-Writes DIR/api/ (see static_build/files.py), replacing what was there so no
-file outlives its record, and DIR/site-data/map.json, the site's own data
-(application_layer/map.py; read when the site builds, not deployed). Then
-prints the build report. Exits 1 if the pull fails, if it has no published
-services (nothing is written), or if the build crashes; schema problems are
-reported, not fatal.
+Writes three things into the output folder (dist/ unless --out is given):
+
+- api/: the HSDS files the API serves (static_build/files.py). Deleted and
+  rewritten every build.
+- site-data/map.json: what the site needs besides the HSDS download: each
+  service's map pin, category names, organization name and service areas, and the
+  filter lists (application_layer/map.py). The site reads it when it builds.
+  Not deployed as a file.
+- worker-data/data.json: the lists, filters and search fields the API's list
+  routes serve (worker/; static_build/worker_data.py). Built into their code. Not
+  deployed as a file.
+
+Then prints the build report. Exits 1 without writing anything if the pull
+fails or finds no published services, and exits 1 if the build crashes.
+Schema problems go in the report, they don't fail the build.
 """
 from __future__ import annotations
 
@@ -33,11 +42,14 @@ from data_layer.airtable_config import REPO_ROOT, load_config
 from data_layer.dataset import Dataset
 from data_layer.loader import AirtableLoadError, load_tables
 from static_build.files import ApiFile, api_files
+from static_build.records import Records
 from static_build.report import build_report, render
 from static_build.schema import SchemaProblem, SchemasNotInstalled, schema_problems
+from static_build.worker_data import worker_data
 
 DEFAULT_OUT = REPO_ROOT / "dist"
 SITE_DATA = Path("site-data") / "map.json"  # under the output folder; the site reads it
+WORKER_DATA = Path("worker-data") / "data.json"  # under the output folder, built into worker/
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -64,9 +76,12 @@ def main(argv: list[str] | None = None) -> int:
         )
         return 1
     terms = Terms.from_dataset(dataset)
-    files = api_files(dataset, published, terms, built_at=datetime.now(UTC).isoformat())
+    records = Records.build(dataset, published, terms)
+    files = api_files(records, built_at=datetime.now(UTC).isoformat())
     write(files, args.out)
-    write_site_data(map_data(dataset, published, terms), args.out)
+    site = map_data(dataset, published, terms)
+    write_site_data(site, args.out)
+    write_worker_data(worker_data(records, published, terms, site), args.out)
 
     problems: list[SchemaProblem] = []
     note = None
@@ -120,15 +135,18 @@ def write(files: list[ApiFile], out: Path) -> None:
 
 def write_site_data(data: MapData, out: Path) -> None:
     """Write the site's own data (not HSDS, not deployed) to out/site-data/map.json."""
-    path = out / SITE_DATA
+    _write_json(out / SITE_DATA, data.model_dump(mode="json", exclude_none=True))
+
+
+def write_worker_data(data: dict[str, Any], out: Path) -> None:
+    """Write what the API's list routes serve from memory to out/worker-data/data.json."""
+    _write_json(out / WORKER_DATA, data)
+
+
+def _write_json(path: Path, data: dict[str, Any]) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(
-        json.dumps(
-            data.model_dump(mode="json", exclude_none=True),
-            ensure_ascii=False,
-            separators=(",", ":"),
-        ),
-        encoding="utf-8",
+        json.dumps(data, ensure_ascii=False, separators=(",", ":")), encoding="utf-8"
     )
 
 
@@ -139,7 +157,7 @@ def _parse(argv: list[str] | None) -> argparse.Namespace:
         type=Path,
         default=DEFAULT_OUT,
         help="output folder; its api/ folder is deleted and rewritten, and "
-        "site-data/map.json written (default: dist)",
+        "site-data/map.json and worker-data/data.json written (default: dist)",
     )
     return parser.parse_args(argv)
 

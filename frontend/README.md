@@ -18,10 +18,14 @@ Setup and running the build are in the [root README](../README.md). This file co
 
 | File | What the site uses it for |
 |------|---------------------------|
-| `api/download.json` | Every published resource and group: detail pages, group addresses, group list |
+| `api/download.json` | Every published service and organization: detail pages, organization addresses, the organizations list |
 | `site-data/map.json` | Map pins, category names, search fields, filter values (site-only, not HSDS) |
 
 From `../dist` by default (`SITE_DATA_DIR` to change it). Missing files fail the build.
+
+## Search
+
+`src/lib/search.ts` is shared with the API: `worker/` imports it, so a change here also changes the API's `search`. After changing it, run `npm test` in `worker/` too.
 
 ## Commands
 
@@ -31,6 +35,3 @@ npm run build       # static site in out/
 npx serve out       # check the static site locally
 ```
 
-## Search engines are blocked
-
-Every page emits `<meta name="robots" content="noindex">`, set in `layout.tsx`, until launch.

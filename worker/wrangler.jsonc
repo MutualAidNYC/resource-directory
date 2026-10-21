@@ -1,0 +1,30 @@
+{
+    "$schema": "node_modules/wrangler/config-schema.json",
+    "name": "resource-directory",
+    "main": "src/index.ts",
+    "compatibility_date": "2026-10-01",
+    "preview_urls": false,
+    // The list data the build writes (static_build/worker_data.py), built into the code.
+    "alias": { "worker-data": "../dist/worker-data/data.json" },
+    "assets": {
+        // Everything public: the site and the API's static files.
+        "directory": "../dist/public",
+        "binding": "ASSETS",
+        // Code runs first only for these. Everything else is a static file; a missing one
+        // falls through to the code, which answers with a 404.
+        "run_worker_first": [
+            "/api",
+            "/api/",
+            "/api/services",
+            "/api/organizations",
+            "/api/service_at_locations",
+            "/api/taxonomies",
+            "/api/taxonomy_terms"
+        ]
+    },
+    "observability": {
+        "logs": { "enabled": true, "head_sampling_rate": 1, "invocation_logs": true, "persist": true },
+        "traces": { "enabled": false, "head_sampling_rate": 1, "persist": true }
+    },
+    "send_metrics": false
+}

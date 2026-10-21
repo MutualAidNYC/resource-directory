@@ -26,6 +26,7 @@ def service_summary(service: ServiceResponse, published: Published) -> ServiceSu
         description=service.description,
         url=service.url,
         email=service.email,
+        assured_date=service.assured_date,
     )
 
 

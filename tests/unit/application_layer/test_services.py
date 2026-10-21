@@ -38,6 +38,7 @@ def test_list_item(published: Published):
     assert fridge.id == hsds_id("services", FRIDGE)
     assert fridge.organization_id == hsds_id("organizations", ORG)
     assert fridge.status == "active"
+    assert fridge.assured_date == "2026-01-02"
 
 
 def test_list_item_without_organization(published: Published):
