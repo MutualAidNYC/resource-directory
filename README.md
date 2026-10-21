@@ -49,8 +49,10 @@ python3.12 -m venv venv
 source venv/bin/activate  # Windows: venv\Scripts\activate
 
 # Install dependencies
-pip install -r requirements.txt
+pip install -r requirements.txt -r requirements-dev.txt
 ```
+
+Versions are pinned. To add or upgrade a package, edit `requirements.in` or `requirements-dev.in`, then run `pip-compile requirements.in && pip-compile requirements-dev.in` and commit the `.in` and `.txt` files.
 
 ### 3. Add your Airtable settings
 
@@ -86,8 +88,6 @@ npm run dev               # http://localhost:8787: the site, and the API at /api
 
 `npm run dev` writes `dist/public/` and serves it the way Cloudflare does. It needs no Cloudflare account.
 
-To check changes: `pytest tests/unit` and `ruff check .` at the repo root (with the venv active), `npm run lint` in `frontend/`, and `npm test` and `npm run typecheck` in `worker/`.
-
 ### 6. Optional: work on the site with live reload
 
 ```bash
@@ -96,6 +96,22 @@ npm run dev               # http://localhost:3000; reloads as you edit; no API
 ```
 
 To pick up new data from Airtable, rerun step 4.
+
+## Testing and CI
+
+Run the checks for the parts you changed:
+
+| Where | Checks |
+|-------|--------|
+| Repo root (venv active) | `pytest tests/unit`, `ruff check .`, `pyright` |
+| `frontend/` | `npm run lint`, `npm run typecheck` |
+| `worker/` | `npm test`, `npm run typecheck` |
+
+The unit tests need no Airtable access and include the HSDS schema check. `pytest tests/unit --cov` fails below 94% coverage.
+
+GitHub Actions runs these checks on every pull request and on pushes to `main` (`.github/workflows/checks.yml`).
+
+Dependabot opens update PRs every two months: one each for pip, npm and GitHub Actions (`.github/dependabot.yml`).
 
 ## Static build
 

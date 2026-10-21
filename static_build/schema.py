@@ -116,11 +116,11 @@ def _problem(data: dict[str, Any], error: ValidationError) -> SchemaProblem:
 
 def _plain(error: ValidationError) -> str:
     """What's wrong, in plain words, without the value."""
+    rule: Any = error.validator_value
     if error.validator == "required":
-        missing = [name for name in error.validator_value if name not in error.instance]
+        missing = [name for name in rule if name not in error.instance]
         return "missing " + ", ".join(missing)
     field = next((key for key in reversed(error.absolute_path) if isinstance(key, str)), "value")
-    rule: Any = error.validator_value
     if error.validator == "format":
         return f"{field} " + FORMATS.get(rule, f"is not a valid {rule}")
     if error.validator == "enum":

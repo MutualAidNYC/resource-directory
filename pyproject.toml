@@ -2,13 +2,45 @@
 requires-python = ">=3.12"
 
 [tool.pytest.ini_options]
-asyncio_mode = "strict"
 pythonpath = ["."]
 markers = [
   "unit: fast tests, no network",
   "integration: reads the real Airtable base",
   "smoke: calls the old FastAPI routes",
 ]
+
+[tool.pyright]
+pythonVersion = "3.12"
+typeCheckingMode = "standard"
+# The static build's code and unit tests. Skips the old FastAPI code, which is being removed.
+include = [
+    "models/airtable.py",
+    "tests/unit",
+    "data_layer",
+    "application_layer",
+    "static_build",
+    "build_dataset.py",
+]
+exclude = [
+    "**/__pycache__",
+    "application_layer/application_layer.py",
+    "data_layer/airtable.py",
+    "data_layer/dependency.py",
+    "tests/unit/application_layer/test_application_layer.py",
+    "tests/unit/scripts",
+]
+
+[tool.coverage.run]
+source = ["data_layer", "application_layer", "static_build", "build_dataset"]
+omit = [
+    "application_layer/application_layer.py",
+    "data_layer/airtable.py",
+    "data_layer/dependency.py",
+]
+
+[tool.coverage.report]
+# A little under the current total (96%), so small changes don't fail it.
+fail_under = 94
 
 [tool.ruff]
 # Target the Python version you are using
@@ -48,3 +80,7 @@ runtime-evaluated-base-classes = ["pydantic.BaseModel"]
 
 [tool.ruff.lint.per-file-ignores]
 "tests/**/*.py" = ["ANN201"]
+
+[tool.pip-tools]
+# Lets requirements-dev.in use requirements.txt as constraints.
+strip-extras = true
