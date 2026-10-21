@@ -9,6 +9,7 @@
     "dev": "next dev",
     "build": "next build",
     "lint": "eslint",
+    "typecheck": "next typegen && tsc --noEmit",
     "data:copy": "node scripts/copy-data.mjs"
   },
   "dependencies": {

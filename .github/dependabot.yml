@@ -1,0 +1,43 @@
+# Every two months, on the 1st: one PR for pip, one for both npm folders, one
+# for GitHub Actions.
+
+version: 2
+
+updates:
+  - package-ecosystem: pip
+    directory: /
+    schedule:
+      interval: cron
+      cronjob: "0 9 1 */2 *"
+    # Waits a week after a release, so a bad or hijacked release is usually pulled first.
+    cooldown:
+      default-days: 7
+    # Indirect dependencies too, so fixes to them aren't missed.
+    allow:
+      - dependency-type: all
+    groups:
+      python:
+        patterns: ["*"]
+
+  - package-ecosystem: npm
+    directories: [/worker, /frontend]
+    schedule:
+      interval: cron
+      cronjob: "0 9 1 */2 *"
+    cooldown:
+      default-days: 7
+    # Indirect dependencies too, so fixes to them aren't missed.
+    allow:
+      - dependency-type: all
+    groups:
+      npm:
+        patterns: ["*"]
+
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: cron
+      cronjob: "0 9 1 */2 *"
+    groups:
+      actions:
+        patterns: ["*"]
