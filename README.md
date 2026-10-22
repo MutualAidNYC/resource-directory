@@ -32,7 +32,7 @@ flowchart LR
 3. **The website** (`frontend/`, Next.js) is built from that data into plain HTML, CSS and JavaScript. It has no server and doesn't call the API.
 4. **The Worker** (`worker/`, Cloudflare) serves the website and the API at `/api`. Single records are static files. The lists (`/api/services` and others) run a little code, because they need paging and search.
 
-To change what's live: edit in Airtable, then run the build and deploy (see [Deployment](#deployment)). To run everything locally, see [Quick Start](#quick-start-local-development).
+To change what's live: edit in Airtable. Changing a service's `status` rebuilds the site; other edits go live with the daily rebuild (see [Deployment](#deployment)). To run everything locally, see [Quick Start](#quick-start-local-development).
 
 `main.py` and the folders it uses (`routes/`, `airtable/` and others) are an old server that nothing uses. They will be removed in November 2026.
 
@@ -210,7 +210,28 @@ Errors return JSON: `{"error": "…"}`. A request gets a 400 if it uses an HSDS 
 
 ## Deployment
 
-The site and the API deploy together to Cloudflare as one Worker. Deploys are manual and need a Cloudflare account with access to the Worker. From the repo root:
+The site and the API deploy together to Cloudflare as one Worker, `resource-directory`. [Workers Builds](https://developers.cloudflare.com/workers/ci-cd/builds/) builds and deploys it when:
+
+- There is a commit to the `main` branch.
+- A service's `status` changes in Airtable: an automation runs `worker/scripts/airtable-rebuild.js`
+- Once a day with the Worker's Cron Trigger (`worker/src/rebuild.ts`)
+
+The last two POST the Worker's deploy hook.
+
+### Workers Builds settings
+
+| Setting | Value |
+|---------|-------|
+| Root directory | the repo root |
+| Build command | `bash worker/scripts/build.sh` |
+| Deploy command | `cd worker && npx wrangler deploy` |
+| Build variables | `AIRTABLE_BASE_ID`; `AIRTABLE_API_KEY` as a secret |
+| Deploy hook | Settings → Builds → Deploy Hooks, on `main` |
+| Runtime secret | `DEPLOY_HOOK_URL`: the deploy hook URL (Settings → Variables and Secrets) |
+
+### Deploying by hand
+
+Needs a Cloudflare account with access to the Worker. From the repo root:
 
 ```bash
 python build_dataset.py              # pull Airtable, write dist/
