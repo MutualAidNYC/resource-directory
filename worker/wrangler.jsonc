@@ -22,6 +22,8 @@
             "/api/taxonomy_terms"
         ]
     },
+    // The daily rebuild (src/rebuild.ts), 10:07 UTC. Needs the DEPLOY_HOOK_URL secret.
+    "triggers": { "crons": ["7 10 * * *"] },
     "observability": {
         "logs": { "enabled": true, "head_sampling_rate": 1, "invocation_logs": true, "persist": true },
         "traces": { "enabled": false, "head_sampling_rate": 1, "persist": true }
