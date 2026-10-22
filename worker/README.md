@@ -15,13 +15,4 @@ The Cloudflare Worker that serves the site and the API. Static files (the site a
 
 The list data (`dist/worker-data/data.json`, written by `python build_dataset.py`) is built into the code, not served as a file.
 
-## Commands
-
-Run `python build_dataset.py` (repo root) and `npm run build` (`frontend/`) first.
-
-```bash
-npm install
-npm run dev         # assemble, then serve at http://localhost:8787
-npm test            # vitest
-npm run typecheck   # tsc
-```
+To deploy, see [Deployment](../README.md#deployment) in the root README.
