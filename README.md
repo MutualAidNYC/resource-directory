@@ -111,7 +111,7 @@ The unit tests need no Airtable access and include the HSDS schema check. `pytes
 
 GitHub Actions runs these checks on every pull request and on pushes to `main` (`.github/workflows/checks.yml`).
 
-Dependabot opens update PRs every two months: one each for pip, npm and GitHub Actions (`.github/dependabot.yml`).
+Dependabot opens update PRs every two months: one each for pip, npm and GitHub Actions, with minor and patch updates only. Each pip or npm major update gets its own PR (`.github/dependabot.yml`).
 
 ## Static build
 
