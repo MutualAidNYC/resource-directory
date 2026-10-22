@@ -2,37 +2,26 @@
 
 Powers the Mutual Aid NYC Community Resources Library. A build pulls the directory's data from an [Airtable](https://airtable.com) base and turns it into a static website and a read-only [HSDS](https://docs.openreferral.org/) API.
 
-Follows the core Human Services Data Specification (HSDS) from the ([Open Referral Initiative](https://openreferral.org/)), and the build checks every record against HSDS's JSON Schemas.
+It follows core HSDS ([Open Referral](https://openreferral.org/)), and the build checks every record against HSDS's JSON Schemas.
 
-Note: The code and API use HSDS's terms "service" and "organization", while the the site uses "resource" and "group" to better align with the domain of mutual aid.
-
+Code and the API use HSDS's terms, **service** and **organization**. The site calls them **resource** and **group**, to better match a mutual aid ethos.
 
 ## How it works
 
-Data is edited in Airtable, turned into files by two builds, and served by a Cloudflare Worker as the website and the API.
-
-```mermaid
-flowchart LR
-  accTitle: How the directory is built and served
-  accDescr: Airtable feeds the data build. The data build feeds the website build. The API files and the website files go to the Cloudflare Worker, which serves them to visitors.
-  airtable["Airtable<br>(where the data is maintained)"]
-  build["Data build<br>(Python)"]
-  site["Website build<br>(Next.js)"]
-  worker["Cloudflare Worker<br>(serves the files,<br>pages and searches the API's lists)"]
-  people["Visitors and<br>API users"]
-  airtable --> build
-  build -- "API files" --> worker
-  build -- "site data" --> site
-  site -- "website files" --> worker
-  worker --> people
+```
+Airtable
+   │  1. python build_dataset.py     (repo root)
+   ▼
+dist/            the API's files, and the data the site and the API's code need
+   │  2. npm run build               (frontend/)
+   ▼
+frontend/out/    the website
+   │  3. npm run assemble            (worker/)
+   ▼
+dist/public/     the website and the API's files, ready to serve
 ```
 
-1. **Airtable** is where the data is maintained.
-2. **The data build** (`build_dataset.py`, Python) pulls specified tables/fields from Airtable, keeps only published services and what they link to, and checks each record against HSDS. It writes the API's records as JSON files, plus the data the site and the Worker need.
-3. **The website** (`frontend/`, Next.js) is built from that data into plain HTML, CSS and JavaScript. It has no server and doesn't call the API.
-4. **The Worker** (`worker/`, Cloudflare) serves the website and the API at `/api`. Single records are static files. The lists (`/api/services` and others) run a little code, because they need paging and search.
-
-To change what's live: edit in Airtable. Changing a service's `status` rebuilds the site; other edits go live with the daily rebuild (see [Deployment](#deployment)). To run everything locally, see [Quick Start](#quick-start-local-development).
+Cloudflare serves `dist/public/` as static files. Code in `worker/` answers the API's lists (`/api/services` and others), which need paging and search. To run everything locally, see [Quick Start](#quick-start).
 
 `main.py` and the folders it uses (`routes/`, `airtable/` and others) are an old server that nothing uses. They will be removed in November 2026.
 
@@ -122,39 +111,43 @@ The unit tests need no Airtable access and include the HSDS schema check. `pytes
 
 GitHub Actions runs these checks on every pull request and on pushes to `main` (`.github/workflows/checks.yml`).
 
-Dependabot opens update pull requests every two months: one each for pip, npm and GitHub Actions (`.github/dependabot.yml`).
+Dependabot opens update PRs every two months: one each for pip, npm and GitHub Actions (`.github/dependabot.yml`).
 
 ## Static build
 
-`python build_dataset.py` writes:
+```bash
+python build_dataset.py   # pulls Airtable once (uses .env), writes dist/
+```
+
+It writes:
 
 - `dist/api/`: the API's static files (one per record, the full download, the OpenAPI description).
-- `dist/site-data/map.json`: the site's own data read when the site builds: map pins, category names, search fields, filter values.
+- `dist/site-data/map.json`: the site's map pins and category names. Read when the site builds; not deployed.
 - `dist/worker-data/data.json`: the lists, filters and search fields the API's code serves. Built into that code; not deployed as a file.
 
-It then prints a build report of what to fix in Airtable. The build fails only if the pull fails or finds no published services. The HSDS version is `HSDS_VERSION` in `models/hsds.py`. Its schemas, and how to upgrade, are in [`schemas/hsds/`](schemas/hsds/README.md).
+It then prints a build report of what to fix in Airtable. The build fails only if the pull fails or finds no published services. For the HSDS version and its schemas, see [`schemas/hsds/`](schemas/hsds/README.md).
 
 ## Airtable base
 
-The build requests only the tables and fields listed in `airtable.toml`, so private/internal fields never leave Airtable. Field names must match Airtable exactly. A table's optional `filter` limits which records are pulled. Tables and fields left out are treated as empty.
+The build reads only the tables and fields listed in `airtable.toml` (see [Airtable tables and fields](#airtable-tables-and-fields-airtabletoml)). Field names must match Airtable exactly.
 
 The base needs:
 
 - **Publishing.** The `services` filter in `airtable.toml` decides which services are published (Mutual Aid NYC's: `{status} = 'Published'`). Without a filter, every service is published. An organization is shown only if it has a published service. The `organizations` filter can exclude more (Mutual Aid NYC's excludes "Do Not Publish").
 - **Categories.** Services' category fields are matched by name to `taxonomy_terms` in two taxonomies. The fields (`needFocus`, `communityFocus`) are read in `models/airtable.py`, and the taxonomy names ("MANYC Need", "MANYC Community Focus") are set in `application_layer/taxonomies.py`.
 - **Locations.** Services link to locations only through `service_at_location`. Coordinates are on `locations` (`latitude`, `longitude`). This app doesn't geocode: add coordinates in Airtable.
-- **Service areas** are the areas a service is for, not its location (specified in the `service_areas` field).
+- **Service areas** are the areas a service is for, not where it is located (specified in the `service_areas` field).
 - **Ids.** Public ids (UUIDs) are made from Airtable record ids, so no id field is needed. Moving records to another base or table changes their ids.
 
 ### Connecting your own base
 
-1. Copy `airtable.toml`. For each table, set `id` to its Airtable table id (`tbl…`, under **Help → API documentation**), or leave `id` out if the Airtable table has the same name as the section (for example `services`). List the fields to read and set the filters. If your category fields or taxonomies have other names, see **Categories** above.
+1. Copy `airtable.toml`. For each table, set `id` to its Airtable table id (`tbl…`, under **Help → API documentation**), or leave `id` out to use the table's name. List the fields to read and set the filters. If your category fields or taxonomies have other names, see **Categories** above.
 2. In `.env`, set `AIRTABLE_BASE_ID`, and `AIRTABLE_CONFIG` to your copy's path.
 3. Run `python build_dataset.py` and fix what the build report lists.
 
 ## API
 
-A read-only [HSDS](https://docs.openreferral.org/en/latest/hsds/api_reference.html) API at `/api`.
+A read-only [HSDS](https://docs.openreferral.org/en/latest/hsds/api_reference.html) API at `/api`. Records, the full download and the OpenAPI description are static files. Code in `worker/` answers `/api` and the lists.
 
 | Endpoint | Served as | Returns |
 |----------|-----------|---------|
@@ -176,7 +169,9 @@ A read-only [HSDS](https://docs.openreferral.org/en/latest/hsds/api_reference.ht
 | `taxonomy_term_id`, `taxonomy_id` | services, organizations, service_at_locations | For organizations: those with a matching service |
 | `taxonomy_id`, `parent_id`, `top_only` | taxonomy_terms | |
 
+
 Errors return JSON: `{"error": "…"}`. A request gets a 400 if it uses an HSDS parameter this API doesn't support (`modified_after`, `minimal`, `full`, `full_service`, `postcode`, `proximity`, or `format` other than `json`), has a bad value, or repeats a parameter. To get everything, use `/api/download.json`. Parameters HSDS doesn't define are ignored. Only GET and HEAD are allowed.
+
 
 ## Configuration
 
@@ -195,9 +190,13 @@ Errors return JSON: `{"error": "…"}`. A request gets a 400 if it uses an HSDS 
 |----------|---------|-------------|
 | `AIRTABLE_API_KEY` | *(required)* | Airtable personal access token (read-only) |
 | `AIRTABLE_BASE_ID` | *(required)* | Airtable base id (`appXXXXXXXXX`) |
-| `AIRTABLE_CONFIG` | `airtable.toml` | The tables and fields to read (see [Airtable base](#airtable-base)) |
+| `AIRTABLE_CONFIG` | `airtable.toml` | The tables and fields to read (see below) |
 
 `SYNC_INTERVAL_MINUTES`, `HOST`, `PORT`, `PUBLISHED_STATUS_VALUE` and `FILTER_ORGS_WITHOUT_PUBLISHED_SERVICES` are read only by the old server and will be removed with it.
+
+### Airtable tables and fields (`airtable.toml`)
+
+The build requests only the tables and fields listed here, so nothing else leaves Airtable and private fields stay private. A table's optional `filter` limits which records are pulled. Tables and fields left out are treated as empty. The committed file is Mutual Aid NYC's. To use another base, see [Connecting your own base](#connecting-your-own-base).
 
 ### Frontend settings
 
@@ -210,39 +209,7 @@ Errors return JSON: `{"error": "…"}`. A request gets a 400 if it uses an HSDS 
 
 ## Deployment
 
-The site and the API deploy together to Cloudflare as one Worker, `resource-directory`. [Workers Builds](https://developers.cloudflare.com/workers/ci-cd/builds/) builds and deploys it when:
-
-- There is a commit to the `main` branch.
-- A service's `status` changes in Airtable: an automation runs `worker/scripts/airtable-rebuild.js`
-- Once a day with the Worker's Cron Trigger (`worker/src/rebuild.ts`)
-
-The last two POST the Worker's deploy hook.
-
-### Workers Builds settings
-
-| Setting | Value |
-|---------|-------|
-| Root directory | the repo root |
-| Build command | `bash worker/scripts/build.sh` |
-| Deploy command | `cd worker && npx wrangler deploy` |
-| Build variables | `AIRTABLE_BASE_ID`; `AIRTABLE_API_KEY` as a secret |
-| Deploy hook | Settings → Builds → Deploy Hooks, on `main` |
-| Runtime secret | `DEPLOY_HOOK_URL`: the deploy hook URL (Settings → Variables and Secrets) |
-
-### Deploying by hand
-
-Needs a Cloudflare account with access to the Worker. From the repo root:
-
-```bash
-python build_dataset.py              # pull Airtable, write dist/
-(cd frontend && npm run build)       # build the site
-cd worker
-npx wrangler login                   # once per machine
-npm run assemble                     # write dist/public/
-npx wrangler deploy
-```
-
-`docker-compose.yml` and `Dockerfile` run only the old server and will be removed with it.
+The site and the API deploy together to Cloudflare as a Worker (`worker/wrangler.jsonc`) that serves `dist/public/`. See [`worker/`](worker/README.md). `docker-compose.yml` and `Dockerfile` run only the old server and will be removed with it.
 
 ## Before launch
 
@@ -274,13 +241,17 @@ A service gets a pin from its first location with coordinates, found through `se
 - **The location has no coordinates.** Add `latitude` and `longitude` to the location in Airtable. The build report lists locations with an address but no coordinates.
 - **The service has no location.** Link it to a location through `service_at_location`.
 
+## Standards
+
+- [HSDS](https://docs.openreferral.org/en/latest/hsds/api_reference.html): the version is `HSDS_VERSION` in `models/hsds.py`. Its schemas, and how to upgrade, are in [`schemas/hsds/`](schemas/hsds/README.md).
+
 ## Contributing
 
-We welcome contributions! See [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines.
+See [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines.
 
 ## Credits
 
-Adapted from code developed by [Sarapis](https://sarapis.org/), this repo is maintained by [Mutual Aid NYC](https://mutualaid.nyc) volunteers. Sarapis also maintains an implementation at [sarapis/hsd](https://github.com/sarapis/hsd).
+Developed by [Sarapis](https://sarapis.org/) and maintained by Mutual Aid NYC. Sarapis also maintains an implementation at [sarapis/hsd](https://github.com/sarapis/hsd).
 
 ## License
 

@@ -27,4 +27,11 @@ From `../dist` by default (`SITE_DATA_DIR` to change it). Missing files fail the
 
 `src/lib/search.ts` is shared with the API: `worker/` imports it, so a change here also changes the API's `search`. After changing it, run `npm test` in `worker/` too.
 
+## Commands
+
+```bash
+npm run dev         # dev server, http://localhost:3000
+npm run build       # static site in out/
+npx serve out       # check the static site locally
+```
 
