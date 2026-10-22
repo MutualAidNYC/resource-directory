@@ -1,5 +1,6 @@
-# Every two months, on the 1st: one PR for pip, one for both npm folders, one
-# for GitHub Actions.
+# Every two months, on the 1st: one PR of minor and patch updates for pip, one
+# for both npm folders, one for GitHub Actions. pip and npm major updates come
+# as separate PRs, so one breaking upgrade doesn't hold up the rest.
 
 version: 2
 
@@ -18,6 +19,7 @@ updates:
     groups:
       python:
         patterns: ["*"]
+        update-types: [minor, patch]
 
   - package-ecosystem: npm
     directories: [/worker, /frontend]
@@ -32,6 +34,7 @@ updates:
     groups:
       npm:
         patterns: ["*"]
+        update-types: [minor, patch]
 
   - package-ecosystem: github-actions
     directory: /
