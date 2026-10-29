@@ -11,7 +11,7 @@ export async function rebuild(hook: string | undefined, post: typeof fetch = fet
     try {
         response = await post(hook, { method: 'POST' });
     } catch {
-        // The fetch error may include the hook URL,  don't pass it on.
+        // The fetch error may include the hook URL, so don't pass it on.
         throw new Error('The deploy hook request failed before a response.');
     }
     // 429: a build is already queued or the hook is rate-limited, so one will run anyway.
