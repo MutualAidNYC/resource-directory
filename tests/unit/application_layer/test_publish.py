@@ -25,7 +25,7 @@ def test_publishes_pulled_services_in_pull_order(published: Published):
 def test_organizations_only_with_published_services(published: Published):
     assert list(published.organizations) == [ORG]
     assert QUIET_ORG not in published.organizations
-    assert published.service_counts == {ORG: 2}
+    assert len(published.services_of(ORG)) == 2
 
 
 def test_service_whose_organization_was_skipped_is_reported(published: Published):
@@ -42,7 +42,7 @@ def test_service_linked_to_two_organizations_belongs_to_the_first_in_its_list():
     published = select(dataset)
 
     assert published.organization_of[FRIDGE] == ORG
-    assert published.service_counts == {ORG: 2}  # QUIET_ORG doesn't count it
+    assert len(published.services_of(ORG)) == 2  # QUIET_ORG doesn't get it
     assert QUIET_ORG not in published.organizations  # so it has no published service
     fridge = list_services(published)[0]
     assert fridge.organization_id == hsds_id("organizations", ORG)

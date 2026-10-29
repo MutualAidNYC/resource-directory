@@ -92,7 +92,7 @@ def _airtable_records(dataset: Dataset, public_ids: set[str]) -> dict[str, tuple
     """Public id → (table, Airtable record id) for the given public ids."""
     found: dict[str, tuple[str, str]] = {}
     for table in get_args(Table):
-        for record in getattr(dataset, table).list():
+        for record in getattr(dataset, table).all():
             public_id = hsds_id(table, record.id)
             if public_id in public_ids:
                 found[public_id] = (table, record.id)

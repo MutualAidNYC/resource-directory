@@ -1,4 +1,5 @@
 import dataclasses
+from typing import get_args, get_type_hints
 
 import pytest
 
@@ -14,10 +15,22 @@ def test_table_names_match_airtable_toml():
     assert {f.name for f in dataclasses.fields(Dataset)} == set(load_config(DEFAULT_PATH).tables)
 
 
+@pytest.mark.parametrize("table", [f.name for f in dataclasses.fields(Dataset)])
+def test_model_fields_match_airtable_toml(table: str):
+    # A field the model doesn't define is pulled, then silently dropped.
+    model = get_args(get_type_hints(Dataset)[table])[0]
+    read = {
+        f.validation_alias if isinstance(f.validation_alias, str) else name
+        for name, f in model.model_fields.items()
+        if name != "id"
+    }
+    assert read == set(load_config(DEFAULT_PATH).tables[table].fields)
+
+
 def test_missing_tables_are_empty():
     dataset = Dataset.from_pull({"services": []})
 
-    assert dataset.languages.list() == []
+    assert dataset.languages.all() == []
     assert dataset.taxonomy_terms.get("recAnything000001") is None
 
 

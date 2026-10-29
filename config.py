@@ -1,43 +1,21 @@
-"""
-Configuration management for the HSDS API application.
-
-Loads settings from environment variables with sensible defaults.
-"""
-from pydantic_settings import BaseSettings, SettingsConfigDict
+"""The build's settings, read from the environment or `.env`."""
 from functools import lru_cache
+
+from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
 class Settings(BaseSettings):
-    """Application settings loaded from environment variables."""
-    
-    # Airtable Configuration
+    """Settings for build_dataset.py."""
+
     airtable_api_key: str
     airtable_base_id: str
 
     # Tables and fields the static build requests; relative paths are from
     # the repo root. See data_layer/airtable_config.py.
     airtable_config: str = "airtable.toml"
-    
-    # Sync Settings
-    sync_interval_minutes: int = 15
-    
-    # Server Settings
-    host: str = "127.0.0.1"
-    port: int = 8080
-    
-    # API Metadata. `profile` points at the UK profile for compliance checking.
-    api_version: str = "HSDS-UK-3.0"
-    api_profile: str = "https://github.com/OpenReferralUK/uk-profile/blob/main/docs/index.md"
-    
-    # Filtering Configuration
-    # Only show services with status matching this value (case-sensitive)
-    # Set to empty string to disable filtering
-    published_status_value: str = "Published"
-    
-    # If True, also hide organizations that have no published services
-    filter_orgs_without_published_services: bool = True
-    
-    model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8")
+
+    # extra="ignore": other variables in .env don't fail the build.
+    model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8", extra="ignore")
 
 
 @lru_cache

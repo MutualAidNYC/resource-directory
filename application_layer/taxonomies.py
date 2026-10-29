@@ -6,8 +6,7 @@ CATEGORY_TAXONOMIES names for its field and published as an HSDS attribute.
 The taxonomy names are Mutual Aid NYC's; for another base, change CATEGORY_TAXONOMIES.
 The site shows the same matched terms as plain names (`Terms.names`, used by map.py).
 
-Only terms used by published services are published. Ids here are Airtable
-record ids; public ids are made at output time (data_layer/ids.py).
+Only terms used by published services are published.
 """
 from __future__ import annotations
 
@@ -37,9 +36,9 @@ class Terms:
 
     @classmethod
     def from_dataset(cls, dataset: Dataset) -> Terms:
-        taxonomies = {t.id: t for t in dataset.taxonomies.list()}
-        by_name = {}
-        for term in dataset.taxonomy_terms.list():
+        taxonomies = {t.id: t for t in dataset.taxonomies.all()}
+        by_name: dict[tuple[str, str], TaxonomyTermResponse] = {}
+        for term in dataset.taxonomy_terms.all():
             taxonomy = taxonomies.get(term.taxonomy_id or "")
             if taxonomy:
                 by_name[(taxonomy.name, term.name)] = term
@@ -103,7 +102,7 @@ def unmatched_categories(published: Published, terms: Terms) -> dict[str, list[s
 def list_taxonomy_terms(published: Published, terms: Terms) -> list[TaxonomyTerm]:
     """Terms used by at least one published service, in pull order."""
     used = {t.id for s in published.services for t in terms.of(s)}
-    out = []
+    out: list[TaxonomyTerm] = []
     for (taxonomy_name, _), term in terms.by_name.items():
         if term.id not in used:
             continue

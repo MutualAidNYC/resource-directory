@@ -5,12 +5,12 @@ site-data/map.json (build_dataset.py). Categories are plain name lists, made fro
 the matched taxonomy terms (Terms.names), so they always agree with the API's
 `attributes`. Coordinates come only from locations linked through
 service_at_location; a service with none gets no pin (never its organization's
-address). Ids passed in are Airtable record ids; public ids are made here with
-data_layer.ids.hsds_id.
+address).
 """
 from __future__ import annotations
 
 from collections.abc import Callable
+from typing import Any
 
 from pydantic import BaseModel
 
@@ -20,7 +20,10 @@ from application_layer.taxonomies import Terms
 from data_layer.dataset import Dataset
 from data_layer.ids import hsds_id
 from models.airtable import LocationResponse, ServiceAreaResponse, ServiceResponse
-from utils.address import format_address
+
+# HSDS address fields in display order. address_2 carries floor / suite detail
+_DISPLAY_PARTS = ("address_1", "address_2", "city", "state_province", "postal_code")
+
 
 class MapService(BaseModel):
     id: str
@@ -54,7 +57,7 @@ AreaOrder = Callable[[str], tuple[int, float, str]]
 
 def map_data(dataset: Dataset, published: Published, terms: Terms) -> MapData:
     """Published services in pull order, and the values the map filters on."""
-    areas = {a.id: a for a in dataset.service_areas.list() if a.name}
+    areas = {a.id: a for a in dataset.service_areas.all() if a.name}
     orders = {a.name: a.order for a in areas.values()}
 
     def area_order(name: str) -> tuple[int, float, str]:
@@ -120,3 +123,22 @@ def _address(dataset: Dataset, place: LocationResponse) -> str | None:
     if not found:
         return None
     return format_address(found[0].model_dump()) or None
+
+
+def format_address(fields: dict[str, Any]) -> str:
+    """Join an Airtable address record's fields into one display string.
+
+    Missing and empty parts are skipped. Values are whitespace-normalised
+    because some address fields can be long-text fields in Airtable (in Mutual
+    Aid NYC's base: `city`, `state_province`, `postal_code`) and carry stray
+    newlines that would break a one-line address.
+    """
+    parts = []
+    for key in _DISPLAY_PARTS:
+        value = fields.get(key)
+        if value is None:
+            continue
+        text = " ".join(str(value).split())
+        if text:
+            parts.append(text)
+    return ", ".join(parts)
