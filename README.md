@@ -37,11 +37,11 @@ To change what's live: edit in Airtable. Changing a service's `status` rebuilds 
 
 - Node.js 22+ (`.nvmrc`)
 - To build the data from Airtable:
-  - Python 3.12+
+  - Python 3.14+
   - An Airtable base with the tables described in [Airtable base](#airtable-base)
   - An Airtable personal access token with only the `data.records:read` scope. Don't use a token with write access.
 
-To work on the site or the Worker only, you don't Python or a token: download production's data instead ([step 4](#4-get-the-data)).
+To work on the site or the Worker only, you don't need Python or a token: download production's data instead ([step 4](#4-get-the-data)).
 
 ## Quick Start (Local Development)
 
@@ -57,8 +57,8 @@ cd resource-directory
 Skip steps 2 and 3 if you'll download production's data in step 4.
 
 ```bash
-# Create and activate virtual environment (Python 3.12+)
-python3.12 -m venv venv
+# Create and activate virtual environment (Python 3.14+)
+python3.14 -m venv venv
 source venv/bin/activate  # Windows: venv\Scripts\activate
 
 # Install dependencies
@@ -238,7 +238,7 @@ The last two POST the Worker's deploy hook.
 | Root directory | `worker` |
 | Build command | `cd .. && bash worker/scripts/build.sh` |
 | Deploy command | `npx wrangler deploy` |
-| Build variables | `AIRTABLE_BASE_ID`, `NODE_VERSION` = `22`, `PYTHON_VERSION` = `3.12` |
+| Build variables | `AIRTABLE_BASE_ID`, `NODE_VERSION` = `22`, `PYTHON_VERSION` = `3.14.8` (the build image's own Python, so builds don't install one) |
 | Build secret | `AIRTABLE_API_KEY` (a build variable set to encrypted) |
 | Deploy hook | One, on `main`. Its URL is a secret |
 | Runtime secret | `DEPLOY_HOOK_URL`: the hook's URL, for the daily rebuild. |
@@ -255,7 +255,7 @@ Its settings differ from production's in:
 | Build command | `cd .. && bash worker/scripts/build.sh preview` |
 | Deploy command | `npx wrangler deploy --env preview` |
 | Preview command | `npx wrangler preview --env preview` |
-| Build variables | `PRODUCTION_URL`, `NODE_VERSION` = `22`. No Airtable token |
+| Build variables | `PRODUCTION_URL`, `NODE_VERSION` = `22`, set on both the **Production** and **Previews Base** tabs (preview builds use only Previews Base). No Airtable token |
 | Deploy hook, runtime secret | None |
 
 ### Deploying manually
