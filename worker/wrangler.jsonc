@@ -33,7 +33,7 @@
         // The preview Worker, resource-directory-preview: a Preview URL for every branch,
         // built from production's data (scripts/build.sh preview). Inherits the rest.
         "preview": {
-            "preview_urls": true,
+            "previews": {},
             // No daily rebuild: triggers are inherited otherwise.
             "triggers": { "crons": [] }
         }
