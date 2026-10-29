@@ -238,7 +238,7 @@ The last two POST the Worker's deploy hook.
 | Root directory | `worker` |
 | Build command | `cd .. && bash worker/scripts/build.sh` |
 | Deploy command | `npx wrangler deploy` |
-| Build variables | `AIRTABLE_BASE_ID`, `NODE_VERSION` = `22`, `PYTHON_VERSION` = `3.14.8` (the build image's own Python, so builds don't install one) |
+| Build variables | `AIRTABLE_BASE_ID`, `NODE_VERSION` = `22` |
 | Build secret | `AIRTABLE_API_KEY` (a build variable set to encrypted) |
 | Deploy hook | One, on `main`. Its URL is a secret |
 | Runtime secret | `DEPLOY_HOOK_URL`: the hook's URL, for the daily rebuild. |
