@@ -231,7 +231,7 @@ The last two POST the Worker's deploy hook.
 
 | Setting | Value |
 |---------|-------|
-| Branch | `main`; builds for other branches off (they must not build with the Airtable token) |
+| Branch | `main`; Enable Preview Builds off (other branches must not build with the Airtable token) |
 | Root directory | `worker` |
 | Build command | `cd .. && bash worker/scripts/build.sh` |
 | Deploy command | `npx wrangler deploy` |
@@ -243,16 +243,18 @@ The Airtable automation's setup is at the top of `worker/scripts/airtable-rebuil
 
 ### Previews
 
-A second Worker, `resource-directory-preview`, gives every branch a Preview URL. It has no Airtable token, so it builds from production's data: previews show changes to the site and the Worker, not to `build_dataset.py`.
+A second Worker, `resource-directory-preview`, gives every branch a Preview URL ([Worker Previews](https://developers.cloudflare.com/workers/previews/)), and Cloudflare comments it on the branch's PR. It has no Airtable token, so it builds from production's data: previews show changes to the site and the Worker, not to `build_dataset.py`. Builds of `main` deploy a copy of production to it.
 
 Its settings differ from production's in:
 
 | Setting | Value |
 |---------|-------|
-| Branch | builds for other branches on |
+| Branch | `main`; Enable Preview Builds on |
 | Build command | `cd .. && bash worker/scripts/build.sh preview` |
-| Deploy commands | `npx wrangler deploy --env preview`; other branches: `npx wrangler versions upload --env preview` |
+| Deploy command | `npx wrangler deploy --env preview` |
+| Preview command | `npx wrangler preview --env preview` |
 | Build variables | `PRODUCTION_URL`, `NODE_VERSION` = `22`. No Airtable token |
+| Deploy hook, runtime secret | None |
 
 ### Deploying manually
 
