@@ -34,6 +34,8 @@
         // built from production's data (scripts/build.sh preview). Inherits the rest.
         "preview": {
             "previews": {},
+            // Overrides the top-level false; otherwise each deploy turns Preview URLs off.
+            "preview_urls": true,
             // No daily rebuild: triggers are inherited otherwise.
             "triggers": { "crons": [] }
         }
