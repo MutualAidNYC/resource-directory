@@ -243,6 +243,8 @@ The last two POST the Worker's deploy hook.
 | Deploy hook | One, on `main`. Its URL is a secret |
 | Runtime secret | `DEPLOY_HOOK_URL`: the hook's URL, for the daily rebuild. |
 
+Builds use the Python in `.python-version`. Keep it at the [build image's](https://developers.cloudflare.com/workers/ci-cd/builds/build-image/) own version, or each build spends minutes installing one.
+
 ### Previews
 
 A second Worker, `resource-directory-preview`, gives every branch a Preview URL ([Worker Previews](https://developers.cloudflare.com/workers/previews/)), and Cloudflare comments it on the branch's PR. It has no Airtable token, so it builds from production's data: previews show changes to the site and the Worker, not to `build_dataset.py`. Builds of `main` deploy a copy of production to it.
