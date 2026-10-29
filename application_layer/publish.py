@@ -7,9 +7,6 @@ reaches the site or API unless it hangs off a published service:
   decides which services the pull returns, so it is the publish guard.
 - Organizations: only those linked from a published service. Organizations the
   organizations `filter` in airtable.toml leaves out are never pulled, so they never appear.
-
-Ids here are Airtable record ids. Public ids are made at output time
-(data_layer/ids.py).
 """
 from __future__ import annotations
 
@@ -23,7 +20,6 @@ class Published:
     services: list[ServiceResponse]  # in pull order
     organizations: dict[str, OrganizationResponse]  # record id → organization, in pull order
     organization_of: dict[str, str]  # service record id → its organization's record id
-    service_counts: dict[str, int]  # organization record id → published services
     # Published services whose organizations the pull skipped: listed in the build report.
     without_organization: list[str] = field(default_factory=list)
 
@@ -38,9 +34,8 @@ class Published:
 
 def select(dataset: Dataset) -> Published:
     """Collect what to publish: the pulled services and the organizations they link to."""
-    services = dataset.services.list()
+    services = dataset.services.all()
     organization_of: dict[str, str] = {}
-    counts: dict[str, int] = {}
     without_organization: list[str] = []
     for service in services:
         # A service has one organization. If it links several, the first one in its own
@@ -52,7 +47,12 @@ def select(dataset: Dataset) -> Published:
             without_organization.append(service.id)
             continue
         organization_of[service.id] = organization
-        counts[organization] = counts.get(organization, 0) + 1
 
-    organizations = {o.id: o for o in dataset.organizations.list() if o.id in counts}
-    return Published(services, organizations, organization_of, counts, without_organization)
+    linked = set(organization_of.values())
+    organizations = {o.id: o for o in dataset.organizations.all() if o.id in linked}
+    return Published(
+        services=services,
+        organizations=organizations,
+        organization_of=organization_of,
+        without_organization=without_organization,
+    )

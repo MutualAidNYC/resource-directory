@@ -33,14 +33,15 @@ flowchart LR
 
 To change what's live: edit in Airtable. Changing a service's `status` rebuilds the site; other edits go live with the daily rebuild (see [Deployment](#deployment)). To run everything locally, see [Quick Start](#quick-start-local-development).
 
-`main.py` and the folders it uses (`routes/`, `airtable/` and others) are an old server that nothing uses. They will be removed in November 2026.
-
 ## Prerequisites
 
-- Python 3.12+
 - Node.js 22+ (`.nvmrc`)
-- An Airtable base with the tables described in [Airtable base](#airtable-base)
-- An Airtable personal access token with only the `data.records:read` scope. Don't use a token with write access.
+- To build the data from Airtable:
+  - Python 3.12+
+  - An Airtable base with the tables described in [Airtable base](#airtable-base)
+  - An Airtable personal access token with only the `data.records:read` scope. Don't use a token with write access.
+
+To work on the site or the Worker only, you don't Python or a token: download production's data instead ([step 4](#4-get-the-data)).
 
 ## Quick Start (Local Development)
 
@@ -52,6 +53,8 @@ cd resource-directory
 ```
 
 ### 2. Set up Python
+
+Skip steps 2 and 3 if you'll download production's data in step 4.
 
 ```bash
 # Create and activate virtual environment (Python 3.12+)
@@ -87,7 +90,7 @@ With an Airtable token (steps 2–3), build it:
 python build_dataset.py   # repo root: pulls Airtable, writes dist/
 ```
 
-Without one, download what production last built, which won't show changes to the data build or newer Airtable edits.:
+Without a token, download what production last built. It won't show changes to the data build or newer Airtable edits:
 
 ```bash
 PRODUCTION_URL=https://… bash worker/scripts/fetch-data.sh   # writes dist/
@@ -145,7 +148,9 @@ It then prints a build report of what to fix in Airtable. The build fails only i
 
 ## Airtable base
 
-The build requests only the tables and fields listed in `airtable.toml`, so private/internal fields never leave Airtable. Field names must match Airtable exactly. A table's optional `filter` limits which records are pulled. Tables and fields left out are treated as empty.
+The build requests only the tables and fields listed in `airtable.toml`, so private/internal fields never leave Airtable. Field names must match Airtable exactly. A table's optional `filter` limits which records are pulled. Tables and fields left out are treated as empty. 
+
+To add a new field, also add it to its models in `models/airtable.py` and `models/hsds.py`, and set it in `application_layer/`.
 
 The base needs:
 
@@ -206,8 +211,6 @@ Errors return JSON: `{"error": "…"}`. A request gets a 400 if it uses an HSDS 
 | `AIRTABLE_BASE_ID` | *(required)* | Airtable base id (`appXXXXXXXXX`) |
 | `AIRTABLE_CONFIG` | `airtable.toml` | The tables and fields to read (see [Airtable base](#airtable-base)) |
 
-`SYNC_INTERVAL_MINUTES`, `HOST`, `PORT`, `PUBLISHED_STATUS_VALUE` and `FILTER_ORGS_WITHOUT_PUBLISHED_SERVICES` are read only by the old server and will be removed with it.
-
 ### Frontend settings
 
 | Variable | Default | Description |
@@ -235,11 +238,10 @@ The last two POST the Worker's deploy hook.
 | Root directory | `worker` |
 | Build command | `cd .. && bash worker/scripts/build.sh` |
 | Deploy command | `npx wrangler deploy` |
-| Build variables | `AIRTABLE_BASE_ID`, `NODE_VERSION` = `22`, `PYTHON_VERSION` = `3.12`, `AIRTABLE_API_KEY`, encrypted |
+| Build variables | `AIRTABLE_BASE_ID`, `NODE_VERSION` = `22`, `PYTHON_VERSION` = `3.12` |
+| Build secret | `AIRTABLE_API_KEY` (a build variable set to encrypted) |
 | Deploy hook | One, on `main`. Its URL is a secret |
 | Runtime secret | `DEPLOY_HOOK_URL`: the hook's URL, for the daily rebuild. |
-
-The Airtable automation's setup is at the top of `worker/scripts/airtable-rebuild.js`.
 
 ### Previews
 
@@ -270,7 +272,7 @@ npm run assemble                           # write dist/public/
 npx wrangler deploy
 ```
 
-`docker-compose.yml` and `Dockerfile` run only the old server and will be removed with it.
+The next build from Workers Builds replaces a manual deploy.
 
 ## Before launch
 
@@ -293,7 +295,7 @@ The build prints the reason:
 
 ### The site build fails with "Site data not found"
 
-The site reads `dist/api/download.json` and `dist/site-data/map.json`. Run `python build_dataset.py` from the repo root first.
+The site reads `dist/api/download.json` and `dist/site-data/map.json`. From the repo root, run `python build_dataset.py`, or download production's data with `worker/scripts/fetch-data.sh` (see [step 4](#4-get-the-data)).
 
 ### Map pins are missing
 

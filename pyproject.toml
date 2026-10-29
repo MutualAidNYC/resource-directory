@@ -6,37 +6,24 @@ pythonpath = ["."]
 markers = [
   "unit: fast tests, no network",
   "integration: reads the real Airtable base",
-  "smoke: calls the old FastAPI routes",
 ]
 
 [tool.pyright]
 pythonVersion = "3.12"
 typeCheckingMode = "standard"
-# The static build's code and unit tests. Skips the old FastAPI code, which is being removed.
+# The static build's code and unit tests.
 include = [
-    "models/airtable.py",
+    "models",
     "tests/unit",
     "data_layer",
     "application_layer",
     "static_build",
     "build_dataset.py",
 ]
-exclude = [
-    "**/__pycache__",
-    "application_layer/application_layer.py",
-    "data_layer/airtable.py",
-    "data_layer/dependency.py",
-    "tests/unit/application_layer/test_application_layer.py",
-    "tests/unit/scripts",
-]
+exclude = ["**/__pycache__"]
 
 [tool.coverage.run]
 source = ["data_layer", "application_layer", "static_build", "build_dataset"]
-omit = [
-    "application_layer/application_layer.py",
-    "data_layer/airtable.py",
-    "data_layer/dependency.py",
-]
 
 [tool.coverage.report]
 # A little under the current total (96%), so small changes don't fail it.
@@ -48,7 +35,7 @@ target-version = "py312"
 line-length = 100
 
 include = [
-    "models/airtable.py",
+    "models/**/*.py",
     "tests/**/*.py",
     "data_layer/**/*.py",
     "application_layer/**/*.py",

@@ -1,9 +1,7 @@
 """HSDS objects for linked records (phones, languages, locations, addresses).
 
 Shared by the service and organization outputs. Links to records missing from the
-pull (deleted, or in a table the config leaves out) are skipped. Ids passed in
-are Airtable record ids; every id written out goes through hsds_id with the
-airtable.toml table name.
+pull (deleted, or in a table the config leaves out) are skipped.
 """
 from __future__ import annotations
 

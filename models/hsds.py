@@ -1,16 +1,15 @@
 """
 The HSDS objects the API publishes (Human Services Data Specification).
 
-Fields without a value are left out of the output, not written as null:
+Each model has only the fields the build sets; the schemas in schemas/hsds/ list
+the rest. Fields without a value are left out of the output, not written as null:
 HSDS doesn't allow null.
 See: https://docs.openreferral.org/en/latest/hsds/schema_reference.html
 See: https://openreferraluk.org/developers/compliance
 """
-from datetime import datetime
-from typing import Optional, List
-from pydantic import BaseModel, Field, ConfigDict
-from enum import Enum
+from typing import Any
 
+from pydantic import BaseModel
 
 # The version of HSDS that the API's data follows. The build records it in
 # download.json and checks its files against this version's schemas in
@@ -18,374 +17,139 @@ from enum import Enum
 HSDS_VERSION = "3.3.1"
 
 
-class ORUKBaseModel(BaseModel):
-    """
-    Base model for ORUK compliance.
-    
-    UK Open Referral requires that optional fields without values
-    should be omitted rather than included with null values.
-    """
-    model_config = ConfigDict(
-        # Exclude None values from JSON serialization (ORUK requirement)
-        json_encoders={},
-    )
-    
-    def model_dump(self, **kwargs):
-        """Override to exclude None values by default."""
-        kwargs.setdefault('exclude_none', True)
+class HSDSModel(BaseModel):
+    """Base for the HSDS objects: model_dump() leaves out fields without a value."""
+
+    def model_dump(self, **kwargs: Any) -> dict[str, Any]:  # noqa: ANN401 (pydantic's own kwargs)
+        kwargs.setdefault("exclude_none", True)
         return super().model_dump(**kwargs)
-
-
-# ============================================================================
-# Enums
-# ============================================================================
-
-class ServiceStatus(str, Enum):
-    """Possible status values for a service."""
-    ACTIVE = "active"
-    INACTIVE = "inactive"
-    DEFUNCT = "defunct"
-    TEMPORARILY_CLOSED = "temporarily_closed"
-
-
-class LocationType(str, Enum):
-    """Type of location."""
-    PHYSICAL = "physical"
-    POSTAL = "postal"
-    VIRTUAL = "virtual"
-
-
-class AddressType(str, Enum):
-    """Type of address."""
-    PHYSICAL = "physical"
-    POSTAL = "postal"
-    VIRTUAL = "virtual"
-
-
-class PhoneType(str, Enum):
-    """Type of phone number."""
-    TEXT = "text"
-    VOICE = "voice"
-    FAX = "fax"
-    CELL = "cell"
-    VIDEO = "video"
-    PAGER = "pager"
-    TEXTPHONE = "textphone"
 
 
 # ============================================================================
 # Supporting Objects
 # ============================================================================
 
-class Phone(ORUKBaseModel):
+class Phone(HSDSModel):
     """Phone number details."""
     id: str
     number: str
-    extension: Optional[str] = None
-    type: Optional[str] = None
-    description: Optional[str] = None
 
 
-class Address(ORUKBaseModel):
+class Address(HSDSModel):
     """Address details."""
     id: str
-    address_1: Optional[str] = None
-    address_2: Optional[str] = None
-    city: Optional[str] = None
-    state_province: Optional[str] = None
-    postal_code: Optional[str] = None
-    region: Optional[str] = None
-    country: Optional[str] = None
-    address_type: Optional[str] = None
-    attention: Optional[str] = None
+    address_1: str | None = None
+    address_2: str | None = None
+    city: str | None = None
+    state_province: str | None = None
+    postal_code: str | None = None
+    country: str | None = None
+    address_type: str | None = None
 
 
-class Language(ORUKBaseModel):
+class Language(HSDSModel):
     """Language availability."""
     id: str
-    name: Optional[str] = None
-    code: Optional[str] = None
-    note: Optional[str] = None
+    name: str | None = None
+    code: str | None = None
 
 
-class Accessibility(ORUKBaseModel):
-    """Accessibility information for a location."""
-    id: str
-    description: Optional[str] = None
-    details: Optional[str] = None
-    url: Optional[str] = None
-
-
-class Schedule(ORUKBaseModel):
-    """Schedule information using RFC 5545 RRULE format."""
-    id: str
-    valid_from: Optional[str] = None
-    valid_to: Optional[str] = None
-    dtstart: Optional[str] = None
-    timezone: Optional[str] = None
-    until: Optional[str] = None
-    count: Optional[str] = None
-    wkst: Optional[str] = None
-    freq: Optional[str] = None
-    interval: Optional[str] = None
-    byday: Optional[str] = None
-    byweekno: Optional[str] = None
-    bymonthday: Optional[str] = None
-    byyearday: Optional[str] = None
-    description: Optional[str] = None
-    opens_at: Optional[str] = None
-    closes_at: Optional[str] = None
-    schedule_link: Optional[str] = None
-    attending_type: Optional[str] = None
-    notes: Optional[str] = None
-
-
-class ServiceArea(ORUKBaseModel):
-    """Geographic service area."""
-    id: str
-    name: Optional[str] = None
-    description: Optional[str] = None
-    extent: Optional[str] = None
-    extent_type: Optional[str] = None
-    uri: Optional[str] = None
-
-
-class Contact(ORUKBaseModel):
-    """Contact person details."""
-    id: str
-    name: Optional[str] = None
-    title: Optional[str] = None
-    department: Optional[str] = None
-    email: Optional[str] = None
-    phones: Optional[List[Phone]] = None
-
-
-class Funding(ORUKBaseModel):
-    """Funding source information."""
-    id: str
-    source: Optional[str] = None
-
-
-class RequiredDocument(ORUKBaseModel):
-    """Required document for a service."""
-    id: str
-    document: Optional[str] = None
-    uri: Optional[str] = None
-
-
-class CostOption(ORUKBaseModel):
-    """Cost/fee option for a service."""
-    id: str
-    option: Optional[str] = None
-    currency: Optional[str] = None
-    amount: Optional[float] = None
-    amount_description: Optional[str] = None
-    valid_from: Optional[str] = None
-    valid_to: Optional[str] = None
-
-
-class Program(ORUKBaseModel):
-    """Program grouping related services."""
-    id: str
-    name: str
-    alternate_name: Optional[str] = None
-    description: Optional[str] = None
-
-
-class OrganizationIdentifier(ORUKBaseModel):
-    """External identifier for an organization."""
-    id: str
-    identifier: Optional[str] = None
-    identifier_scheme: Optional[str] = None
-    identifier_type: Optional[str] = None
-
-
-class Url(ORUKBaseModel):
-    """Additional URL."""
-    id: str
-    label: Optional[str] = None
-    url: str
-
-
-class Attribute(ORUKBaseModel):
+class Attribute(HSDSModel):
     """Links a record (here: a service) to a taxonomy term."""
     id: str
     link_id: str  # id of the linked record
     taxonomy_term_id: str
     link_entity: str  # table of the linked record, e.g. "service"
-    link_type: Optional[str] = None
-    value: Optional[str] = None
-    label: Optional[str] = None
 
 
 # ============================================================================
 # Taxonomy Objects
 # ============================================================================
 
-class Taxonomy(ORUKBaseModel):
+class Taxonomy(HSDSModel):
     """Taxonomy classification system."""
     id: str
     name: str
-    description: Optional[str] = None
-    uri: Optional[str] = None
-    version: Optional[str] = None
+    description: str | None = None
 
 
-class TaxonomyTerm(ORUKBaseModel):
+class TaxonomyTerm(HSDSModel):
     """Term within a taxonomy."""
     id: str
     name: str
-    code: Optional[str] = None
-    description: Optional[str] = None
-    parent_id: Optional[str] = None
-    taxonomy: Optional[str] = None
-    taxonomy_id: Optional[str] = None
-    taxonomy_detail: Optional[Taxonomy] = None
-    language: Optional[str] = None
-    term_uri: Optional[str] = None
+    description: str | None = None
+    taxonomy: str | None = None
+    taxonomy_id: str | None = None
+    taxonomy_detail: Taxonomy | None = None
 
 
 # ============================================================================
 # Core Objects
 # ============================================================================
 
-class Location(ORUKBaseModel):
+class Location(HSDSModel):
     """Location where services are provided."""
     id: str
-    location_type: Optional[str] = None
-    url: Optional[str] = None
-    name: Optional[str] = None
-    alternate_name: Optional[str] = None
-    description: Optional[str] = None
-    transportation: Optional[str] = None
-    latitude: Optional[float] = None
-    longitude: Optional[float] = None
-    external_identifier: Optional[str] = None
-    external_identifier_type: Optional[str] = None
-    addresses: Optional[List[Address]] = None
-    phones: Optional[List[Phone]] = None
-    accessibility: Optional[List[Accessibility]] = None
-    languages: Optional[List[Language]] = None
-    schedules: Optional[List[Schedule]] = None
+    location_type: str | None = None
+    name: str | None = None
+    latitude: float | None = None
+    longitude: float | None = None
+    addresses: list[Address] | None = None
 
 
-class OrganizationSummary(ORUKBaseModel):
+class OrganizationSummary(HSDSModel):
     """Minimal organization info for embedding."""
     id: str
     name: str
-    alternate_name: Optional[str] = None
-    description: Optional[str] = None
-    email: Optional[str] = None
-    website: Optional[str] = None
-    logo: Optional[str] = None
-    uri: Optional[str] = None
+    description: str | None = None
+    email: str | None = None
+    website: str | None = None
 
 
-class Organization(ORUKBaseModel):
+class Organization(HSDSModel):
     """Full organization details."""
     id: str
     name: str
-    alternate_name: Optional[str] = None
-    description: Optional[str] = None
-    email: Optional[str] = None
-    website: Optional[str] = None
-    year_incorporated: Optional[int] = None
-    legal_status: Optional[str] = None
-    logo: Optional[str] = None
-    uri: Optional[str] = None
-    parent_organization_id: Optional[str] = None
-    phones: Optional[List[Phone]] = None
-    locations: Optional[List[Location]] = None
-    programs: Optional[List[Program]] = None
-    funding: Optional[List[Funding]] = None
-    organization_identifiers: Optional[List[OrganizationIdentifier]] = None
+    description: str | None = None
+    email: str | None = None
+    website: str | None = None
+    phones: list[Phone] | None = None
+    locations: list[Location] | None = None
 
 
-class ServiceAtLocation(ORUKBaseModel):
+class ServiceAtLocation(HSDSModel):
     """Link between a service and a location."""
     id: str
-    service_id: Optional[str] = None
-    location_id: Optional[str] = None
-    description: Optional[str] = None
-    location: Optional[Location] = None
-    phones: Optional[List[Phone]] = None
-    schedules: Optional[List[Schedule]] = None
-    service_areas: Optional[List[ServiceArea]] = None
+    service_id: str | None = None
+    location_id: str | None = None
+    location: Location | None = None
 
 
-class Service(ORUKBaseModel):
-    """Full service details - ORUK compliant with required fields."""
+class Service(HSDSModel):
+    """Full service details."""
     id: str
-    organization_id: Optional[str]  # None only if its organization isn't published
+    organization_id: str | None  # None only if its organization isn't published
     name: str
     status: str = "active"  # Required by HSDS
-    alternate_name: Optional[str] = None
-    description: Optional[str] = None
-    url: Optional[str] = None
-    email: Optional[str] = None
-    interpretation_services: Optional[str] = None
-    application_process: Optional[str] = None
-    fees_description: Optional[str] = None
-    accreditations: Optional[str] = None
-    eligibility_description: Optional[str] = None
-    minimum_age: Optional[int] = None
-    maximum_age: Optional[int] = None
-    assured_date: Optional[str] = None
-    alert: Optional[str] = None
-    last_modified: Optional[str] = None
-    
+    description: str | None = None
+    url: str | None = None
+    email: str | None = None
+    assured_date: str | None = None
+
     # Related objects
-    organization: Optional[OrganizationSummary] = None
-    program: Optional[Program] = None
-    phones: Optional[List[Phone]] = None
-    schedules: Optional[List[Schedule]] = None
-    service_areas: Optional[List[ServiceArea]] = None
-    service_at_locations: Optional[List[ServiceAtLocation]] = None
-    languages: Optional[List[Language]] = None
-    funding: Optional[List[Funding]] = None
-    cost_options: Optional[List[CostOption]] = None
-    required_documents: Optional[List[RequiredDocument]] = None
-    attributes: Optional[List[Attribute]] = None  # taxonomy terms (categories)
+    phones: list[Phone] | None = None
+    service_at_locations: list[ServiceAtLocation] | None = None
+    languages: list[Language] | None = None
+    attributes: list[Attribute] | None = None  # taxonomy terms (categories)
 
 
-class ServiceSummary(ORUKBaseModel):
-    """Minimal service info for list views - ORUK compliant."""
+class ServiceSummary(HSDSModel):
+    """Minimal service info for list views."""
     id: str
-    organization_id: Optional[str]  # None only if its organization isn't published
+    organization_id: str | None  # None only if its organization isn't published
     name: str
     status: str = "active"  # Required by HSDS
-    alternate_name: Optional[str] = None
-    description: Optional[str] = None
-    url: Optional[str] = None
-    email: Optional[str] = None
-    assured_date: Optional[str] = None
-    last_modified: Optional[str] = None
-    organization: Optional[OrganizationSummary] = None
-    program: Optional[Program] = None
-
-
-# ============================================================================
-# Pagination
-# ============================================================================
-
-class Page(ORUKBaseModel):
-    """Paginated response wrapper."""
-    total_items: int
-    total_pages: int
-    page_number: int
-    size: int
-    first_page: bool
-    last_page: bool
-    empty: bool
-    contents: List
-
-
-# ============================================================================
-# API Root Response
-# ============================================================================
-
-class ApiInfo(ORUKBaseModel):
-    """Root endpoint response - ORUK compliant."""
-    version: str = "HSDS-UK-3.0"
-    profile: str = "https://github.com/OpenReferralUK/uk-profile/blob/main/docs/index.md"
-    openapi_url: str = "/openapi.json"
+    description: str | None = None
+    url: str | None = None
+    email: str | None = None
+    assured_date: str | None = None

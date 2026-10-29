@@ -9,9 +9,9 @@ from __future__ import annotations
 
 from collections.abc import Mapping
 from dataclasses import dataclass
-from typing import Any
 
 from data_layer.data import InMemoryData
+from data_layer.loader import Record
 from models.airtable import (
     AddressResponse,
     LanguageResponse,
@@ -24,9 +24,6 @@ from models.airtable import (
     TaxonomyResponse,
     TaxonomyTermResponse,
 )
-
-Records = list[dict[str, Any]]  # loader output: [{"id": "rec…", "fields": {…}}]
-
 
 @dataclass(frozen=True)
 class Dataset:
@@ -42,10 +39,10 @@ class Dataset:
     taxonomy_terms: InMemoryData[TaxonomyTermResponse]
 
     @classmethod
-    def from_pull(cls, pull: Mapping[str, Records]) -> Dataset:
+    def from_pull(cls, pull: Mapping[str, list[Record]]) -> Dataset:
         """Build from load_tables() output. Unknown table names are ignored."""
 
-        def rows(name: str) -> Records:
+        def rows(name: str) -> list[Record]:
             return pull.get(name, [])
 
         return cls(

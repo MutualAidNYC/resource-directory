@@ -1,7 +1,6 @@
 """Services: the list and each service's detail.
 
-Built only from `Published` (see publish.py). Ids passed in are Airtable record
-ids; public ids are made here with data_layer.ids.hsds_id.
+Built only from `Published` (see publish.py).
 """
 from __future__ import annotations
 

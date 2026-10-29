@@ -1,8 +1,7 @@
 """Organizations: the list, each organization's detail and its services.
 
 An organization appears only if it has at least one published service (see
-publish.py). Ids passed in are Airtable record ids; public ids are made here
-with data_layer.ids.hsds_id.
+publish.py).
 """
 from __future__ import annotations
 

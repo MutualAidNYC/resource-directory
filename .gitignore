@@ -16,16 +16,8 @@ ENV/
 env/
 .venv/
 
-# Database
-*.db
-*.sqlite
-*.sqlite3
-
-# Data artifacts (regenerated on sync)
+# Local data (not versioned)
 /data/
-
-# Deployment (server-specific)
-deploy.sh
 
 # IDE
 .idea/
