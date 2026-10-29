@@ -79,10 +79,18 @@ AIRTABLE_BASE_ID=app...your_base_id
 
 The base id is the `app…` part of the base's URL: `https://airtable.com/appXXXXXXXXX/…`.
 
-### 4. Build the data
+### 4. Get the data
+
+With an Airtable token (steps 2–3), build it:
 
 ```bash
 python build_dataset.py   # repo root: pulls Airtable, writes dist/
+```
+
+Without one, download what production last built, which won't show changes to the data build or newer Airtable edits.:
+
+```bash
+PRODUCTION_URL=https://… bash worker/scripts/fetch-data.sh   # writes dist/
 ```
 
 ### 5. Run the site and the API
@@ -129,7 +137,9 @@ Dependabot opens update PRs every two months: one each for pip, npm and GitHub A
 
 - `dist/api/`: the API's static files (one per record, the full download, the OpenAPI description).
 - `dist/site-data/map.json`: the site's own data read when the site builds: map pins, category names, search fields, filter values.
-- `dist/worker-data/data.json`: the lists, filters and search fields the API's code serves. Built into that code; not deployed as a file.
+- `dist/worker-data/data.json`: the lists, filters and search fields the API's code serves. Built into that code.
+
+The deploy also publishes all three as `/build-data.tar.gz`, for [previews](#previews).
 
 It then prints a build report of what to fix in Airtable. The build fails only if the pull fails or finds no published services. The HSDS version is `HSDS_VERSION` in `models/hsds.py`. Its schemas, and how to upgrade, are in [`schemas/hsds/`](schemas/hsds/README.md).
 
@@ -230,6 +240,19 @@ The last two POST the Worker's deploy hook.
 | Runtime secret | `DEPLOY_HOOK_URL`: the hook's URL, for the daily rebuild. |
 
 The Airtable automation's setup is at the top of `worker/scripts/airtable-rebuild.js`.
+
+### Previews
+
+A second Worker, `resource-directory-preview`, gives every branch a Preview URL. It has no Airtable token, so it builds from production's data: previews show changes to the site and the Worker, not to `build_dataset.py`.
+
+Its settings differ from production's in:
+
+| Setting | Value |
+|---------|-------|
+| Branch | builds for other branches on |
+| Build command | `cd .. && bash worker/scripts/build.sh preview` |
+| Deploy commands | `npx wrangler deploy --env preview`; other branches: `npx wrangler versions upload --env preview` |
+| Build variables | `PRODUCTION_URL`, `NODE_VERSION` = `22`. No Airtable token |
 
 ### Deploying manually
 

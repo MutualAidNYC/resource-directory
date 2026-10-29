@@ -1,6 +1,6 @@
 """What the API's list routes (worker/) serve from memory: worker-data/data.json.
 
-Built into the list routes' code when it's deployed, never served as a file:
+Built into the list routes' code when it's deployed:
 - `info`: the `/api` response. The routes add `openapi_url` from the request.
 - `services`, `organizations`, `service_at_locations`, `taxonomies`, `taxonomy_terms`:
   every published record as an HSDS list item, unpaginated. The routes page and

@@ -12,10 +12,11 @@ Writes three things into the output folder (dist/ unless --out is given):
 - site-data/map.json: what the site needs besides the HSDS download: each
   service's map pin, category names, organization name and service areas, and the
   filter lists (application_layer/map.py). The site reads it when it builds.
-  Not deployed as a file.
 - worker-data/data.json: the lists, filters and search fields the API's list
-  routes serve (worker/; static_build/worker_data.py). Built into their code. Not
-  deployed as a file.
+  routes serve (worker/; static_build/worker_data.py). Built into their code.
+
+All three also go out in build-data.tar.gz (worker/scripts/assemble.mjs), which
+preview builds download instead of pulling Airtable.
 
 Then prints the build report. Exits 1 without writing anything if the pull
 fails or finds no published services, and exits 1 if the build crashes.
@@ -134,7 +135,7 @@ def write(files: list[ApiFile], out: Path) -> None:
 
 
 def write_site_data(data: MapData, out: Path) -> None:
-    """Write the site's own data (not HSDS, not deployed) to out/site-data/map.json."""
+    """Write the site's own data (not HSDS) to out/site-data/map.json."""
     _write_json(out / SITE_DATA, data.model_dump(mode="json", exclude_none=True))
 
 

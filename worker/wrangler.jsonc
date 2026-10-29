@@ -28,5 +28,14 @@
         "logs": { "enabled": true, "head_sampling_rate": 1, "invocation_logs": true, "persist": true },
         "traces": { "enabled": false, "head_sampling_rate": 1, "persist": true }
     },
-    "send_metrics": false
+    "send_metrics": false,
+    "env": {
+        // The preview Worker, resource-directory-preview: a Preview URL for every branch,
+        // built from production's data (scripts/build.sh preview). Inherits the rest.
+        "preview": {
+            "preview_urls": true,
+            // No daily rebuild: triggers are inherited otherwise.
+            "triggers": { "crons": [] }
+        }
+    }
 }
