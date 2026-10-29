@@ -7,11 +7,7 @@
  * - api/download.json: every published HSDS record (groups, resources, addresses…)
  * - site-data/map.json: the site's own data (map pins, category names, search fields)
  *
- * Where they're read from:
- * - Default: the build's output folder, `SITE_DATA_DIR` (default `../dist`).
- * - The committed copy in src/data/ when `SITE_DATA=snapshot` or on Vercel, which
- *   can't run the build. Refresh it with `npm run data:copy` after a build.
- *
+ * They're read from the build's output folder, `SITE_DATA_DIR` (default `../dist`).
  * Missing files fail the site build, so it never quietly builds from the wrong data.
  */
 import fs from 'node:fs';
@@ -26,13 +22,7 @@ import type {
     ServiceSummary,
 } from './types';
 
-const USE_COMMITTED_COPY = process.env.SITE_DATA === 'snapshot' || !!process.env.VERCEL;
-
 function dataFiles(): { download: string; map: string } {
-    if (USE_COMMITTED_COPY) {
-        const dir = path.join(process.cwd(), 'src', 'data');
-        return { download: path.join(dir, 'download.json'), map: path.join(dir, 'map.json') };
-    }
     const dir = path.resolve(process.cwd(), process.env.SITE_DATA_DIR || '../dist');
     return {
         download: path.join(dir, 'api', 'download.json'),
@@ -40,9 +30,8 @@ function dataFiles(): { download: string; map: string } {
     };
 }
 
-const HOW_TO_FIX = USE_COMMITTED_COPY
-    ? 'Refresh the committed copy: run `python build_dataset.py` from the repo root, then `npm run data:copy`.'
-    : 'Run `python build_dataset.py` from the repo root first, or set SITE_DATA=snapshot to use the committed copy.';
+const HOW_TO_FIX =
+    'From the repo root, run `python build_dataset.py`, or download production data with `bash worker/scripts/fetch-data.sh`.';
 
 function readJson<T>(file: string): T {
     let text: string;

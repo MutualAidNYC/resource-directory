@@ -9,8 +9,7 @@
     "dev": "next dev",
     "build": "next build",
     "lint": "eslint",
-    "typecheck": "next typegen && tsc --noEmit",
-    "data:copy": "node scripts/copy-data.mjs"
+    "typecheck": "next typegen && tsc --noEmit"
   },
   "dependencies": {
     "maplibre-gl": "^5.24.0",
