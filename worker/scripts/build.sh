@@ -1,12 +1,15 @@
 #!/usr/bin/env bash
-# The production Worker's Workers Builds build command, run from the repo root (so the
-# build image reads .python-version and .nvmrc):
-#   bash worker/scripts/build.sh
-# Needs AIRTABLE_API_KEY (a build secret) and AIRTABLE_BASE_ID (a build variable).
-# build_dataset.py fails without them, so a production build never ships without data.
+# Build command for the Workers in Workers Builds:
+#   production: cd .. && bash worker/scripts/build.sh          (needs AIRTABLE_API_KEY, AIRTABLE_BASE_ID)
+#   preview:    cd .. && bash worker/scripts/build.sh preview  (needs PRODUCTION_URL; no Airtable token)
+# Workers Builds installs worker/'s packages before running it.
 set -euo pipefail
 
-pip install -r requirements.txt
-python build_dataset.py
+if [[ "${1:-}" == preview ]]; then
+    bash worker/scripts/fetch-data.sh
+else
+    pip install -r requirements.txt
+    python build_dataset.py
+fi
 (cd frontend && npm ci && npm run build)
-(cd worker && npm ci && npm run assemble)
+(cd worker && npm run assemble)

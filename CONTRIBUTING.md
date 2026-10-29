@@ -18,7 +18,7 @@ Open an issue that describes the feature and who it helps.
 
 ## Contribute code
 
-1. Fork the repository, clone your fork, then follow the [Quick Start](README.md#quick-start) in the README.
+1. Fork the repository, clone your fork, then follow the [Quick Start](README.md#quick-start-local-development) in the README.
 2. In your fork, create a branch from `main`. Update your fork's `main` from MutualAidNYC/resource-directory first.
 3. Make your change, and update the README if it changes how something is set up or used.
 4. Run the checks for the parts you changed (see [Testing and CI](README.md#testing-and-ci)). If you changed `frontend/`, also run `npm run build`.

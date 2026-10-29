@@ -2,10 +2,9 @@
 
 Powers the Mutual Aid NYC Community Resources Library. A build pulls the directory's data from an [Airtable](https://airtable.com) base and turns it into a static website and a read-only [HSDS](https://docs.openreferral.org/) API.
 
-Follows the core Human Services Data Specification (HSDS) from the ([Open Referral Initiative](https://openreferral.org/)), and the build checks every record against HSDS's JSON Schemas.
+It follows the core Human Services Data Specification (HSDS) from the [Open Referral Initiative](https://openreferral.org/), and the build checks every record against HSDS's JSON Schemas.
 
-Note: The code and API use HSDS's terms "service" and "organization", while the the site uses "resource" and "group" to better align with the domain of mutual aid.
-
+Note: The code and API use HSDS's terms "service" and "organization", while the site uses "resource" and "group" to better align with the domain of mutual aid.
 
 ## How it works
 
@@ -80,10 +79,18 @@ AIRTABLE_BASE_ID=app...your_base_id
 
 The base id is the `app…` part of the base's URL: `https://airtable.com/appXXXXXXXXX/…`.
 
-### 4. Build the data
+### 4. Get the data
+
+With an Airtable token (steps 2–3), build it:
 
 ```bash
 python build_dataset.py   # repo root: pulls Airtable, writes dist/
+```
+
+Without one, download what production last built, which won't show changes to the data build or newer Airtable edits.:
+
+```bash
+PRODUCTION_URL=https://… bash worker/scripts/fetch-data.sh   # writes dist/
 ```
 
 ### 5. Run the site and the API
@@ -130,7 +137,9 @@ Dependabot opens update PRs every two months: one each for pip, npm and GitHub A
 
 - `dist/api/`: the API's static files (one per record, the full download, the OpenAPI description).
 - `dist/site-data/map.json`: the site's own data read when the site builds: map pins, category names, search fields, filter values.
-- `dist/worker-data/data.json`: the lists, filters and search fields the API's code serves. Built into that code; not deployed as a file.
+- `dist/worker-data/data.json`: the lists, filters and search fields the API's code serves. Built into that code.
+
+The deploy also publishes all three as `/build-data.tar.gz`, for [previews](#previews).
 
 It then prints a build report of what to fix in Airtable. The build fails only if the pull fails or finds no published services. The HSDS version is `HSDS_VERSION` in `models/hsds.py`. Its schemas, and how to upgrade, are in [`schemas/hsds/`](schemas/hsds/README.md).
 
@@ -213,8 +222,8 @@ Errors return JSON: `{"error": "…"}`. A request gets a 400 if it uses an HSDS 
 The site and the API deploy together to Cloudflare as one Worker, `resource-directory`. [Workers Builds](https://developers.cloudflare.com/workers/ci-cd/builds/) builds and deploys it when:
 
 - There is a commit to the `main` branch.
-- A service's `status` changes in Airtable: an automation runs `worker/scripts/airtable-rebuild.js`
-- Once a day with the Worker's Cron Trigger (`worker/src/rebuild.ts`)
+- A service's `status` changes in Airtable: an automation runs `worker/scripts/airtable-rebuild.js`.
+- Once a day, with the Worker's Cron Trigger (`worker/src/rebuild.ts`).
 
 The last two POST the Worker's deploy hook.
 
@@ -222,23 +231,40 @@ The last two POST the Worker's deploy hook.
 
 | Setting | Value |
 |---------|-------|
-| Root directory | the repo root |
-| Build command | `bash worker/scripts/build.sh` |
-| Deploy command | `cd worker && npx wrangler deploy` |
-| Build variables | `AIRTABLE_BASE_ID`; `AIRTABLE_API_KEY` as a secret |
-| Deploy hook | Settings → Builds → Deploy Hooks, on `main` |
-| Runtime secret | `DEPLOY_HOOK_URL`: the deploy hook URL (Settings → Variables and Secrets) |
+| Branch | `main`; builds for other branches off (they must not build with the Airtable token) |
+| Root directory | `worker` |
+| Build command | `cd .. && bash worker/scripts/build.sh` |
+| Deploy command | `npx wrangler deploy` |
+| Build variables | `AIRTABLE_BASE_ID`, `NODE_VERSION` = `22`, `PYTHON_VERSION` = `3.12`, `AIRTABLE_API_KEY`, encrypted |
+| Deploy hook | One, on `main`. Its URL is a secret |
+| Runtime secret | `DEPLOY_HOOK_URL`: the hook's URL, for the daily rebuild. |
 
-### Deploying by hand
+The Airtable automation's setup is at the top of `worker/scripts/airtable-rebuild.js`.
+
+### Previews
+
+A second Worker, `resource-directory-preview`, gives every branch a Preview URL. It has no Airtable token, so it builds from production's data: previews show changes to the site and the Worker, not to `build_dataset.py`.
+
+Its settings differ from production's in:
+
+| Setting | Value |
+|---------|-------|
+| Branch | builds for other branches on |
+| Build command | `cd .. && bash worker/scripts/build.sh preview` |
+| Deploy commands | `npx wrangler deploy --env preview`; other branches: `npx wrangler versions upload --env preview` |
+| Build variables | `PRODUCTION_URL`, `NODE_VERSION` = `22`. No Airtable token |
+
+### Deploying manually
 
 Needs a Cloudflare account with access to the Worker. From the repo root:
 
 ```bash
-python build_dataset.py              # pull Airtable, write dist/
-(cd frontend && npm run build)       # build the site
+python build_dataset.py                    # pull Airtable, write dist/
+(cd frontend && npm ci && npm run build)   # build the site
 cd worker
-npx wrangler login                   # once per machine
-npm run assemble                     # write dist/public/
+npm ci
+npx wrangler login                         # once per machine
+npm run assemble                           # write dist/public/
 npx wrangler deploy
 ```
 
