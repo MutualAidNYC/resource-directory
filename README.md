@@ -35,7 +35,7 @@ To change what's live: edit in Airtable. Changing a service's `status` rebuilds 
 
 ## Prerequisites
 
-- Node.js 22+ (`.nvmrc`)
+- Node.js 24+ (`.nvmrc`)
 - To build the data from Airtable:
   - Python 3.14+
   - An Airtable base with the tables described in [Airtable base](#airtable-base)
@@ -238,12 +238,12 @@ The last two POST the Worker's deploy hook.
 | Root directory | `worker` |
 | Build command | `cd .. && bash worker/scripts/build.sh` |
 | Deploy command | `npx wrangler deploy` |
-| Build variables | `AIRTABLE_BASE_ID`, `NODE_VERSION` = `22` |
+| Build variables | `AIRTABLE_BASE_ID` |
 | Build secret | `AIRTABLE_API_KEY` (a build variable set to encrypted) |
 | Deploy hook | One, on `main`. Its URL is a secret |
 | Runtime secret | `DEPLOY_HOOK_URL`: the hook's URL, for the daily rebuild. |
 
-Builds use the Python in `.python-version`. Keep it at the [build image's](https://developers.cloudflare.com/workers/ci-cd/builds/build-image/) own version, or each build spends minutes installing one.
+Builds use the Node and Python versions in `.nvmrc` and `.python-version`. Keep Python at the [build image's](https://developers.cloudflare.com/workers/ci-cd/builds/build-image/) own version, or each build spends minutes installing one.
 
 ### Previews
 
@@ -257,7 +257,7 @@ Its settings differ from production's in:
 | Build command | `cd .. && bash worker/scripts/build.sh preview` |
 | Deploy command | `npx wrangler deploy --env preview` |
 | Preview command | `npx wrangler preview --env preview` |
-| Build variables | `PRODUCTION_URL`, `NODE_VERSION` = `22`, set on both the **Production** and **Previews Base** tabs (preview builds use only Previews Base). No Airtable token |
+| Build variables | `PRODUCTION_URL`, set on both the **Production** and **Previews Base** tabs (preview builds use only Previews Base). No Airtable token |
 | Deploy hook, runtime secret | None |
 
 ### Deploying manually
