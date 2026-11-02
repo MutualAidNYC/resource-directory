@@ -1,6 +1,7 @@
 # Every two months, on the 1st: one PR of minor and patch updates for pip, one
 # for both npm folders, one for GitHub Actions. pip and npm major updates come
-# as separate PRs, so one breaking upgrade doesn't hold up the rest.
+# as separate PRs, so one breaking upgrade doesn't hold up the rest. Security
+# fixes come as one PR per ecosystem, when they're found.
 
 version: 2
 
@@ -13,13 +14,17 @@ updates:
     # Waits a week after a release, so a bad or hijacked release is usually pulled first.
     cooldown:
       default-days: 7
-    # Indirect dependencies too, so fixes to them aren't missed.
+    open-pull-requests-limit: 10
+    # Indirect dependencies too: pip-compile pins them, and they update cleanly as a group.
     allow:
       - dependency-type: all
     groups:
       python:
         patterns: ["*"]
         update-types: [minor, patch]
+      python-security:
+        applies-to: security-updates
+        patterns: ["*"]
 
   - package-ecosystem: npm
     directories: [/worker, /frontend]
@@ -28,13 +33,14 @@ updates:
       cronjob: "0 9 1 */2 *"
     cooldown:
       default-days: 7
-    # Indirect dependencies too, so fixes to them aren't missed.
-    allow:
-      - dependency-type: all
+    open-pull-requests-limit: 10
     groups:
       npm:
         patterns: ["*"]
         update-types: [minor, patch]
+      npm-security:
+        applies-to: security-updates
+        patterns: ["*"]
 
   - package-ecosystem: github-actions
     directory: /
