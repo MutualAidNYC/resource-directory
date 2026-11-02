@@ -1,8 +1,14 @@
 'use client';
 
-import { useEffect, useRef } from 'react';
-import maplibregl from 'maplibre-gl';
+import { useEffect, useRef, useState } from 'react';
+import * as maplibregl from 'maplibre-gl';
 import 'maplibre-gl/dist/maplibre-gl.css';
+
+// MapLibre runs its worker from a separate file; this lets Next.js bundle it
+// as a hashed asset.
+maplibregl.setWorkerUrl(
+    new URL('maplibre-gl/dist/maplibre-gl-worker.mjs', import.meta.url).toString(),
+);
 
 interface MapLocation {
     id: string;
@@ -54,6 +60,26 @@ function pinDataUrl(fill: string, stroke: string): string {
     return `data:image/svg+xml;charset=utf-8,${encodeURIComponent(svg)}`;
 }
 
+/** Escape text for the popup's HTML, which is built from Airtable data. */
+function escapeHtml(text: string): string {
+    return text
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+}
+
+/**
+ * MapLibre needs WebGL2. Without it the Map constructor throws, which would
+ * take the whole page down, so check first.
+ */
+function supportsWebGL2(): boolean {
+    const gl = document.createElement('canvas').getContext('webgl2');
+    gl?.getExtension('WEBGL_lose_context')?.loseContext();
+    return gl !== null;
+}
+
 /**
  * Build a GeoJSON FeatureCollection from locations.
  */
@@ -86,10 +112,11 @@ export default function MapView({ locations, highlightedId }: MapViewProps) {
     const mapContainer = useRef<HTMLDivElement>(null);
     const mapRef = useRef<maplibregl.Map | null>(null);
     const popupRef = useRef<maplibregl.Popup | null>(null);
+    const [canRender] = useState(supportsWebGL2);
 
     // Initialize map once
     useEffect(() => {
-        if (!mapContainer.current || mapRef.current) return;
+        if (!canRender || !mapContainer.current || mapRef.current) return;
 
         const bounds = new maplibregl.LngLatBounds();
         locations.forEach(loc => bounds.extend([loc.longitude, loc.latitude]));
@@ -172,7 +199,7 @@ export default function MapView({ locations, highlightedId }: MapViewProps) {
                 popupRef.current?.remove();
 
                 const linkHref = props.serviceId
-                    ? `/services/${props.serviceId}`
+                    ? `/services/${encodeURIComponent(props.serviceId)}`
                     : '/services';
                 const linkText = props.serviceId ? 'View resource details →' : 'Browse resources →';
 
@@ -180,9 +207,9 @@ export default function MapView({ locations, highlightedId }: MapViewProps) {
                     .setLngLat(coords)
                     .setHTML(`
                         <div class="popup-content">
-                            <h4 class="popup-title">${props.name}</h4>
+                            <h4 class="popup-title">${escapeHtml(props.name)}</h4>
                             ${props.orgName
-                            ? `<p class="popup-org">${props.orgName}</p>`
+                            ? `<p class="popup-org">${escapeHtml(props.orgName)}</p>`
                             : ''}
                             <a href="${linkHref}" class="popup-link">${linkText}</a>
                         </div>
@@ -211,7 +238,7 @@ export default function MapView({ locations, highlightedId }: MapViewProps) {
             map.remove();
             mapRef.current = null;
         };
-    }, [locations]);
+    }, [locations, canRender]);
 
     // React to highlight changes
     useEffect(() => {
@@ -257,6 +284,14 @@ export default function MapView({ locations, highlightedId }: MapViewProps) {
             duration: 800,
         });
     }, [highlightedId, locations]);
+
+    if (!canRender) {
+        return (
+            <div className="w-full h-full min-h-[400px] bg-[var(--section-alt)] flex items-center justify-center p-4 text-center">
+                <p className="text-[var(--muted)]">This browser can&apos;t show the map.</p>
+            </div>
+        );
+    }
 
     return (
         <div
