@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo, useCallback, useRef } from 'react';
+import { useState, useMemo, useCallback, useRef, useEffect, useEffectEvent } from 'react';
 import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { TagLink } from '@/components/ui/TagLink';
@@ -41,6 +41,7 @@ export default function MapPageClient({
 }: MapPageClientProps) {
     const searchParams = useSearchParams();
     const searchInputRef = useRef<HTMLInputElement>(null);
+    const filtersHeadingRef = useRef<HTMLHeadingElement>(null);
 
     // Initialize state from URL query params
     const [searchQuery, setSearchQuery] = useState<string>(
@@ -56,13 +57,14 @@ export default function MapPageClient({
         searchParams.get('area') || ''
     );
 
-    // Initialize user location from URL params (set by SearchBar location button)
-    const initLat = searchParams.get('lat');
-    const initLng = searchParams.get('lng');
-    const [userLocation, setUserLocation] = useState<{ lat: number; lng: number } | null>(
-        (initLat && initLng) ? { lat: parseFloat(initLat), lng: parseFloat(initLng) } : null
+    // Kept in memory only, never in the URL.
+    const [userLocation, setUserLocation] = useState<{ lat: number; lng: number } | null>(null);
+    // The home page's location button opens /services?near=1. This page renders only in the
+    // browser (useSearchParams under Suspense), so navigator is defined here.
+    const near = searchParams.get('near') === '1';
+    const [locationStatus, setLocationStatus] = useState<'idle' | 'loading' | 'error'>(
+        () => (!near ? 'idle' : navigator.geolocation ? 'loading' : 'error')
     );
-    const [locationStatus, setLocationStatus] = useState<'idle' | 'loading' | 'error'>('idle');
     const [hoveredServiceId, setHoveredServiceId] = useState<string | null>(null);
 
     // Responsive state
@@ -78,11 +80,6 @@ export default function MapPageClient({
         setSelectedNeed(searchParams.get('category') || '');
         setSelectedCommunity(searchParams.get('community') || '');
         setSelectedArea(searchParams.get('area') || '');
-        const lat = searchParams.get('lat');
-        const lng = searchParams.get('lng');
-        if (lat && lng) {
-            setUserLocation({ lat: parseFloat(lat), lng: parseFloat(lng) });
-        }
     }
 
     /**
@@ -127,14 +124,9 @@ export default function MapPageClient({
         syncUrl(searchQuery, selectedNeed, selectedCommunity, value);
     };
 
-    // Request browser geolocation
-    const handleUseLocation = () => {
-        if (!navigator.geolocation) {
-            setLocationStatus('error');
-            return;
-        }
-        setLocationStatus('loading');
-        navigator.geolocation.getCurrentPosition(
+    // Ask the browser for the location; state changes only in its callbacks.
+    const requestLocation = () => {
+        navigator.geolocation?.getCurrentPosition(
             (pos) => {
                 setUserLocation({ lat: pos.coords.latitude, lng: pos.coords.longitude });
                 setLocationStatus('idle');
@@ -143,6 +135,17 @@ export default function MapPageClient({
             { enableHighAccuracy: true, timeout: 10000 }
         );
     };
+
+    const handleUseLocation = () => {
+        setLocationStatus(navigator.geolocation ? 'loading' : 'error');
+        requestLocation();
+    };
+
+    // Status for near=1 is set in its initial state above, so the effect sets none.
+    const locateOnArrival = useEffectEvent(requestLocation);
+    useEffect(() => {
+        if (near) locateOnArrival();
+    }, [near]);
 
     const handleClearLocation = () => {
         setUserLocation(null);
@@ -217,21 +220,38 @@ export default function MapPageClient({
         });
     }, [filteredServices]);
 
+    const filterIcon = (
+        <svg className="w-4 h-4" aria-hidden="true" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" />
+        </svg>
+    );
+    const activeFilterDot = (searchQuery || selectedNeed || selectedCommunity || selectedArea) && (
+        <span className="w-2 h-2 rounded-full bg-[var(--highlight)] flex-shrink-0"></span>
+    );
+
+    // Jump up to the filters (instant: the page is long) and move focus to their heading.
+    const openFiltersFromFloat = () => {
+        setIsFiltersOpen(true);
+        requestAnimationFrame(() => {
+            const heading = filtersHeadingRef.current;
+            heading?.scrollIntoView({ behavior: 'instant', block: 'start' });
+            heading?.focus({ preventScroll: true });
+        });
+    };
+
+    // Fills the screen with its own scroll areas only when the screen is tall enough;
+    // on short screens and at high zoom the whole page scrolls instead (WCAG 1.4.10).
     return (
-        <div className="flex flex-col md:flex-row h-[calc(100vh-64px)] overflow-hidden">
+        <div className="flex flex-col md:flex-row [@media(min-height:32rem)]:h-[calc(100vh-64px)] [@media(min-height:32rem)]:overflow-hidden">
             {/* Mobile Action Bar */}
             <div className="md:hidden flex items-center justify-between p-3 bg-[var(--section-alt)] border-b border-[var(--card-border)] flex-shrink-0 z-10 w-full shadow-sm">
-                <button 
+                <button
                     onClick={() => setIsFiltersOpen(!isFiltersOpen)}
                     className="flex items-center gap-2 px-3 py-1.5 rounded-lg border border-[var(--card-border)] bg-[var(--card-bg)] text-sm font-medium text-[var(--foreground)]"
                 >
-                    <svg className="w-4 h-4" aria-hidden="true" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" />
-                    </svg>
+                    {filterIcon}
                     {isFiltersOpen ? 'Hide Filters' : 'Filters'}
-                    {(searchQuery || selectedNeed || selectedCommunity || selectedArea) && (
-                        <span className="w-2 h-2 rounded-full bg-[var(--highlight)] flex-shrink-0"></span>
-                    )}
+                    {activeFilterDot}
                 </button>
 
                 <div className="flex items-center bg-[var(--card-bg)] rounded-lg border border-[var(--card-border)] p-0.5">
@@ -250,9 +270,20 @@ export default function MapPageClient({
                 </div>
             </div>
 
+            {/* Short screens: the bar above scrolls away with the page, so a small Filters
+                button floats at the bottom right. It opens the filters and moves focus there. */}
+            <button
+                onClick={openFiltersFromFloat}
+                className="hidden [@media(width<48rem)_and_(height<32rem)]:flex fixed bottom-3 right-3 z-20 items-center gap-2 px-3 py-1.5 rounded-full border border-[var(--card-border)] bg-[var(--card-bg)] text-sm font-medium text-[var(--foreground)] shadow-lg"
+            >
+                {filterIcon}
+                Filters
+                {activeFilterDot}
+            </button>
+
             {/* Left Column: Filters */}
-            <div className={`${isFiltersOpen ? 'block' : 'hidden'} md:block w-full md:w-64 flex-shrink-0 bg-[var(--section-alt)] md:border-r border-b md:border-b-0 border-[var(--card-border)] p-4 overflow-y-auto scrollbar-thin`}>
-                <h2 className="text-lg font-semibold text-[var(--foreground)] mb-4">
+            <div className={`${isFiltersOpen ? 'block' : 'hidden'} md:block w-full md:w-64 min-h-0 md:flex-shrink-0 bg-[var(--section-alt)] md:border-r border-b md:border-b-0 border-[var(--card-border)] p-4 overflow-y-auto scrollbar-thin`}>
+                <h2 ref={filtersHeadingRef} tabIndex={-1} className="text-lg font-semibold text-[var(--foreground)] mb-4">
                     Filters
                 </h2>
 

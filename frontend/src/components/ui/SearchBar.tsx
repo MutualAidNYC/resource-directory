@@ -10,9 +10,8 @@ interface SearchBarProps {
 }
 
 /**
- * Reusable search bar with optional geolocation.
- * The location pin icon requests browser geolocation and passes
- * lat/lng to the map page so proximity sorting activates automatically.
+ * Reusable search bar. The location pin opens /services with `near=1`, which
+ * asks for the visitor's location there. Coordinates never go in the URL.
  */
 export function SearchBar({
     initialQuery = '',
@@ -20,17 +19,13 @@ export function SearchBar({
     placeholder = 'Search for services...'
 }: SearchBarProps) {
     const [query, setQuery] = useState(initialQuery);
-    const [locating, setLocating] = useState(false);
     const router = useRouter();
 
-    /** Build the /services URL with current query and optional lat/lng. */
-    const buildUrl = (q: string, coords?: { lat: number; lng: number }) => {
+    /** Build the /services URL with the current query and optional `near`. */
+    const buildUrl = (q: string, near = false) => {
         const params = new URLSearchParams();
         if (q.trim()) params.set('q', q.trim());
-        if (coords) {
-            params.set('lat', coords.lat.toFixed(6));
-            params.set('lng', coords.lng.toFixed(6));
-        }
+        if (near) params.set('near', '1');
         const qs = params.toString();
         return qs ? `/services?${qs}` : '/services';
     };
@@ -40,22 +35,7 @@ export function SearchBar({
         router.push(buildUrl(query));
     };
 
-    /** Get geolocation then navigate to map with lat/lng in URL. */
-    const handleLocationSearch = () => {
-        if (!navigator.geolocation) return;
-        setLocating(true);
-        navigator.geolocation.getCurrentPosition(
-            (pos) => {
-                setLocating(false);
-                router.push(buildUrl(query, {
-                    lat: pos.coords.latitude,
-                    lng: pos.coords.longitude,
-                }));
-            },
-            () => setLocating(false),
-            { enableHighAccuracy: true, timeout: 10000 }
-        );
-    };
+    const handleLocationSearch = () => router.push(buildUrl(query, true));
 
     const inputClasses = size === 'lg'
         ? 'h-14 text-lg pl-6 pr-28'
@@ -84,11 +64,11 @@ export function SearchBar({
                     <button
                         type="button"
                         onClick={handleLocationSearch}
-                        disabled={locating}
+                        aria-label="Search near my location"
                         title="Search near my location"
-                        className={`rounded-full p-2 text-[var(--muted)] hover:text-[var(--primary)] hover:bg-[var(--tag-coral-bg)] transition-colors disabled:opacity-50 ${locating ? 'animate-pulse' : ''}`}
+                        className="rounded-full p-2 text-[var(--muted)] hover:text-[var(--primary)] hover:bg-[var(--tag-coral-bg)] transition-colors"
                     >
-                        <svg className="w-5 h-5" aria-label="search by location" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <svg className="w-5 h-5" aria-hidden="true" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
                                 d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
