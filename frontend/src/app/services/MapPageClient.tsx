@@ -239,10 +239,11 @@ export default function MapPageClient({
         });
     };
 
-    // Fills the screen with its own scroll areas only when the screen is tall enough;
-    // on short screens and at high zoom the whole page scrolls instead (WCAG 1.4.10).
+    // Fills the screen with its own scroll areas when the screen is tall or wide. Only on
+    // narrow, short screens (high zoom) does the whole page scroll instead (WCAG 1.4.10);
+    // the floating Filters button below uses the same condition.
     return (
-        <div className="flex flex-col md:flex-row [@media(min-height:32rem)]:h-[calc(100vh-64px)] [@media(min-height:32rem)]:overflow-hidden">
+        <div className="flex flex-col md:flex-row md:h-[calc(100vh-64px)] md:overflow-hidden [@media(min-height:32rem)]:h-[calc(100vh-64px)] [@media(min-height:32rem)]:overflow-hidden">
             {/* Mobile Action Bar */}
             <div className="md:hidden flex items-center justify-between p-3 bg-[var(--section-alt)] border-b border-[var(--card-border)] flex-shrink-0 z-10 w-full shadow-sm">
                 <button
