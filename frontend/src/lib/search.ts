@@ -70,11 +70,15 @@ export function normalize(text: string): string {
         .trim();
 }
 
-/** The query's words, normalized, without stop words. */
+/** At most this many query words count: each one is checked against every record. */
+const MAX_QUERY_WORDS = 8;
+
+/** The query's distinct words, normalized, without stop words. */
 export function queryWords(query: string): string[] {
-    return normalize(query)
+    const words = normalize(query)
         .split(' ')
         .filter((w) => w.length > 0 && !STOP_WORDS.has(w));
+    return [...new Set(words)].slice(0, MAX_QUERY_WORDS);
 }
 
 export function search<T extends object>(
