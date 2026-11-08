@@ -18,10 +18,11 @@ export function Header() {
 
     return (
         <header className="w-full bg-[var(--nav-bg)]">
-            <div className="w-full px-[50px]">
+            {/* Wide margins only from md up: on phones they pushed the logo and menu button to the middle. */}
+            <div className="w-full px-4 md:px-[50px]">
 
                 {/* ── Header row */}
-                <div className="flex h-[80px] xl:h-[160px] items-center justify-between mx-[42.36px]">
+                <div className="flex h-[80px] xl:h-[160px] items-center justify-between md:mx-[42.36px]">
 
                     {/* Logo */}
                     <a href="https://mutualaid.nyc" className="flex items-center gap-3">
