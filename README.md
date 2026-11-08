@@ -35,7 +35,7 @@ To change what's live: edit in Airtable. Changing a service's `status` rebuilds 
 
 ## Prerequisites
 
-- Node.js 24+ (`.nvmrc`)
+- Node.js 26+ (`.nvmrc`)
 - To build the data from Airtable:
   - Python 3.14+
   - An Airtable base with the tables described in [Airtable base](#airtable-base)

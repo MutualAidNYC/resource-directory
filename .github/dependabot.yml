@@ -34,6 +34,10 @@ updates:
     cooldown:
       default-days: 7
     open-pull-requests-limit: 10
+    # @types/node majors follow .nvmrc: bump them by hand with the Node version.
+    ignore:
+      - dependency-name: "@types/node"
+        update-types: ["version-update:semver-major"]
     groups:
       npm:
         patterns: ["*"]
