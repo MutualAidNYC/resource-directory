@@ -102,6 +102,14 @@ function toGeoJSON(locations: MapLocation[]): GeoJSON.FeatureCollection {
     };
 }
 
+/** Zoom the map to show every location. */
+function fitToLocations(map: maplibregl.Map, locations: MapLocation[]) {
+    if (locations.length === 0) return;
+    const bounds = new maplibregl.LngLatBounds();
+    locations.forEach(loc => bounds.extend([loc.longitude, loc.latitude]));
+    map.fitBounds(bounds, { padding: 50, maxZoom: 14 });
+}
+
 /**
  * Interactive map using MapLibre GL with native symbol layers.
  *
@@ -112,21 +120,18 @@ export default function MapView({ locations, highlightedId }: MapViewProps) {
     const mapContainer = useRef<HTMLDivElement>(null);
     const mapRef = useRef<maplibregl.Map | null>(null);
     const popupRef = useRef<maplibregl.Popup | null>(null);
+    // The latest pins, for when the map finishes loading.
+    const locationsRef = useRef(locations);
     const [canRender] = useState(supportsWebGL2);
 
-    // Initialize map once
+    // Initialize map once; pin changes go through setData below, not a new map.
     useEffect(() => {
         if (!canRender || !mapContainer.current || mapRef.current) return;
-
-        const bounds = new maplibregl.LngLatBounds();
-        locations.forEach(loc => bounds.extend([loc.longitude, loc.latitude]));
 
         const map = new maplibregl.Map({
             container: mapContainer.current,
             style: BASEMAP_STYLE_URL,
-            center: locations.length > 0
-                ? [bounds.getCenter().lng, bounds.getCenter().lat]
-                : [-74.006, 40.7128],
+            center: [-74.006, 40.7128],
             zoom: 10,
         });
 
@@ -137,10 +142,12 @@ export default function MapView({ locations, highlightedId }: MapViewProps) {
             // Load pin images into the map sprite
             const defaultImg = new Image();
             defaultImg.onload = () => {
+                if (mapRef.current !== map) return; // removed while loading
                 map.addImage('pin-default', defaultImg);
 
                 const hlImg = new Image();
                 hlImg.onload = () => {
+                    if (mapRef.current !== map) return;
                     map.addImage('pin-highlight', hlImg);
                     addLayers();
                 };
@@ -150,10 +157,8 @@ export default function MapView({ locations, highlightedId }: MapViewProps) {
         });
 
         function addLayers() {
-            const geojson = toGeoJSON(locations);
-
             // Main pins source
-            map.addSource('pins', { type: 'geojson', data: geojson });
+            map.addSource('pins', { type: 'geojson', data: toGeoJSON(locationsRef.current) });
 
             // Default pins layer
             map.addLayer({
@@ -227,10 +232,7 @@ export default function MapView({ locations, highlightedId }: MapViewProps) {
                 map.getCanvas().style.cursor = '';
             });
 
-            // Fit bounds after layers are added
-            if (locations.length > 0) {
-                map.fitBounds(bounds, { padding: 50, maxZoom: 14 });
-            }
+            fitToLocations(map, locationsRef.current);
         }
 
         return () => {
@@ -238,7 +240,19 @@ export default function MapView({ locations, highlightedId }: MapViewProps) {
             map.remove();
             mapRef.current = null;
         };
-    }, [locations, canRender]);
+    }, [canRender]);
+
+    // New pins (search or filters): swap the data and zoom to fit, keeping the map.
+    useEffect(() => {
+        locationsRef.current = locations;
+        const map = mapRef.current;
+        const pins = map?.getSource('pins') as maplibregl.GeoJSONSource | undefined;
+        if (!map || !pins) return; // not loaded yet: addLayers reads locationsRef
+        pins.setData(toGeoJSON(locations));
+        // Zoom once typing pauses, so the map doesn't jump and reload tiles on every letter.
+        const timer = setTimeout(() => fitToLocations(map, locations), 500);
+        return () => clearTimeout(timer);
+    }, [locations]);
 
     // React to highlight changes
     useEffect(() => {
@@ -259,11 +273,7 @@ export default function MapView({ locations, highlightedId }: MapViewProps) {
         const loc = locations.find(l => (l.serviceId || l.id) === highlightedId);
         if (!loc) {
             // No matching pin — reset view
-            const bounds = new maplibregl.LngLatBounds();
-            locations.forEach(l => bounds.extend([l.longitude, l.latitude]));
-            if (!bounds.isEmpty()) {
-                map.fitBounds(bounds, { padding: 50, maxZoom: 14, duration: 800 });
-            }
+            fitToLocations(map, locations);
             return;
         }
 
