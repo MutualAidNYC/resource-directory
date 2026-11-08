@@ -49,7 +49,7 @@ pydantic-core==2.50.2
     # via pydantic
 pydantic-settings==2.16.2
     # via -r requirements.in
-python-dateutil==3.0.0
+python-dateutil==4.0.0
     # via arrow
 python-dotenv==1.2.4
     # via pydantic-settings
@@ -69,9 +69,7 @@ rpds-py==2026.9.1
     #   jsonschema
     #   referencing
 six==1.17.0
-    # via
-    #   python-dateutil
-    #   rfc3339-validator
+    # via rfc3339-validator
 typing-extensions==4.16.0
     # via
     #   anyio
