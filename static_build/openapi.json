@@ -612,7 +612,7 @@
         "name": "search",
         "in": "query",
         "required": false,
-        "description": "Full text search.",
+        "description": "Full text search: records that contain every word (the first 8 different words count).",
         "schema": {
           "type": "string"
         }

@@ -185,7 +185,7 @@ A read-only [HSDS](https://docs.openreferral.org/en/latest/hsds/api_reference.ht
 | Parameter | Lists | Notes |
 |-----------|-------|-------|
 | `page`, `per_page` | all | 50 per page by default; at most 1,000 |
-| `search` | all | Search returns the records that contain every word you search for |
+| `search` | all | Search returns the records that contain every word you search for (the first 8 different words count) |
 | `organization_id` | services, service_at_locations | |
 | `taxonomy_term_id`, `taxonomy_id` | services, organizations, service_at_locations | For organizations: those with a matching service |
 | `taxonomy_id`, `parent_id`, `top_only` | taxonomy_terms | |

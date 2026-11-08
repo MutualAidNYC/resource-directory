@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
+import { queryWords } from '../../frontend/src/lib/search';
 import { lists, paginate } from '../src/lists';
 import { PER_PAGE_DEFAULT, type Query } from '../src/query';
 import { DATA, ID } from './fixture';
@@ -58,6 +59,13 @@ describe('services', () => {
         expect(ids(api.services(q({ search: 'food' })))).toEqual([ID.fridge, ID.pantry]);
         expect(ids(api.services(q({ search: 'housing' })))).toEqual([ID.legal]); // description
         expect(ids(api.services(q({ search: 'brooklyn' })))).toEqual([ID.pantry]); // service area
+    });
+
+    it('counts each search word once, and at most 8 (CPU per request)', () => {
+        expect(ids(api.services(q({ search: 'food '.repeat(100) })))).toEqual([ID.fridge, ID.pantry]);
+        expect(queryWords('one two two three four five six seven eight nine')).toEqual([
+            'one', 'two', 'three', 'four', 'five', 'six', 'seven', 'eight',
+        ]);
     });
 
     it('gives an empty list for a well-formed id that matches nothing', () => {
