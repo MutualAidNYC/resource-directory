@@ -49,11 +49,6 @@
                       "type": "string",
                       "description": "HSDS version of this API."
                     },
-                    "profile": {
-                      "type": "string",
-                      "format": "uri",
-                      "description": "URL of the information on the HSDS profile of this API."
-                    },
                     "openapi_url": {
                       "type": "string",
                       "format": "uri",
@@ -109,7 +104,7 @@
     },
     "/services": {
       "get": {
-        "description": "Retrieve fully nested service with all related data with id.",
+        "description": "Retrieve paginated listings of services that only have one-to-one fields in them.",
         "summary": "Retrieves paginated listings of services that only have one-to-one fields in them.",
         "operationId": "getPaginatedListOfServices",
         "tags": [
@@ -356,7 +351,7 @@
           "in": "path",
           "name": "id",
           "required": true,
-          "description": "The id of the service that the request is intended to retrieve.",
+          "description": "The id of the service at location that the request is intended to retrieve.",
           "schema": {
             "type": "string"
           }
@@ -522,7 +517,7 @@
             "name": "top_only",
             "in": "query",
             "required": false,
-            "description": "Only retrieve taxonomy terms that have not child terms.",
+            "description": "Only retrieve top-level taxonomy terms: those with no parent.",
             "schema": {
               "type": "boolean"
             }
@@ -531,7 +526,7 @@
             "name": "parent_id",
             "in": "query",
             "required": false,
-            "description": "Recieve taxonomy terms that have a parent with this id.",
+            "description": "Retrieve taxonomy terms that have a parent with this id.",
             "schema": {
               "type": "string"
             }
@@ -666,7 +661,7 @@
         "name": "organization_id",
         "in": "query",
         "required": false,
-        "description": "Search for services which contain services that that this organization provides.",
+        "description": "Search for records of services that this organization provides.",
         "schema": {
           "type": "string"
         }

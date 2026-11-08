@@ -25,13 +25,14 @@ function get(path: string, method = 'GET') {
 }
 
 describe('handle', () => {
-    it('answers /api and /api/ with the info and an absolute openapi_url', async () => {
+    it('answers /api and /api/ with the info and absolute openapi_url and data_guide', async () => {
         for (const path of ['/api', '/api/']) {
             const response = await get(path);
             expect(response.status).toBe(200);
             expect(await response.json()).toEqual({
                 ...DATA.info,
                 openapi_url: 'https://example.org/api/openapi.json',
+                data_guide: 'https://example.org/api-docs',
             });
         }
     });

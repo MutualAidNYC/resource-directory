@@ -2,7 +2,8 @@
  * The requests that reach code instead of a static file: `/api`, the five lists,
  * and anything with no file (a 404).
  *
- * - `/api` and `/api/`: the API info, with `openapi_url` from the request's origin.
+ * - `/api` and `/api/`: the API info, with `openapi_url` and `data_guide` (the site's
+ *   API docs page) from the request's origin.
  * - `/api/<list>`: an HSDS Page, or a 400 with `{"error": …}`.
  * - Other `/api/…`: a JSON 404. Elsewhere: the site's 404 page.
  * - GET and HEAD only (405 otherwise); OPTIONS answers CORS preflights.
@@ -48,7 +49,8 @@ export async function handle(request: Request, api: Api): Promise<Response> {
 
     const name = url.pathname.replace(/^\/api\/?/, '').replace(/\/$/, '');
     if (name === '') {
-        return json({ ...api.info, openapi_url: `${url.origin}/api/openapi.json` }, 200, head);
+        const links = { openapi_url: `${url.origin}/api/openapi.json`, data_guide: `${url.origin}/api-docs` };
+        return json({ ...api.info, ...links }, 200, head);
     }
     if (isListRoute(name)) {
         const parsed = parseQuery(name, url.searchParams);

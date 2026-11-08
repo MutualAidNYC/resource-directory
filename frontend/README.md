@@ -23,6 +23,8 @@ Setup and running the build are in the [root README](../README.md). This file co
 
 From `../dist` by default (`SITE_DATA_DIR` to change it). Missing files fail the build.
 
+The API docs page (`/api-docs`) is built from `../static_build/openapi.json` by `src/lib/openapi.ts`, not from `dist/`, so a branch's preview shows that branch's description. A response or parameter the page can't show fails the build.
+
 ## Search
 
 `src/lib/search.ts` is shared with the API: `worker/` imports it, so a change here also changes the API's `search`. After changing it, run `npm test` in `worker/` too.

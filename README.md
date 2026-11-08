@@ -168,11 +168,11 @@ The base needs:
 
 ## API
 
-A read-only [HSDS](https://docs.openreferral.org/en/latest/hsds/api_reference.html) API at `/api`.
+A read-only [HSDS](https://docs.openreferral.org/en/latest/hsds/api_reference.html) API at `/api`. Its docs are a site page, `/api-docs`, built from `static_build/openapi.json`: a change there shows on the page at the next build.
 
 | Endpoint | Served as | Returns |
 |----------|-----------|---------|
-| `/api` | code | API info: HSDS version, publisher, `openapi_url` |
+| `/api` | code | API info: HSDS version, publisher, `openapi_url`, `data_guide` (the docs page) |
 | `/api/services`, `/api/organizations`, `/api/service_at_locations`, `/api/taxonomies`, `/api/taxonomy_terms` | code | An HSDS list, paginated |
 | `/api/<list>/{id}` | static file | One record, fully nested |
 | `/api/download.json` | static file | Every published record |
