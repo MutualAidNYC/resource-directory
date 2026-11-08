@@ -16,9 +16,6 @@ ENV/
 env/
 .venv/
 
-# Local data (not versioned)
-/data/
-
 # IDE
 .idea/
 .vscode/
