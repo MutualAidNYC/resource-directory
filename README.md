@@ -144,7 +144,7 @@ Dependabot opens update PRs every two months: one each for pip, npm and GitHub A
 
 The deploy also publishes all three as `/build-data.tar.gz`, for [previews](#previews).
 
-It then prints a build report of what to fix in Airtable. The build fails only if the pull fails or finds no published services. The HSDS version is `HSDS_VERSION` in `models/hsds.py`. Its schemas, and how to upgrade, are in [`schemas/hsds/`](schemas/hsds/README.md).
+It then prints a build report of what to fix in Airtable. Production builds in the daily rebuild's hour also post the records to fix, each linked to Airtable, to `DIGEST_WEBHOOK_URL` (see [Workers Builds settings](#workers-builds-settings)). The build fails only if the pull fails or finds no published services. The HSDS version is `HSDS_VERSION` in `models/hsds.py`. Its schemas, and how to upgrade, are in [`schemas/hsds/`](schemas/hsds/README.md).
 
 ## Airtable base
 
@@ -241,7 +241,7 @@ A second Cron Trigger runs `worker/src/alerts.ts` every hour. It posts to Slack 
 | Build command | `cd .. && bash worker/scripts/build.sh` |
 | Deploy command | `npx wrangler deploy` |
 | Build variables | `AIRTABLE_BASE_ID` |
-| Build secret | `AIRTABLE_API_KEY` (a build variable set to encrypted) |
+| Build secrets | `AIRTABLE_API_KEY`, and `DIGEST_WEBHOOK_URL` (a Slack incoming webhook for the daily digest of records to fix). Each a build variable set to encrypted |
 | Deploy hook | One, on `main`. Its URL is a secret |
 | Runtime secrets | `DEPLOY_HOOK_URL`: the hook's URL, for the daily rebuild. For the hourly check: `ALERTS_WEBHOOK_URL` (a Slack incoming webhook), `ANALYTICS_API_TOKEN` (an API token that can only read account analytics) and `ACCOUNT_ID` |
 
