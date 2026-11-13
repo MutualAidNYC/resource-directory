@@ -18,14 +18,18 @@ Writes three things into the output folder (dist/ unless --out is given):
 All three also go out in build-data.tar.gz (worker/scripts/assemble.mjs), which
 preview builds download instead of pulling Airtable.
 
-Then prints the build report. Exits 1 without writing anything if the pull
-fails or finds no published services, and exits 1 if the build crashes.
+Then prints the build report. Production builds in the daily rebuild's hour
+also post its records to fix to DIGEST_WEBHOOK_URL (static_build/digest.py).
+Exits 1 without writing anything if the pull fails or finds no published
+services, and exits 1 if the build crashes.
 Schema problems go in the report, they don't fail the build.
 """
+
 from __future__ import annotations
 
 import argparse
 import json
+import os
 import shutil
 import sys
 import time
@@ -42,15 +46,17 @@ from config import get_settings
 from data_layer.airtable_config import REPO_ROOT, load_config
 from data_layer.dataset import Dataset
 from data_layer.loader import AirtableLoadError, load_tables
+from static_build.digest import digest, post
 from static_build.files import ApiFile, api_files
 from static_build.records import Records
-from static_build.report import build_report, render
+from static_build.report import Report, build_report, render
 from static_build.schema import SchemaProblem, SchemasNotInstalled, schema_problems
 from static_build.worker_data import worker_data
 
 DEFAULT_OUT = REPO_ROOT / "dist"
 SITE_DATA = Path("site-data") / "map.json"  # under the output folder; the site reads it
 WORKER_DATA = Path("worker-data") / "data.json"  # under the output folder, built into worker/
+DIGEST_HOUR = 10  # UTC: the daily rebuild's hour (worker/src/rebuild.ts)
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -102,6 +108,7 @@ def main(argv: list[str] | None = None) -> int:
         schema_note=note,
     )
     print(render(report))
+    send_digest(report, datetime.now(UTC))
     return 0
 
 
@@ -115,6 +122,27 @@ def pull_from_airtable() -> dict[str, list[dict[str, Any]]]:
         raise ValueError(f"missing or invalid settings: {missing}") from None
     config = load_config(settings.airtable_config)
     return load_tables(settings.airtable_api_key, settings.airtable_base_id, config)
+
+
+def send_digest(report: Report, now: datetime) -> None:
+    """Post the digest from production builds in the daily rebuild's hour: about once a day."""
+    # From the environment only, not .env, so local builds never post.
+    webhook = os.environ.get("DIGEST_WEBHOOK_URL")
+    # shortcut: a status change or push between 10:00 and 10:59 UTC posts again; store what
+    # was posted if repeats get noisy.
+    if not webhook or now.hour != DIGEST_HOUR:
+        return
+    # Never fatal: the files are written, and a failed build wouldn't deploy them.
+    try:
+        settings = get_settings()
+        tables = load_config(settings.airtable_config).tables
+        text = digest(report, settings.airtable_base_id, {n: t.id for n, t in tables.items()})
+        if text:
+            post(webhook, text)
+    except Exception as e:
+        # post()'s RuntimeErrors leave out the URL; other errors (a bad URL) might not.
+        why = e if isinstance(e, RuntimeError) else type(e).__name__
+        print(f"Digest not posted: {why}", file=sys.stderr)
 
 
 def write(files: list[ApiFile], out: Path) -> None:
@@ -146,9 +174,7 @@ def write_worker_data(data: dict[str, Any], out: Path) -> None:
 
 def _write_json(path: Path, data: dict[str, Any]) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text(
-        json.dumps(data, ensure_ascii=False, separators=(",", ":")), encoding="utf-8"
-    )
+    path.write_text(json.dumps(data, ensure_ascii=False, separators=(",", ":")), encoding="utf-8")
 
 
 def _parse(argv: list[str] | None) -> argparse.Namespace:

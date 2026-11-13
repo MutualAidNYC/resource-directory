@@ -1,9 +1,11 @@
 """The build report: what the build left out, couldn't match or found incomplete.
 
-Printed in the build log, for whoever keeps the data in Airtable. It never
-fails the build. It names records by Airtable record id (to find them in
-Airtable) and by name where they have one; it never holds contact details.
+Printed in the build log, for whoever keeps the data in Airtable, and posted
+once a day as the digest (static_build/digest.py). It never fails the build. It
+names records by Airtable record id (to find them in Airtable) and by name where
+they have one; it never holds contact details.
 """
+
 from __future__ import annotations
 
 from collections import Counter
@@ -19,6 +21,7 @@ from data_layer.ids import Table, hsds_id
 from models.hsds import HSDS_VERSION
 from static_build.files import ApiFile
 from static_build.schema import SchemaProblem
+
 
 @dataclass(frozen=True)
 class PartialLocation:
@@ -119,64 +122,79 @@ def partial_locations(dataset: Dataset, published: Published) -> list[PartialLoc
     return found
 
 
+SCHEMA_TITLE = f"Problems to fix in Airtable (HSDS {HSDS_VERSION} rules, not fatal)"
+
+# (table, Airtable record id, line): the record to fix, for a link, and how the report lists it.
+Item = tuple[str, str, str]
+
+
+def problems(report: Report) -> list[tuple[str, list[Item]]]:
+    """The report's sections that name records to fix in Airtable, in order, for the build
+    log (render) and the digest (static_build/digest.py). Leaves out the schema section when
+    the check didn't run."""
+    name = report.service_names
+
+    def service(i: str, more: str = "") -> Item:
+        return ("services", i, f"{i} ({name.get(i, '?')}){more}")
+
+    sections = [
+        (
+            "Records skipped (didn't fit their model)",
+            [(t, i, f"{t} {i}: {why}") for t, rows in report.skipped.items() for i, why in rows],
+        ),
+        (
+            "Published services with no published organization",
+            [service(i) for i in report.without_organization],
+        ),
+        (
+            "Published services with no service area",
+            [service(i) for i in report.without_service_area],
+        ),
+        (
+            "Category names that match no taxonomy term",
+            [service(i, f": {', '.join(n)}") for i, n in report.unmatched_categories.items()],
+        ),
+        (
+            "Published services' locations missing coordinates or an address",
+            [
+                (
+                    "locations",
+                    p.location,
+                    f"location {p.location} has no {p.missing} (service {p.service}, "
+                    f"{name.get(p.service, '?')})",
+                )
+                for p in report.partial_locations
+            ],
+        ),
+    ]
+    if not report.schema_note:
+        # Sorted, so each table's records are listed together.
+        schema = [_schema_item(p, report.airtable_records) for p in report.schema_problems]
+        sections.append((SCHEMA_TITLE, sorted(schema, key=lambda item: item[2])))
+    return sections
+
+
 def render(report: Report) -> str:
     """The report as text for the build log."""
-    name = report.service_names
-    lines = ["Build report"]
-
-    lines.append(
+    lines = [
+        "Build report",
         f"Pulled {sum(report.pulled.values())} records from Airtable in "
-        f"{report.pull_seconds:.1f} s: {_counts(report.pulled)}"
-    )
-    lines.append(f"Wrote {sum(report.written.values())} record files: {_counts(report.written)}")
-
-    skipped = [(t, i, why) for t, rows in report.skipped.items() for i, why in rows]
-    lines += _section(
-        "Records skipped (didn't fit their model)",
-        [f"{t} {i}: {why}" for t, i, why in skipped],
-    )
-    lines += _section(
-        "Published services with no published organization",
-        [f"{i} ({name.get(i, '?')})" for i in report.without_organization],
-    )
-    lines += _section(
-        "Published services with no service area",
-        [f"{i} ({name.get(i, '?')})" for i in report.without_service_area],
-    )
-    lines += _section(
-        "Category names that match no taxonomy term",
-        [
-            f"{i} ({name.get(i, '?')}): {', '.join(names)}"
-            for i, names in report.unmatched_categories.items()
-        ],
-    )
-    lines += _section(
-        "Published services' locations missing coordinates or an address",
-        [
-            f"location {p.location} has no {p.missing} (service {p.service}, "
-            f"{name.get(p.service, '?')})"
-            for p in report.partial_locations
-        ],
-    )
-
-    title = f"Problems to fix in Airtable (HSDS {HSDS_VERSION} rules, not fatal)"
+        f"{report.pull_seconds:.1f} s: {_counts(report.pulled)}",
+        f"Wrote {sum(report.written.values())} record files: {_counts(report.written)}",
+    ]
+    for title, items in problems(report):
+        lines += _section(title, [line for _, _, line in items])
     if report.schema_note:
-        lines += [f"{title}: not checked. {report.schema_note}"]
-    else:
-        # Sorted, so each table's records are listed together.
-        lines += _section(
-            title,
-            sorted(_schema_line(p, report.airtable_records) for p in report.schema_problems),
-        )
+        lines.append(f"{SCHEMA_TITLE}: not checked. {report.schema_note}")
     return "\n".join(lines)
 
 
-def _schema_line(problem: SchemaProblem, airtable: Mapping[str, tuple[str, str]]) -> str:
-    """e.g. "addresses recAbc… (in Community Hall): missing postal_code"."""
+def _schema_item(problem: SchemaProblem, airtable: Mapping[str, tuple[str, str]]) -> Item:
+    """Its line is e.g. "addresses recAbc… (in Community Hall): missing postal_code"."""
     # Something with no Airtable record of its own (an attribute) keeps its public id.
     table, record_id = airtable.get(problem.record_id, ("record", problem.record_id))
     label = f" ({problem.label})" if problem.label else ""
-    return f"{table} {record_id}{label}: {problem.problem}"
+    return (table, record_id, f"{table} {record_id}{label}: {problem.problem}")
 
 
 def _section(title: str, items: list[str]) -> list[str]:
