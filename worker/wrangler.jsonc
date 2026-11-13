@@ -23,9 +23,19 @@
         ]
     },
     // The daily rebuild (src/rebuild.ts), 10:07 UTC. Needs the DEPLOY_HOOK_URL secret.
-    "triggers": { "crons": ["7 10 * * *"] },
+    // Its hour is DIGEST_HOUR in build_dataset.py too: the Airtable digest posts from it.
+    // The hourly check (src/alerts.ts), at :17. Needs ALERTS_WEBHOOK_URL,
+    // ANALYTICS_API_TOKEN and ACCOUNT_ID. src/index.ts picks the job by these strings.
+    "triggers": { "crons": ["7 10 * * *", "17 * * * *"] },
+    // When this version was deployed: the hourly check reports a version over a day old.
+    "version_metadata": { "binding": "CF_VERSION_METADATA" },
     "observability": {
-        "logs": { "enabled": true, "head_sampling_rate": 1, "invocation_logs": true, "persist": true },
+        "logs": {
+            "enabled": true,
+            "head_sampling_rate": 1,
+            "invocation_logs": true,
+            "persist": true
+        },
         "traces": { "enabled": false, "head_sampling_rate": 1, "persist": true }
     },
     "send_metrics": false,
@@ -36,7 +46,7 @@
             "previews": {},
             // Overrides the top-level false; otherwise each deploy turns Preview URLs off.
             "preview_urls": true,
-            // No daily rebuild: triggers are inherited otherwise.
+            // No daily rebuild or hourly check: triggers are inherited otherwise.
             "triggers": { "crons": [] }
         }
     }

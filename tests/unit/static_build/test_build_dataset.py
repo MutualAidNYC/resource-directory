@@ -1,4 +1,5 @@
 """Smoke test: the whole build, with the sample pull standing in for Airtable."""
+
 import json
 from pathlib import Path
 from typing import Any, NoReturn
@@ -17,6 +18,7 @@ pytestmark = pytest.mark.unit
 def airtable_returns(monkeypatch: pytest.MonkeyPatch, tables: dict[str, Any]) -> None:
     """Make the build's Airtable pull return these tables instead of calling Airtable."""
     monkeypatch.setattr(build_dataset, "pull_from_airtable", lambda: tables)
+    monkeypatch.delenv("DIGEST_WEBHOOK_URL", raising=False)  # never post from a test
 
 
 def test_builds_from_one_pull(
