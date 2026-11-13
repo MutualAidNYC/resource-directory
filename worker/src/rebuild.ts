@@ -5,6 +5,9 @@
  * When the rebuild can't start it throws an error, and Cloudflare lists that day's run as
  * failed in the Worker's list of Cron runs.
  */
+
+/** Its Cron Trigger in wrangler.jsonc: 10:07 UTC. */
+export const DAILY_REBUILD = '7 10 * * *';
 export async function rebuild(hook: string | undefined, post: typeof fetch = fetch): Promise<void> {
     if (!hook) throw new Error('DEPLOY_HOOK_URL is not set: add it as a secret on the production Worker.');
     let response: Response;

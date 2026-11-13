@@ -230,6 +230,8 @@ The site and the API deploy together to Cloudflare as one Worker, `resource-dire
 
 The last two POST the Worker's deploy hook.
 
+A second Cron Trigger runs `worker/src/alerts.ts` every hour. It posts to Slack when runs of the Worker failed in the past hour, or when the Worker hasn't been deployed for over a day (the daily rebuild isn't landing, so the data may be out of date). It POSTs `{"text": "..."}`, Slack's incoming-webhook format, which can also be used with other messaging products.
+
 ### Workers Builds settings
 
 | Setting | Value |
@@ -241,7 +243,7 @@ The last two POST the Worker's deploy hook.
 | Build variables | `AIRTABLE_BASE_ID` |
 | Build secret | `AIRTABLE_API_KEY` (a build variable set to encrypted) |
 | Deploy hook | One, on `main`. Its URL is a secret |
-| Runtime secret | `DEPLOY_HOOK_URL`: the hook's URL, for the daily rebuild. |
+| Runtime secrets | `DEPLOY_HOOK_URL`: the hook's URL, for the daily rebuild. For the hourly check: `ALERTS_WEBHOOK_URL` (a Slack incoming webhook), `ANALYTICS_API_TOKEN` (an API token that can only read account analytics) and `ACCOUNT_ID` |
 
 Builds use the Node and Python versions in `.nvmrc` and `.python-version`. Keep Python at the [build image's](https://developers.cloudflare.com/workers/ci-cd/builds/build-image/) own version, or each build spends minutes installing one.
 
@@ -258,7 +260,7 @@ Its settings differ from production's in:
 | Deploy command | `npx wrangler deploy --env preview` |
 | Preview command | `npx wrangler preview --env preview` |
 | Build variables | `PRODUCTION_URL`, set on both the **Production** and **Previews Base** tabs (preview builds use only Previews Base). No Airtable token |
-| Deploy hook, runtime secret | None |
+| Deploy hook, runtime secrets, Cron Triggers | None |
 
 ### Deploying manually
 
