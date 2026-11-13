@@ -22,7 +22,6 @@ from models.hsds import HSDS_VERSION
 from static_build.files import ApiFile
 from static_build.schema import SchemaProblem
 
-
 @dataclass(frozen=True)
 class PartialLocation:
     """A published service's location missing coordinates, an address, or both.
