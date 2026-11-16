@@ -81,6 +81,7 @@ function json(
         status,
         headers: {
             'Content-Type': 'application/json; charset=utf-8',
+            'X-Content-Type-Options': 'nosniff',
             'Cache-Control': status === 200 ? 'public, max-age=300' : 'no-store',
             ...CORS,
             ...NOINDEX,
