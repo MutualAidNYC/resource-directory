@@ -8,9 +8,6 @@
 export interface Phone {
     id: string;
     number: string;
-    extension?: string;
-    type?: string;
-    description?: string;
 }
 
 export interface Address {

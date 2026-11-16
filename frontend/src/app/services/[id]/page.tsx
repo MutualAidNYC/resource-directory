@@ -355,16 +355,6 @@ export default async function ServiceDetailPage({ params }: ServiceDetailPagePro
                                             >
                                                 {phone.number}
                                             </a>
-                                            {phone.extension && (
-                                                <span className="text-sm border-l border-[var(--card-border)] ml-2 pl-2">
-                                                    ext {phone.extension}
-                                                </span>
-                                            )}
-                                            {phone.type && (
-                                                <span className="text-sm opacity-70 ml-2">
-                                                    ({phone.type})
-                                                </span>
-                                            )}
                                         </span>
                                     </div>
                                 ))}
