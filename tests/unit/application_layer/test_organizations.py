@@ -1,18 +1,12 @@
 import pytest
 
-from application_layer.organizations import (
-    list_organizations,
-    organization_detail,
-    organization_services,
-)
+from application_layer.organizations import list_organizations, organization_detail
 from application_layer.publish import Published, select
 from data_layer.dataset import Dataset
 from data_layer.ids import hsds_id
 from tests.unit.application_layer.sample_pull import (
     ADDRESS,
-    FRIDGE,
     HALL,
-    HOTLINE,
     ORG,
     PHONE_ORG,
     QUIET_ORG,
@@ -58,14 +52,3 @@ def test_detail(dataset: Dataset, published: Published):
     assert location.addresses is not None
     assert [a.id for a in location.addresses] == [hsds_id("addresses", ADDRESS)]
     assert record_ids_in(out.model_dump()) == []
-
-
-def test_organization_services(published: Published):
-    services = organization_services(ORG, published)
-
-    assert [s.id for s in services] == [hsds_id("services", FRIDGE), hsds_id("services", HOTLINE)]
-    assert {s.organization_id for s in services} == {hsds_id("organizations", ORG)}
-
-
-def test_unpublished_organization_has_no_services(published: Published):
-    assert organization_services(QUIET_ORG, published) == []

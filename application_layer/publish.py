@@ -29,10 +29,6 @@ class Published:
         """The service's published organization, or None if it has none."""
         return self.organizations.get(self.organization_of.get(service.id, ""))
 
-    def services_of(self, organization_id: str) -> list[ServiceResponse]:
-        """The organization's published services, in pull order."""
-        return [s for s in self.services if self.organization_of.get(s.id) == organization_id]
-
 
 def select(dataset: Dataset) -> Published:
     """Collect what to publish: the pulled services and the organizations they link to."""
