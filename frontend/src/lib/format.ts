@@ -9,6 +9,7 @@ export function formatAddress(address: Address): string {
         address.state_province,
         address.postal_code,
     ]
+        .map((part) => part?.replace(/\s+/g, ' ').trim())
         .filter(Boolean)
         .join(', ');
 }
