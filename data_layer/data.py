@@ -14,9 +14,9 @@ class InMemoryData[T]:
     output time (data_layer/ids.py).
     """
 
-    def __init__(self, data: dict[str, T]):
+    def __init__(self, data: dict[str, T], skipped: list[tuple[str, str]]):
         self.data = data
-        self.skipped: list[tuple[str, str]] = []
+        self.skipped = skipped  # (record id, reason) for records that didn't fit the model
 
     @classmethod
     def from_records(
@@ -42,9 +42,7 @@ class InMemoryData[T]:
                     for err in e.errors(include_url=False, include_input=False)
                 )
                 skipped.append((record_id, reason))
-        table = cls(data)
-        table.skipped = skipped
-        return table
+        return cls(data, skipped)
 
     def all(self) -> list[T]:
         """Every record, in pull order."""
