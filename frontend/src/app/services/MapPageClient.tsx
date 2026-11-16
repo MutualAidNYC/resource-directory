@@ -3,6 +3,7 @@
 import { useState, useMemo, useCallback, useRef, useEffect, useEffectEvent } from 'react';
 import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
+import { MapContainer } from '@/components/map/MapContainer';
 import { TagLink } from '@/components/ui/TagLink';
 import { externalHref } from '@/lib/format';
 import { search, SERVICE_FIELDS } from '@/lib/search';
@@ -190,9 +191,8 @@ export default function MapPageClient({
                 name: s.name,
                 latitude: s.latitude!,
                 longitude: s.longitude!,
-                serviceName: s.name,
-                serviceId: s.id,
                 orgName: s.organization_name,
+                href: `/services/${s.id}`,
             }));
 
         // Add jitter for overlapping coordinates (exact matches)
@@ -501,7 +501,7 @@ export default function MapPageClient({
                 className={`${viewMode === 'map' ? 'block' : 'hidden'} md:block flex-1 relative h-full min-w-0 p-2 md:p-2`}
             >
                 <div className="w-full h-full rounded-xl overflow-hidden shadow-lg border border-[var(--card-border)]">
-                    <MapViewDynamic locations={mapLocations} highlightedId={hoveredServiceId} />
+                    <MapContainer locations={mapLocations} highlightedId={hoveredServiceId} />
                 </div>
             </div>
         </div>
@@ -698,17 +698,3 @@ function ResourceCard({
         </div>
     );
 }
-
-/**
- * Dynamic map component (lazy loaded)
- */
-import dynamic from 'next/dynamic';
-
-const MapViewDynamic = dynamic(() => import('@/components/map/MapView'), {
-    ssr: false,
-    loading: () => (
-        <div className="w-full h-full bg-[var(--section-alt)] flex items-center justify-center">
-            <div className="text-[var(--muted)]">Loading map...</div>
-        </div>
-    ),
-});

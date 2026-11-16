@@ -3,7 +3,7 @@ import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { getMapService, getOrganization, getService, serviceIds } from '@/lib/data';
 import { externalHref, formatAddress } from '@/lib/format';
-import ServiceLocationMap from './ServiceLocationMap';
+import { MapContainer } from '@/components/map/MapContainer';
 import { TagLink } from '@/components/ui/TagLink';
 
 interface ServiceDetailPageProps {
@@ -218,11 +218,18 @@ export default async function ServiceDetailPage({ params }: ServiceDetailPagePro
                         {/* Map Card - show if service has geocoded coordinates */}
                         {mapCoords && (
                             <div className="rounded-xl border border-[var(--card-border)] bg-[var(--card-bg)] overflow-hidden">
-                                <ServiceLocationMap
-                                    latitude={mapCoords.latitude}
-                                    longitude={mapCoords.longitude}
-                                    name={mapCoords.name}
-                                />
+                                <div className="rounded-xl overflow-hidden border border-[var(--card-border)] h-64">
+                                    <MapContainer
+                                        locations={[
+                                            {
+                                                id: service.id,
+                                                name: mapCoords.name,
+                                                latitude: mapCoords.latitude,
+                                                longitude: mapCoords.longitude,
+                                            },
+                                        ]}
+                                    />
+                                </div>
                                 {mapCoords.address && (
                                     <div className="p-4 border-t border-[var(--card-border)]">
                                         <p className="text-sm text-[var(--foreground)] mb-2">

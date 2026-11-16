@@ -10,14 +10,17 @@ maplibregl.setWorkerUrl(
     new URL('maplibre-gl/dist/maplibre-gl-worker.mjs', import.meta.url).toString(),
 );
 
-interface MapLocation {
+/** One pin. Every map on the site passes these (via MapContainer). */
+export interface MapLocation {
     id: string;
+    /** The popup's title. */
     name: string;
     latitude: number;
     longitude: number;
-    serviceName?: string;
-    serviceId?: string;
+    /** The popup's second line: the resource's group. */
     orgName?: string;
+    /** The popup links here; no link without it. */
+    href?: string;
 }
 
 interface MapViewProps {
@@ -92,10 +95,10 @@ function toGeoJSON(locations: MapLocation[]): GeoJSON.FeatureCollection {
                 coordinates: [loc.longitude, loc.latitude],
             },
             properties: {
-                id: loc.serviceId || loc.id,
-                name: loc.serviceName || loc.name,
-                serviceId: loc.serviceId || '',
-                orgName: loc.orgName || '',
+                id: loc.id,
+                name: loc.name,
+                orgName: loc.orgName ?? '',
+                href: loc.href ?? '',
             },
         })),
     };
@@ -205,11 +208,6 @@ export default function MapView({ locations, highlightedId }: MapViewProps) {
                 // Remove existing popup
                 popupRef.current?.remove();
 
-                const linkHref = props.serviceId
-                    ? `/services/${encodeURIComponent(props.serviceId)}`
-                    : '/services';
-                const linkText = props.serviceId ? 'View resource details →' : 'Browse resources →';
-
                 const popup = new maplibregl.Popup({ offset: [0, -PIN_H] })
                     .setLngLat(coords)
                     .setHTML(
@@ -221,7 +219,11 @@ export default function MapView({ locations, highlightedId }: MapViewProps) {
                                     ? `<p class="popup-org">${escapeHtml(props.orgName)}</p>`
                                     : ''
                             }
-                            <a href="${linkHref}" class="popup-link">${linkText}</a>
+                            ${
+                                props.href
+                                    ? `<a href="${escapeHtml(props.href)}" class="popup-link">View resource details →</a>`
+                                    : ''
+                            }
                         </div>
                     `,
                     )
@@ -278,7 +280,7 @@ export default function MapView({ locations, highlightedId }: MapViewProps) {
         }
 
         // Find the highlighted location
-        const loc = locations.find((l) => (l.serviceId || l.id) === highlightedId);
+        const loc = locations.find((l) => l.id === highlightedId);
         if (!loc) {
             // No matching pin — reset view
             fitToLocations(map, locations);
@@ -292,7 +294,7 @@ export default function MapView({ locations, highlightedId }: MapViewProps) {
                 {
                     type: 'Feature',
                     geometry: { type: 'Point', coordinates: [loc.longitude, loc.latitude] },
-                    properties: { id: loc.serviceId || loc.id, name: loc.serviceName || loc.name },
+                    properties: { id: loc.id, name: loc.name },
                 },
             ],
         });

@@ -4,7 +4,8 @@ import { notFound } from 'next/navigation';
 import { getMapData, getOrganization, organizationIds, servicesOf } from '@/lib/data';
 import { externalHref, formatAddress } from '@/lib/format';
 import { ServiceCard } from '@/components/services/ServiceCard';
-import OrgLocationsMap from './OrgLocationsMap';
+import { MapContainer } from '@/components/map/MapContainer';
+import type { MapLocation } from '@/components/map/MapView';
 
 interface OrganizationDetailPageProps {
     params: Promise<{ id: string }>;
@@ -30,16 +31,6 @@ export async function generateMetadata({ params }: OrganizationDetailPageProps):
     };
 }
 
-interface MapPin {
-    id: string;
-    name: string;
-    latitude: number;
-    longitude: number;
-    serviceName: string;
-    serviceId: string;
-    address?: string;
-}
-
 /**
  * Group detail page showing group info and its resources.
  * Two-column layout: Left (info + resources), Right (multi-pin map)
@@ -59,36 +50,27 @@ export default async function OrganizationDetailPage({ params }: OrganizationDet
 
     // Pins: the group's resources that have one on the main map.
     const serviceIds = new Set(relatedServices.map((s) => s.id));
-    let mapLocations: MapPin[] = getMapData()
+    let mapLocations: MapLocation[] = getMapData()
         .services.filter((s) => serviceIds.has(s.id) && s.latitude && s.longitude)
         .map((s) => ({
             id: s.id,
-            name: s.address || s.name,
+            name: s.name,
             latitude: s.latitude!,
             longitude: s.longitude!,
-            serviceName: s.name,
-            serviceId: s.id,
-            address: s.address,
+            href: `/services/${s.id}`,
         }));
     let mapLocationLabel = 'Resource Locations';
 
     // Fallback: if none of its resources has a pin, pin the group's own locations.
-    // Only their address records: never the location's name as an address.
     if (mapLocations.length === 0 && organization.locations?.length) {
         mapLocations = organization.locations
             .filter((loc) => loc.latitude && loc.longitude)
-            .map((loc) => {
-                const address = loc.addresses?.[0] ? formatAddress(loc.addresses[0]) : undefined;
-                return {
-                    id: loc.id,
-                    name: address || organization.name,
-                    latitude: loc.latitude!,
-                    longitude: loc.longitude!,
-                    serviceName: organization.name,
-                    serviceId: '',
-                    address,
-                };
-            });
+            .map((loc) => ({
+                id: loc.id,
+                name: organization.name,
+                latitude: loc.latitude!,
+                longitude: loc.longitude!,
+            }));
         // Pins came from the group's address, not a specific resource
         mapLocationLabel = 'Group Locations';
     }
@@ -177,7 +159,9 @@ export default async function OrganizationDetailPage({ params }: OrganizationDet
                                         {mapLocationLabel} ({mapLocations.length})
                                     </h3>
                                 </div>
-                                <OrgLocationsMap locations={mapLocations} />
+                                <div className="h-[300px]">
+                                    <MapContainer locations={mapLocations} />
+                                </div>
                             </div>
                         ) : (
                             <div className="rounded-xl border border-[var(--card-border)] bg-[var(--section-alt)] p-8 text-center">
