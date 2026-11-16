@@ -1,10 +1,10 @@
-import { Metadata } from "next";
-import Link from "next/link";
-import { notFound } from "next/navigation";
-import { getMapData, getOrganization, organizationIds, servicesOf } from "@/lib/data";
-import { externalHref, formatAddress } from "@/lib/format";
-import { ServiceCard } from "@/components/services/ServiceCard";
-import OrgLocationsMap from "./OrgLocationsMap";
+import { Metadata } from 'next';
+import Link from 'next/link';
+import { notFound } from 'next/navigation';
+import { getMapData, getOrganization, organizationIds, servicesOf } from '@/lib/data';
+import { externalHref, formatAddress } from '@/lib/format';
+import { ServiceCard } from '@/components/services/ServiceCard';
+import OrgLocationsMap from './OrgLocationsMap';
 
 interface OrganizationDetailPageProps {
     params: Promise<{ id: string }>;
@@ -23,7 +23,7 @@ export function generateStaticParams() {
 export async function generateMetadata({ params }: OrganizationDetailPageProps): Promise<Metadata> {
     const { id } = await params;
     const organization = getOrganization(id);
-    if (!organization) return { title: "Group Not Found" };
+    if (!organization) return { title: 'Group Not Found' };
     return {
         title: organization.name,
         description: organization.description || `Resources provided by ${organization.name}`,
@@ -70,7 +70,7 @@ export default async function OrganizationDetailPage({ params }: OrganizationDet
             serviceId: s.id,
             address: s.address,
         }));
-    let mapLocationLabel = "Resource Locations";
+    let mapLocationLabel = 'Resource Locations';
 
     // Fallback: if none of its resources has a pin, pin the group's own locations.
     // Only their address records: never the location's name as an address.
@@ -85,12 +85,12 @@ export default async function OrganizationDetailPage({ params }: OrganizationDet
                     latitude: loc.latitude!,
                     longitude: loc.longitude!,
                     serviceName: organization.name,
-                    serviceId: "",
+                    serviceId: '',
                     address,
                 };
             });
         // Pins came from the group's address, not a specific resource
-        mapLocationLabel = "Group Locations";
+        mapLocationLabel = 'Group Locations';
     }
 
     return (
@@ -105,7 +105,10 @@ export default async function OrganizationDetailPage({ params }: OrganizationDet
                     </li>
                     <span>/</span>
                     <li>
-                        <Link href="/organizations" className="hover:text-[var(--foreground)] hover:underline">
+                        <Link
+                            href="/organizations"
+                            className="hover:text-[var(--foreground)] hover:underline"
+                        >
                             Groups
                         </Link>
                     </li>
@@ -178,15 +181,27 @@ export default async function OrganizationDetailPage({ params }: OrganizationDet
                             </div>
                         ) : (
                             <div className="rounded-xl border border-[var(--card-border)] bg-[var(--section-alt)] p-8 text-center">
-                                <svg className="w-12 h-12 mx-auto text-[var(--muted)] mb-3" aria-hidden="true" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
-                                        d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
-                                        d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                                <svg
+                                    className="w-12 h-12 mx-auto text-[var(--muted)] mb-3"
+                                    aria-hidden="true"
+                                    fill="none"
+                                    stroke="currentColor"
+                                    viewBox="0 0 24 24"
+                                >
+                                    <path
+                                        strokeLinecap="round"
+                                        strokeLinejoin="round"
+                                        strokeWidth={2}
+                                        d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"
+                                    />
+                                    <path
+                                        strokeLinecap="round"
+                                        strokeLinejoin="round"
+                                        strokeWidth={2}
+                                        d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"
+                                    />
                                 </svg>
-                                <p className="text-[var(--muted)]">
-                                    No location data available
-                                </p>
+                                <p className="text-[var(--muted)]">No location data available</p>
                             </div>
                         )}
 
@@ -204,9 +219,19 @@ export default async function OrganizationDetailPage({ params }: OrganizationDet
                                         rel="noopener noreferrer"
                                         className="flex items-center gap-3 text-[var(--primary)] hover:text-[var(--primary-hover)]"
                                     >
-                                        <svg className="w-5 h-5 shrink-0" aria-hidden="true" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
-                                                d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
+                                        <svg
+                                            className="w-5 h-5 shrink-0"
+                                            aria-hidden="true"
+                                            fill="none"
+                                            stroke="currentColor"
+                                            viewBox="0 0 24 24"
+                                        >
+                                            <path
+                                                strokeLinecap="round"
+                                                strokeLinejoin="round"
+                                                strokeWidth={2}
+                                                d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"
+                                            />
                                         </svg>
                                         <span className="truncate">Visit Website</span>
                                     </a>
@@ -217,23 +242,54 @@ export default async function OrganizationDetailPage({ params }: OrganizationDet
                                         href={`mailto:${organization.email}`}
                                         className="flex items-center gap-3 text-[var(--foreground)] hover:text-[var(--primary)]"
                                     >
-                                        <svg className="w-5 h-5 shrink-0" role="img" aria-label="email" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
-                                                d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                                        <svg
+                                            className="w-5 h-5 shrink-0"
+                                            role="img"
+                                            aria-label="email"
+                                            fill="none"
+                                            stroke="currentColor"
+                                            viewBox="0 0 24 24"
+                                        >
+                                            <path
+                                                strokeLinecap="round"
+                                                strokeLinejoin="round"
+                                                strokeWidth={2}
+                                                d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"
+                                            />
                                         </svg>
                                         <span className="truncate">{organization.email}</span>
                                     </a>
                                 )}
 
                                 {addresses.map((address) => (
-                                    <div key={address.id} className="flex items-start gap-3 text-[var(--foreground)]">
-                                        <svg className="w-5 h-5 shrink-0 mt-0.5" role="img" aria-label="address" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
-                                                d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
-                                                d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                                    <div
+                                        key={address.id}
+                                        className="flex items-start gap-3 text-[var(--foreground)]"
+                                    >
+                                        <svg
+                                            className="w-5 h-5 shrink-0 mt-0.5"
+                                            role="img"
+                                            aria-label="address"
+                                            fill="none"
+                                            stroke="currentColor"
+                                            viewBox="0 0 24 24"
+                                        >
+                                            <path
+                                                strokeLinecap="round"
+                                                strokeLinejoin="round"
+                                                strokeWidth={2}
+                                                d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"
+                                            />
+                                            <path
+                                                strokeLinecap="round"
+                                                strokeLinejoin="round"
+                                                strokeWidth={2}
+                                                d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"
+                                            />
                                         </svg>
-                                        <address className="not-italic">{formatAddress(address)}</address>
+                                        <address className="not-italic">
+                                            {formatAddress(address)}
+                                        </address>
                                     </div>
                                 ))}
 
@@ -246,12 +302,20 @@ export default async function OrganizationDetailPage({ params }: OrganizationDet
                         </div>
 
                         {/* Back Button */}
-                        <Link
-                            href="/organizations"
-                            className="btn btn-secondary w-full gap-2"
-                        >
-                            <svg className="w-4 h-4" aria-hidden="true" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                        <Link href="/organizations" className="btn btn-secondary w-full gap-2">
+                            <svg
+                                className="w-4 h-4"
+                                aria-hidden="true"
+                                fill="none"
+                                stroke="currentColor"
+                                viewBox="0 0 24 24"
+                            >
+                                <path
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                    strokeWidth={2}
+                                    d="M15 19l-7-7 7-7"
+                                />
                             </svg>
                             Back to Groups
                         </Link>

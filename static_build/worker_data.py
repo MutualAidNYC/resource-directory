@@ -10,6 +10,7 @@ Built into the list routes' code when it's deployed:
 - `service_search`: each service's fields from the site's map data, so API search
   finds what the site's search finds.
 """
+
 from __future__ import annotations
 
 from typing import Any

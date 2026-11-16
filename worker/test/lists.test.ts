@@ -37,7 +37,10 @@ describe('paginate', () => {
     });
 
     it('gives one empty page for an empty list', () => {
-        expect(paginate([], { page: 1, perPage: 2 })).toMatchObject({ total_pages: 1, empty: true });
+        expect(paginate([], { page: 1, perPage: 2 })).toMatchObject({
+            total_pages: 1,
+            empty: true,
+        });
     });
 });
 
@@ -62,9 +65,19 @@ describe('services', () => {
     });
 
     it('counts each search word once, and at most 8 (CPU per request)', () => {
-        expect(ids(api.services(q({ search: 'food '.repeat(100) })))).toEqual([ID.fridge, ID.pantry]);
+        expect(ids(api.services(q({ search: 'food '.repeat(100) })))).toEqual([
+            ID.fridge,
+            ID.pantry,
+        ]);
         expect(queryWords('one two two three four five six seven eight nine')).toEqual([
-            'one', 'two', 'three', 'four', 'five', 'six', 'seven', 'eight',
+            'one',
+            'two',
+            'three',
+            'four',
+            'five',
+            'six',
+            'seven',
+            'eight',
         ]);
     });
 

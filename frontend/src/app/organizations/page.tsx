@@ -1,11 +1,11 @@
-import { Suspense } from "react";
-import { Metadata } from "next";
-import { listOrganizations } from "@/lib/data";
-import OrganizationsPageClient, { OrganizationGrid } from "./OrganizationsPageClient";
+import { Suspense } from 'react';
+import { Metadata } from 'next';
+import { listOrganizations } from '@/lib/data';
+import OrganizationsPageClient, { OrganizationGrid } from './OrganizationsPageClient';
 
 export const metadata: Metadata = {
-    title: "Groups",
-    description: "Browse groups providing community resources.",
+    title: 'Groups',
+    description: 'Browse groups providing community resources.',
 };
 
 /**

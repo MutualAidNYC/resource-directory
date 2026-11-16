@@ -8,12 +8,14 @@ reaches the site or API unless it hangs off a published service:
 - Organizations: only those linked from a published service. Organizations the
   organizations `filter` in airtable.toml leaves out are never pulled, so they never appear.
 """
+
 from __future__ import annotations
 
 from dataclasses import dataclass, field
 
 from data_layer.dataset import Dataset
 from models.airtable import OrganizationResponse, ServiceResponse
+
 
 @dataclass(frozen=True)
 class Published:

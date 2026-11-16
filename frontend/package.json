@@ -9,6 +9,8 @@
     "dev": "next dev",
     "build": "next build",
     "lint": "eslint",
+    "format": "prettier --write src",
+    "format:check": "prettier --check src",
     "typecheck": "next typegen && tsc --noEmit"
   },
   "dependencies": {
@@ -24,6 +26,7 @@
     "@types/react-dom": "^19",
     "eslint": "^10",
     "eslint-config-next": "16.4.3",
+    "prettier": "3.10.1",
     "tailwindcss": "^4",
     "typescript": "^5"
   }

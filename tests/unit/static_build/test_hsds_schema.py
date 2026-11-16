@@ -1,4 +1,5 @@
 """The schema check, against the vendored HSDS schemas (python -m static_build.fetch_schemas)."""
+
 import json
 from pathlib import Path
 

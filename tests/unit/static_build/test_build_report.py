@@ -71,9 +71,7 @@ def test_location_without_coordinates_or_address_is_reported():
 
     report = report_for(raw)
 
-    assert report.partial_locations == [
-        PartialLocation(FRIDGE, HALL, "coordinates or address")
-    ]
+    assert report.partial_locations == [PartialLocation(FRIDGE, HALL, "coordinates or address")]
     assert f"location {HALL} has no coordinates or address (service {FRIDGE}" in render(report)
 
 

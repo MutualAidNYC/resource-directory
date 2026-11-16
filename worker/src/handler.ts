@@ -49,7 +49,10 @@ export async function handle(request: Request, api: Api): Promise<Response> {
 
     const name = url.pathname.replace(/^\/api\/?/, '').replace(/\/$/, '');
     if (name === '') {
-        const links = { openapi_url: `${url.origin}/api/openapi.json`, data_guide: `${url.origin}/api-docs` };
+        const links = {
+            openapi_url: `${url.origin}/api/openapi.json`,
+            data_guide: `${url.origin}/api-docs`,
+        };
         return json({ ...api.info, ...links }, 200, head);
     }
     if (isListRoute(name)) {

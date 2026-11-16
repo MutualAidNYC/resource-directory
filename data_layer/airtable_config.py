@@ -4,6 +4,7 @@ The file lists the tables and fields the build requests. Only those are
 requested, so anything not listed never leaves Airtable. The file is checked
 here, before any request is sent.
 """
+
 from __future__ import annotations
 
 import tomllib

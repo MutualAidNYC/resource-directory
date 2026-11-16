@@ -4,6 +4,7 @@ The API's files (static_build/files.py) and the list routes' data
 (static_build/worker_data.py) both read these, so each service's detail is built
 once, not once per output.
 """
+
 from __future__ import annotations
 
 from dataclasses import dataclass
@@ -14,6 +15,7 @@ from application_layer.services import service_detail
 from application_layer.taxonomies import Terms, list_taxonomies, list_taxonomy_terms
 from data_layer.dataset import Dataset
 from models.hsds import Organization, Service, ServiceAtLocation, Taxonomy, TaxonomyTerm
+
 
 @dataclass(frozen=True)
 class Records:

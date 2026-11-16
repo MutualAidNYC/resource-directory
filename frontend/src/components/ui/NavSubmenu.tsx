@@ -53,19 +53,26 @@ export function NavSubmenu({ label, items }: NavSubmenuProps) {
             {/* Toggle button */}
             <button
                 aria-expanded={open}
-                onClick={() => setOpen(v => !v)}
+                onClick={() => setOpen((v) => !v)}
                 className="nav-link inline-flex items-center gap-1 bg-transparent border-0 cursor-pointer"
             >
                 {label}
-                <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 12 12" fill="none" aria-hidden="true">
-                    <path d="M1.50002 4L6.00002 8L10.5 4" stroke="currentColor" strokeWidth="1.5"/>
+                <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    width="12"
+                    height="12"
+                    viewBox="0 0 12 12"
+                    fill="none"
+                    aria-hidden="true"
+                >
+                    <path d="M1.50002 4L6.00002 8L10.5 4" stroke="currentColor" strokeWidth="1.5" />
                 </svg>
             </button>
 
             {/* Submenu */}
             {open && (
                 <ul className="absolute right-0 top-full mt-2 bg-black text-white rounded-lg py-2 min-w-max z-50 before:absolute before:inset-x-0 before:-top-2 before:h-2">
-                    {items.map(item => (
+                    {items.map((item) => (
                         <li key={item.href}>
                             <a href={item.href} className="nav-link block px-5 py-2">
                                 {item.label}

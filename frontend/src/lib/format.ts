@@ -28,7 +28,9 @@ export function externalHref(url: string | undefined | null): string | undefined
     const withScheme = SCHEME.test(value) ? value : `https://${value.replace(/^\/+/, '')}`;
     try {
         const parsed = new URL(withScheme);
-        return parsed.protocol === 'http:' || parsed.protocol === 'https:' ? parsed.href : undefined;
+        return parsed.protocol === 'http:' || parsed.protocol === 'https:'
+            ? parsed.href
+            : undefined;
     } catch {
         return undefined;
     }

@@ -39,8 +39,7 @@ const PIN_H = 40;
  * point at our own instance (or an alternative style) without a code change.
  */
 const BASEMAP_STYLE_URL =
-    process.env.NEXT_PUBLIC_BASEMAP_STYLE_URL ||
-    'https://tiles.openfreemap.org/styles/bright';
+    process.env.NEXT_PUBLIC_BASEMAP_STYLE_URL || 'https://tiles.openfreemap.org/styles/bright';
 
 /**
  * Generate an SVG pin image as a data URL for loading into the map sprite.
@@ -86,7 +85,7 @@ function supportsWebGL2(): boolean {
 function toGeoJSON(locations: MapLocation[]): GeoJSON.FeatureCollection {
     return {
         type: 'FeatureCollection',
-        features: locations.map(loc => ({
+        features: locations.map((loc) => ({
             type: 'Feature' as const,
             geometry: {
                 type: 'Point' as const,
@@ -106,7 +105,7 @@ function toGeoJSON(locations: MapLocation[]): GeoJSON.FeatureCollection {
 function fitToLocations(map: maplibregl.Map, locations: MapLocation[]) {
     if (locations.length === 0) return;
     const bounds = new maplibregl.LngLatBounds();
-    locations.forEach(loc => bounds.extend([loc.longitude, loc.latitude]));
+    locations.forEach((loc) => bounds.extend([loc.longitude, loc.latitude]));
     map.fitBounds(bounds, { padding: 50, maxZoom: 14 });
 }
 
@@ -197,7 +196,10 @@ export default function MapView({ locations, highlightedId }: MapViewProps) {
             map.on('click', 'pins-layer', (e) => {
                 if (!e.features || e.features.length === 0) return;
                 const feature = e.features[0];
-                const coords = (feature.geometry as GeoJSON.Point).coordinates.slice() as [number, number];
+                const coords = (feature.geometry as GeoJSON.Point).coordinates.slice() as [
+                    number,
+                    number,
+                ];
                 const props = feature.properties;
 
                 // Remove existing popup
@@ -210,15 +212,19 @@ export default function MapView({ locations, highlightedId }: MapViewProps) {
 
                 const popup = new maplibregl.Popup({ offset: [0, -PIN_H] })
                     .setLngLat(coords)
-                    .setHTML(`
+                    .setHTML(
+                        `
                         <div class="popup-content">
                             <h4 class="popup-title">${escapeHtml(props.name)}</h4>
-                            ${props.orgName
-                            ? `<p class="popup-org">${escapeHtml(props.orgName)}</p>`
-                            : ''}
+                            ${
+                                props.orgName
+                                    ? `<p class="popup-org">${escapeHtml(props.orgName)}</p>`
+                                    : ''
+                            }
                             <a href="${linkHref}" class="popup-link">${linkText}</a>
                         </div>
-                    `)
+                    `,
+                    )
                     .addTo(map);
 
                 popupRef.current = popup;
@@ -264,13 +270,15 @@ export default function MapView({ locations, highlightedId }: MapViewProps) {
 
         if (!highlightedId) {
             // Clear highlight
-            (map.getSource('pin-highlight') as maplibregl.GeoJSONSource)
-                .setData({ type: 'FeatureCollection', features: [] });
+            (map.getSource('pin-highlight') as maplibregl.GeoJSONSource).setData({
+                type: 'FeatureCollection',
+                features: [],
+            });
             return;
         }
 
         // Find the highlighted location
-        const loc = locations.find(l => (l.serviceId || l.id) === highlightedId);
+        const loc = locations.find((l) => (l.serviceId || l.id) === highlightedId);
         if (!loc) {
             // No matching pin — reset view
             fitToLocations(map, locations);
@@ -280,11 +288,13 @@ export default function MapView({ locations, highlightedId }: MapViewProps) {
         // Set highlight pin
         (map.getSource('pin-highlight') as maplibregl.GeoJSONSource).setData({
             type: 'FeatureCollection',
-            features: [{
-                type: 'Feature',
-                geometry: { type: 'Point', coordinates: [loc.longitude, loc.latitude] },
-                properties: { id: loc.serviceId || loc.id, name: loc.serviceName || loc.name },
-            }],
+            features: [
+                {
+                    type: 'Feature',
+                    geometry: { type: 'Point', coordinates: [loc.longitude, loc.latitude] },
+                    properties: { id: loc.serviceId || loc.id, name: loc.serviceName || loc.name },
+                },
+            ],
         });
 
         // Fly to highlighted pin
@@ -303,10 +313,5 @@ export default function MapView({ locations, highlightedId }: MapViewProps) {
         );
     }
 
-    return (
-        <div
-            ref={mapContainer}
-            className="w-full h-full min-h-[400px]"
-        />
-    );
+    return <div ref={mapContainer} className="w-full h-full min-h-[400px]" />;
 }

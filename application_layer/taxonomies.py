@@ -8,6 +8,7 @@ The site shows the same matched terms as plain names (`Terms.names`, used by map
 
 Only terms used by published services are published.
 """
+
 from __future__ import annotations
 
 from collections.abc import Iterator

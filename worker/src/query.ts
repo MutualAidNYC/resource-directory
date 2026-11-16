@@ -85,7 +85,8 @@ export function parseQuery(route: ListRoute, params: URLSearchParams): Parsed {
         seen.add(name);
 
         if (name === 'page' || name === 'per_page') {
-            if (!WHOLE_NUMBER.test(value)) return fail(`${name} must be a whole number, 1 or more.`);
+            if (!WHOLE_NUMBER.test(value))
+                return fail(`${name} must be a whole number, 1 or more.`);
             const number = Number(value);
             if (name === 'page') query.page = number;
             else query.perPage = Math.min(number, PER_PAGE_MAX);
@@ -93,7 +94,8 @@ export function parseQuery(route: ListRoute, params: URLSearchParams): Parsed {
             if (!UUID.test(value)) return fail(`${name} must be an id (a UUID).`);
             query[ID_FIELDS[name]] = value.toLowerCase();
         } else if (name === 'top_only') {
-            if (value !== 'true' && value !== 'false') return fail('top_only must be true or false.');
+            if (value !== 'true' && value !== 'false')
+                return fail('top_only must be true or false.');
             query.topOnly = value === 'true';
         } else if (name === 'search') {
             if (value.length > SEARCH_MAX_LENGTH) {

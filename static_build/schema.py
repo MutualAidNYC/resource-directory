@@ -13,6 +13,7 @@ in) and what's wrong in plain words, once, however many files show that
 record. It never holds the value, so the report doesn't repeat emails or phone
 numbers. Ids here are public ids; the report turns them into Airtable records.
 """
+
 from __future__ import annotations
 
 import json
@@ -54,9 +55,7 @@ class SchemaProblem:
     problem: str  # e.g. "missing postal_code", "url is not a full web address (…)"
 
 
-def schema_problems(
-    files: Iterable[ApiFile], schema_dir: Path = SCHEMA_DIR
-) -> list[SchemaProblem]:
+def schema_problems(files: Iterable[ApiFile], schema_dir: Path = SCHEMA_DIR) -> list[SchemaProblem]:
     """Each problem once, in the order found. Files with no schema are skipped.
 
     A record can be in several files (an address shows in its service's file

@@ -81,7 +81,8 @@ export function lists(data: WorkerData): Lists {
                 const ids = new Set(services.map((s) => s.organization_id));
                 organizations = organizations.filter((o) => ids.has(o.id));
             }
-            if (query.search) organizations = search(organizations, query.search, ORGANIZATION_FIELDS);
+            if (query.search)
+                organizations = search(organizations, query.search, ORGANIZATION_FIELDS);
             return paginate(organizations, query);
         },
 

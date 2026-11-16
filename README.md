@@ -124,9 +124,9 @@ Run the checks for the parts you changed:
 
 | Where | Checks |
 |-------|--------|
-| Repo root (venv active) | `pytest tests/unit`, `ruff check .`, `pyright` |
-| `frontend/` | `npm run lint`, `npm run typecheck` |
-| `worker/` | `npm test`, `npm run typecheck` |
+| Repo root (venv active) | `pytest tests/unit`, `ruff check .`, `ruff format --check .`, `pyright` |
+| `frontend/` | `npm run lint`, `npm run format:check`, `npm run typecheck` |
+| `worker/` | `npm test`, `npm run format:check`, `npm run typecheck` |
 
 The unit tests need no Airtable access and include the HSDS schema check. `pytest tests/unit --cov` fails below 94% coverage.
 

@@ -2,6 +2,7 @@
 
 Built only from `Published` (see publish.py).
 """
+
 from __future__ import annotations
 
 from application_layer import records

@@ -153,15 +153,24 @@ function toReturns(schema: Schema, route: string): Returns {
         if (items?.$ref) return hsds(items.$ref, true, route);
     }
     if (schema.properties) return { kind: 'object', fields: toFields(schema) };
-    throw new Error(`openapi.json: ${route}'s response isn't an HSDS record, a page of them or an object.`);
+    throw new Error(
+        `openapi.json: ${route}'s response isn't an HSDS record, a page of them or an object.`,
+    );
 }
 
 /** An HSDS schema `$ref`, linked to its page on GitHub instead of the raw file. */
 function hsds(ref: string, list: boolean, route: string): Returns {
-    const match = ref.match(/^https:\/\/raw\.githubusercontent\.com\/([^/]+\/[^/]+)\/([^/]+)\/(.+\/([^/]+)\.json)$/);
+    const match = ref.match(
+        /^https:\/\/raw\.githubusercontent\.com\/([^/]+\/[^/]+)\/([^/]+)\/(.+\/([^/]+)\.json)$/,
+    );
     if (!match) throw new Error(`openapi.json: ${route} refers to ${ref}, not an HSDS schema.`);
     const [, repo, tag, file, name] = match;
-    return { kind: 'hsds', list, schema: name, url: `https://github.com/${repo}/blob/${tag}/${file}` };
+    return {
+        kind: 'hsds',
+        list,
+        schema: name,
+        url: `https://github.com/${repo}/blob/${tag}/${file}`,
+    };
 }
 
 function toFields(schema: Schema): Field[] {

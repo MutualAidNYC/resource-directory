@@ -8,6 +8,7 @@ Pinned to the release tag, so a rerun gets the same files. Each file is saved
 exactly as downloaded, at the same path it has under the specification's
 schema/ folder.
 """
+
 from __future__ import annotations
 
 import httpx

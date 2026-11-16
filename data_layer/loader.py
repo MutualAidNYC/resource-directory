@@ -8,6 +8,7 @@ the base. Going over returns 429, and requests fail for the next 30 seconds
 (https://airtable.com/developers/web/api/rate-limits), so requests are paced
 and a 429 waits that out before retrying.
 """
+
 from __future__ import annotations
 
 import time
@@ -96,7 +97,7 @@ class _Loader:
             data = self._get(table.name, url, params)
             try:
                 page = [{"id": r["id"], "fields": r.get("fields", {})} for r in data["records"]]
-            except (KeyError, TypeError):
+            except KeyError, TypeError:
                 message = f"{table.name}: unexpected response from Airtable"
                 raise AirtableLoadError(message) from None
             records += page

@@ -5,9 +5,11 @@ and multi-selects) and exposes the names the app uses, so the build never
 special-cases Airtable shapes. `id` is always the Airtable record id.
 The fields are the ones airtable.toml requests: add a field in both places.
 """
+
 from typing import Annotated
 
 from pydantic import BaseModel, BeforeValidator, ConfigDict, Field
+
 
 def _first(value: object) -> object:
     """Links and multi-selects arrive as lists; these fields hold one value."""
@@ -35,6 +37,7 @@ class OrganizationResponse(BaseModel):
 
 class ServiceResponse(BaseModel):
     """A service record as read from Airtable."""
+
     model_config = BY_NAME
 
     id: str
@@ -85,6 +88,7 @@ class LocationResponse(BaseModel):
 
 class AddressResponse(BaseModel):
     """Address details."""
+
     id: str
     address_1: str | None = None
     address_2: str | None = None
@@ -103,6 +107,7 @@ class LanguageResponse(BaseModel):
 
 class ServiceAreaResponse(BaseModel):
     """Who a service is for (e.g. a borough), not where it is."""
+
     model_config = BY_NAME
 
     id: str
@@ -127,5 +132,6 @@ class TaxonomyTermResponse(BaseModel):
 
 class PhoneResponse(BaseModel):
     """Phone number details."""
+
     id: str
     number: str

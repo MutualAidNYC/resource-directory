@@ -1,10 +1,12 @@
 """Fixtures for the application_layer tests, built from sample_pull.py."""
+
 import pytest
 
 from application_layer.publish import Published, select
 from application_layer.taxonomies import Terms
 from data_layer.dataset import Dataset
 from tests.unit.application_layer.sample_pull import pull
+
 
 @pytest.fixture
 def dataset() -> Dataset:

@@ -32,9 +32,19 @@ export function ServiceCard({ service }: ServiceCardProps) {
                     {/* Group (Organization) */}
                     {service.organization && (
                         <p className="mt-1 text-sm text-[var(--foreground)] flex items-center gap-1">
-                            <svg className="w-3.5 h-3.5 shrink-0" aria-label="group" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
-                                    d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z" />
+                            <svg
+                                className="w-3.5 h-3.5 shrink-0"
+                                aria-label="group"
+                                fill="none"
+                                stroke="currentColor"
+                                viewBox="0 0 24 24"
+                            >
+                                <path
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                    strokeWidth={2}
+                                    d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"
+                                />
                             </svg>
                             {service.organization.name}
                         </p>
@@ -46,12 +56,14 @@ export function ServiceCard({ service }: ServiceCardProps) {
                             {service.description}
                         </p>
                     )}
-            </div>
+                </div>
             </div>
 
             {/* Footer with address */}
             {(() => {
-                const loc = service.service_at_locations?.find(s => s.location?.addresses?.length);
+                const loc = service.service_at_locations?.find(
+                    (s) => s.location?.addresses?.length,
+                );
                 const addr = loc?.location?.addresses?.[0];
                 if (!addr) return null;
                 const text = formatAddress(addr);
@@ -59,11 +71,25 @@ export function ServiceCard({ service }: ServiceCardProps) {
                 return (
                     <div className="mt-4 pt-4 border-t border-[var(--card-border)]">
                         <p className="text-sm text-[var(--foreground)] flex items-center gap-1">
-                            <svg className="w-4 h-4 shrink-0" aria-label="address" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
-                                    d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
-                                    d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                            <svg
+                                className="w-4 h-4 shrink-0"
+                                aria-label="address"
+                                fill="none"
+                                stroke="currentColor"
+                                viewBox="0 0 24 24"
+                            >
+                                <path
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                    strokeWidth={2}
+                                    d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"
+                                />
+                                <path
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                    strokeWidth={2}
+                                    d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"
+                                />
                             </svg>
                             <span className="truncate">{text}</span>
                         </p>

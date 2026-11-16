@@ -5,6 +5,7 @@ from typing import Any
 
 from pydantic import ValidationError
 
+
 class InMemoryData[T]:
     """A table held in memory, keyed by Airtable record id.
 

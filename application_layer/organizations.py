@@ -3,6 +3,7 @@
 An organization appears only if it has at least one published service (see
 publish.py).
 """
+
 from __future__ import annotations
 
 from application_layer import records
@@ -12,6 +13,7 @@ from data_layer.dataset import Dataset
 from data_layer.ids import hsds_id
 from models.airtable import OrganizationResponse
 from models.hsds import Organization, OrganizationSummary, ServiceSummary
+
 
 def list_organizations(published: Published) -> list[OrganizationSummary]:
     """Published organizations, sorted by name ignoring case."""

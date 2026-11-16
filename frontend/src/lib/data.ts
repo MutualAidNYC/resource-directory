@@ -101,7 +101,8 @@ export function listOrganizations(): OrganizationListItem[] {
     const { download } = siteData();
     const counts = new Map<string, number>();
     for (const s of download.services) {
-        if (s.organization_id) counts.set(s.organization_id, (counts.get(s.organization_id) ?? 0) + 1);
+        if (s.organization_id)
+            counts.set(s.organization_id, (counts.get(s.organization_id) ?? 0) + 1);
     }
     return download.organizations
         .map((o) => ({ ...o, service_count: counts.get(o.id) ?? 0 }))

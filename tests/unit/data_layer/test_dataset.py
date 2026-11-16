@@ -46,9 +46,7 @@ def test_reads_airtable_shapes():
             "service_at_location": [
                 {"id": "recSal00000000001", "fields": {"locations": ["recLocation000001"]}}
             ],
-            "locations": [
-                {"id": "recLocation000001", "fields": {"location_type": ["physical"]}}
-            ],
+            "locations": [{"id": "recLocation000001", "fields": {"location_type": ["physical"]}}],
             "addresses": [{"id": "recAddress0000001", "fields": {"address_type": []}}],
             "service_areas": [
                 {"id": "recArea0000000001", "fields": {"name": "Bronx", "x-order": 2}}

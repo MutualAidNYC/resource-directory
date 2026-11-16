@@ -1,4 +1,5 @@
 """The static build run on the application_layer sample pull."""
+
 from typing import Any
 
 from application_layer.map import map_data

@@ -15,6 +15,7 @@ with no value are left out, never written as null: HSDS types them as strings,
 numbers or objects, so null fails the schema. That includes `organization_id`
 on a service with no published organization.
 """
+
 from __future__ import annotations
 
 import json
@@ -28,6 +29,7 @@ from models.hsds import HSDS_VERSION
 from static_build.records import Records
 
 OPENAPI = Path(__file__).with_name("openapi.json")
+
 
 @dataclass(frozen=True)
 class ApiFile:
