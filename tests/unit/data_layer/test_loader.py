@@ -75,6 +75,7 @@ def run(
 
 # What gets requested
 
+
 def test_requests_config_fields(sleeps: list[float]):
     fake = FakeAirtable({})
 
@@ -123,6 +124,7 @@ def test_bearer_token(sleeps: list[float]):
 
 # What comes back
 
+
 def test_fetches_all_pages(sleeps: list[float]):
     pages = [records("a", 100) for _ in range(7)] + [records("b", 3)]
     fake = FakeAirtable({SERVICES_ID: pages})
@@ -159,6 +161,7 @@ def test_unexpected_shape(sleeps: list[float]):
 
 # Pacing and retries
 
+
 def test_paces_requests(sleeps: list[float]):
     fake = FakeAirtable({SERVICES_ID: [records("a", 1)] * 3})
 
@@ -174,7 +177,12 @@ def test_rate_limit_resumes_page(sleeps: list[float]):
     result = run(fake, sleeps, ["services"])
 
     assert [r["id"] for r in result["services"]] == [
-        "reca0000", "reca0001", "recb0000", "recb0001", "recc0000", "recc0001",
+        "reca0000",
+        "reca0001",
+        "recb0000",
+        "recb0001",
+        "recc0000",
+        "recc0001",
     ]
     offsets = [r.url.params.get("offset") for r in fake.requests]
     assert offsets == [None, "1", "1", "2"]
@@ -245,6 +253,7 @@ def test_error_hides_api_key(sleeps: list[float]):
 
 
 # Arguments
+
 
 def test_rejects_unknown_table():
     with pytest.raises(ValueError, match="contacts"):

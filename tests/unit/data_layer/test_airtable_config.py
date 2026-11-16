@@ -15,6 +15,7 @@ pytestmark = pytest.mark.unit
 
 # The shipped config (Mutual Aid NYC's base)
 
+
 def test_shipped_config_loads():
     config = load_config(DEFAULT_PATH)
     assert "services" in config.tables
@@ -35,6 +36,7 @@ def test_shipped_services_filter_on_status():
 
 # Loading
 
+
 def test_relative_path_from_repo_root(monkeypatch: pytest.MonkeyPatch):
     monkeypatch.chdir("/")
     config = load_config("airtable.toml")
@@ -54,6 +56,7 @@ def test_malformed_toml(tmp_path: Path):
 
 
 # Table settings
+
 
 def test_ref_defaults_to_name():
     config = parse_config({"tables": {"languages": {"fields": ["name"]}}})

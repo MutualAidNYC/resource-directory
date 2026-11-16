@@ -59,7 +59,10 @@ export async function check(
     post: typeof fetch = fetch,
 ): Promise<void> {
     const webhook = env.ALERTS_WEBHOOK_URL;
-    if (!webhook) throw new Error('ALERTS_WEBHOOK_URL is not set: add it as a secret on the production Worker.');
+    if (!webhook)
+        throw new Error(
+            'ALERTS_WEBHOOK_URL is not set: add it as a secret on the production Worker.',
+        );
 
     const lines: string[] = [];
     const stale = staleness(deployedAt, now);
@@ -87,9 +90,15 @@ export function staleness(deployedAt: string, now: number): string | null {
 }
 
 /** A message counting the past hour's failed runs by status, or null when there were none. */
-export async function failures(env: AlertsEnv, now: number, post: typeof fetch = fetch): Promise<string | null> {
+export async function failures(
+    env: AlertsEnv,
+    now: number,
+    post: typeof fetch = fetch,
+): Promise<string | null> {
     if (!env.ANALYTICS_API_TOKEN || !env.ACCOUNT_ID) {
-        throw new Error('ANALYTICS_API_TOKEN and ACCOUNT_ID must be set as secrets on the production Worker.');
+        throw new Error(
+            'ANALYTICS_API_TOKEN and ACCOUNT_ID must be set as secrets on the production Worker.',
+        );
     }
     const end = new Date(now - LAG);
     const start = new Date(end.getTime() - HOUR);
@@ -97,7 +106,10 @@ export async function failures(env: AlertsEnv, now: number, post: typeof fetch =
     // The URL is public and the token is in a header, so a fetch error can pass through as is.
     const response = await post(GRAPHQL, {
         method: 'POST',
-        headers: { Authorization: `Bearer ${env.ANALYTICS_API_TOKEN}`, 'Content-Type': 'application/json' },
+        headers: {
+            Authorization: `Bearer ${env.ANALYTICS_API_TOKEN}`,
+            'Content-Type': 'application/json',
+        },
         body: JSON.stringify({
             query: QUERY,
             variables: {
@@ -111,7 +123,8 @@ export async function failures(env: AlertsEnv, now: number, post: typeof fetch =
     if (!response.ok) throw new Error(`the analytics API answered ${response.status}.`);
 
     const body = (await response.json()) as GraphQLResponse;
-    if (body.errors?.length) throw new Error(`the analytics API returned an error: ${body.errors[0].message}`);
+    if (body.errors?.length)
+        throw new Error(`the analytics API returned an error: ${body.errors[0].message}`);
     const account = body.data?.viewer?.accounts?.[0];
     if (!account) throw new Error('the analytics API found no account with that ACCOUNT_ID.');
 

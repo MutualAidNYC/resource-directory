@@ -26,6 +26,7 @@ jobs:
           cache-dependency-path: requirements*.txt
       - run: pip install -r requirements.txt -r requirements-dev.txt
       - run: ruff check .
+      - run: ruff format --check .
       - run: pyright
       # Includes the HSDS schema check (tests/unit/static_build/test_hsds_schema.py).
       - run: pytest tests/unit --cov
@@ -45,6 +46,7 @@ jobs:
           cache-dependency-path: worker/package-lock.json
       - run: npm ci
       - run: npm test
+      - run: npm run format:check
       - run: npm run typecheck
 
   frontend:
@@ -62,4 +64,5 @@ jobs:
           cache-dependency-path: frontend/package-lock.json
       - run: npm ci
       - run: npm run lint
+      - run: npm run format:check
       - run: npm run typecheck

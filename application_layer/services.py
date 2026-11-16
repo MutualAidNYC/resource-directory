@@ -2,6 +2,7 @@
 
 Built only from `Published` (see publish.py).
 """
+
 from __future__ import annotations
 
 from application_layer import records
@@ -16,7 +17,7 @@ STATUS = "active"  # every published service; HSDS: active, inactive, defunct, â
 
 
 def service_summary(service: ServiceResponse, published: Published) -> ServiceSummary:
-    """A service in a list (all services, or one organization's)."""
+    """A service in the list of all services."""
     return ServiceSummary(
         id=hsds_id("services", service.id),
         organization_id=_organization_id(service, published),

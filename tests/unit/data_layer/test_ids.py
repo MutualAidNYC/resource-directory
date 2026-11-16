@@ -24,9 +24,7 @@ def test_hsds_id_is_uuid5():
 
 
 def test_hsds_id_differs_by_table():
-    assert hsds_id("services", "recAAAAAAAAAAAAAA") != hsds_id(
-        "organizations", "recAAAAAAAAAAAAAA"
-    )
+    assert hsds_id("services", "recAAAAAAAAAAAAAA") != hsds_id("organizations", "recAAAAAAAAAAAAAA")
 
 
 def test_attribute_id_depends_on_both_records():

@@ -2,33 +2,15 @@
 
 import dynamic from 'next/dynamic';
 
-interface MapLocation {
-    id: string;
-    name: string;
-    latitude: number;
-    longitude: number;
-    serviceName?: string;
-    serviceId?: string;
-}
-
-interface MapContainerProps {
-    locations: MapLocation[];
-}
-
-// Dynamically import MapView to avoid SSR issues with MapLibre
-const MapView = dynamic(() => import('./MapView'), {
+/**
+ * The map (MapView), loaded only in the browser: MapLibre needs `window` and WebGL.
+ * Every page uses this one. Put it in a parent with a height; it fills it.
+ */
+export const MapContainer = dynamic(() => import('./MapView'), {
     ssr: false,
     loading: () => (
-        <div className="w-full h-[600px] bg-[var(--section-alt)] rounded-xl flex items-center justify-center">
-            <div className="text-[var(--muted)]">Loading map...</div>
+        <div className="w-full h-full bg-[var(--section-alt)] flex items-center justify-center">
+            <p className="text-[var(--muted)] text-sm">Loading map…</p>
         </div>
     ),
 });
-
-/**
- * Client-side container for the map.
- * Handles dynamic import of MapView to avoid SSR issues.
- */
-export function MapContainer({ locations }: MapContainerProps) {
-    return <MapView locations={locations} />;
-}

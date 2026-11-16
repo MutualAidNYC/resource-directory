@@ -6,7 +6,11 @@ import text from '../wrangler.jsonc?raw';
 
 const HOUR = 3_600_000;
 const WEBHOOK = 'https://hooks.slack.com/services/T000/B000/secret-webhook';
-const ENV = { ALERTS_WEBHOOK_URL: WEBHOOK, ANALYTICS_API_TOKEN: 'secret-token', ACCOUNT_ID: 'acct' };
+const ENV = {
+    ALERTS_WEBHOOK_URL: WEBHOOK,
+    ANALYTICS_API_TOKEN: 'secret-token',
+    ACCOUNT_ID: 'acct',
+};
 const NOW = Date.parse('2026-11-11T12:17:00Z');
 const FRESH = '2026-11-11T10:12:00Z';
 
@@ -23,8 +27,13 @@ function fake(rows: Rows, analytics?: Response) {
         }
         graphql.push(JSON.parse(String(init?.body)));
         if (analytics) return analytics;
-        const invocations = rows.map((r) => ({ sum: { requests: r.requests }, dimensions: { status: r.status } }));
-        return Response.json({ data: { viewer: { accounts: [{ workersInvocationsAdaptive: invocations }] } } });
+        const invocations = rows.map((r) => ({
+            sum: { requests: r.requests },
+            dimensions: { status: r.status },
+        }));
+        return Response.json({
+            data: { viewer: { accounts: [{ workersInvocationsAdaptive: invocations }] } },
+        });
     }) as typeof fetch;
     return { post, slack, graphql };
 }
@@ -37,7 +46,7 @@ describe('wrangler.jsonc', () => {
         expect(config.env.preview.triggers.crons).toEqual([]);
     });
 
-    it("names the Worker the hourly check asks about (a wrong name finds no failures)", () => {
+    it('names the Worker the hourly check asks about (a wrong name finds no failures)', () => {
         expect(config.name).toBe(SCRIPT_NAME);
     });
 });
@@ -85,9 +94,11 @@ describe('failures', () => {
     });
 
     it('throws on an API error, without the token', async () => {
-        const error = await failures(ENV, NOW, fake([], new Response(null, { status: 403 })).post).catch(
-            (e: Error) => e,
-        );
+        const error = await failures(
+            ENV,
+            NOW,
+            fake([], new Response(null, { status: 403 })).post,
+        ).catch((e: Error) => e);
         expect((error as Error).message).toContain('403');
         expect((error as Error).message).not.toContain('secret-token');
     });
@@ -151,10 +162,14 @@ describe('check', () => {
         await expect(check({}, NOW, FRESH, fake([]).post)).rejects.toThrow('ALERTS_WEBHOOK_URL');
     });
 
-    it("throws when Slack fails, without the webhook URL", async () => {
+    it('throws when Slack fails, without the webhook URL', async () => {
         const post = (async (url: string) =>
-            url === WEBHOOK ? new Response(null, { status: 404 }) : Response.json({})) as typeof fetch;
-        const error = await check(ENV, Date.parse(FRESH) + STALE_AFTER, FRESH, post).catch((e: Error) => e);
+            url === WEBHOOK
+                ? new Response(null, { status: 404 })
+                : Response.json({})) as typeof fetch;
+        const error = await check(ENV, Date.parse(FRESH) + STALE_AFTER, FRESH, post).catch(
+            (e: Error) => e,
+        );
         expect((error as Error).message).toContain('404');
         expect((error as Error).message).not.toContain('secret-webhook');
     });

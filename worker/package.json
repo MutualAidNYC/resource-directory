@@ -9,10 +9,13 @@
     "assemble": "node scripts/assemble.mjs",
     "dev": "npm run assemble && wrangler dev",
     "test": "vitest run",
+    "format": "prettier --write src test scripts wrangler.jsonc",
+    "format:check": "prettier --check src test scripts wrangler.jsonc",
     "typecheck": "tsc --noEmit"
   },
   "devDependencies": {
     "@cloudflare/workers-types": "5.20261101.1",
+    "prettier": "3.10.1",
     "typescript": "7.0.2",
     "vitest": "5.0.5",
     "wrangler": "4.156.0"

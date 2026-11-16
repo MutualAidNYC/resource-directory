@@ -1,17 +1,18 @@
-"""Organizations: the list, each organization's detail and its services.
+"""Organizations: the list and each organization's detail.
 
 An organization appears only if it has at least one published service (see
 publish.py).
 """
+
 from __future__ import annotations
 
 from application_layer import records
 from application_layer.publish import Published
-from application_layer.services import service_summary
 from data_layer.dataset import Dataset
 from data_layer.ids import hsds_id
 from models.airtable import OrganizationResponse
-from models.hsds import Organization, OrganizationSummary, ServiceSummary
+from models.hsds import Organization, OrganizationSummary
+
 
 def list_organizations(published: Published) -> list[OrganizationSummary]:
     """Published organizations, sorted by name ignoring case."""
@@ -42,8 +43,3 @@ def organization_detail(organization: OrganizationResponse, dataset: Dataset) ->
             for place in dataset.locations.get_bulk(organization.locations or [])
         ],
     )
-
-
-def organization_services(organization_id: str, published: Published) -> list[ServiceSummary]:
-    """The organization's published services, in pull order."""
-    return [service_summary(s, published) for s in published.services_of(organization_id)]

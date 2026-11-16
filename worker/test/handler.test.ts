@@ -47,10 +47,11 @@ describe('handle', () => {
         expect(filtered.contents.map((s) => s.id)).toEqual([ID.legal]);
     });
 
-    it('sets JSON, CORS, cache and noindex headers', async () => {
+    it('sets JSON, nosniff, CORS, cache and noindex headers', async () => {
         const response = await get('/api/services');
         expect(Object.fromEntries(response.headers)).toMatchObject({
             'content-type': 'application/json; charset=utf-8',
+            'x-content-type-options': 'nosniff',
             'access-control-allow-origin': '*',
             'cache-control': 'public, max-age=300',
             'x-robots-tag': 'noindex',

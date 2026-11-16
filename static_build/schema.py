@@ -13,6 +13,7 @@ in) and what's wrong in plain words, once, however many files show that
 record. It never holds the value, so the report doesn't repeat emails or phone
 numbers. Ids here are public ids; the report turns them into Airtable records.
 """
+
 from __future__ import annotations
 
 import json
@@ -54,25 +55,25 @@ class SchemaProblem:
     problem: str  # e.g. "missing postal_code", "url is not a full web address (…)"
 
 
-def schema_problems(
-    files: Iterable[ApiFile], schema_dir: Path = SCHEMA_DIR
-) -> list[SchemaProblem]:
+def schema_problems(files: Iterable[ApiFile], schema_dir: Path = SCHEMA_DIR) -> list[SchemaProblem]:
     """Each problem once, in the order found. Files with no schema are skipped.
 
     A record can be in several files (an address shows in its service's file
     and its organization's), so the same problem can be found more than once.
     """
     registry = _registry(schema_dir)
+    validators: dict[str, Draft202012Validator] = {}  # one per schema, not per file
     found: dict[SchemaProblem, None] = {}  # a dict drops repeats and keeps the order
     for file in files:
         if file.schema is None:
             continue
-        validator = Draft202012Validator(
-            {"$ref": SOURCE + file.schema},
-            registry=registry,
-            format_checker=Draft202012Validator.FORMAT_CHECKER,
-        )
-        for error in validator.iter_errors(file.data):
+        if file.schema not in validators:
+            validators[file.schema] = Draft202012Validator(
+                {"$ref": SOURCE + file.schema},
+                registry=registry,
+                format_checker=Draft202012Validator.FORMAT_CHECKER,
+            )
+        for error in validators[file.schema].iter_errors(file.data):
             found[_problem(file.data, error)] = None
     return list(found)
 

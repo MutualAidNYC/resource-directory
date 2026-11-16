@@ -50,10 +50,6 @@ ignore = [
     "ANN204", # Ignore __init__ method missing type annotations
 ]
 
-[tool.ruff.lint.isort]
-# Groups imports so your standard libs stay separate from third-party ones
-lines-after-imports = 1
-
 [tool.ruff.format]
 # Settings for 'ruff format' (the Black replacement)
 quote-style = "double"

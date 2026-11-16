@@ -9,7 +9,8 @@
 /** Its Cron Trigger in wrangler.jsonc: 10:07 UTC. */
 export const DAILY_REBUILD = '7 10 * * *';
 export async function rebuild(hook: string | undefined, post: typeof fetch = fetch): Promise<void> {
-    if (!hook) throw new Error('DEPLOY_HOOK_URL is not set: add it as a secret on the production Worker.');
+    if (!hook)
+        throw new Error('DEPLOY_HOOK_URL is not set: add it as a secret on the production Worker.');
     let response: Response;
     try {
         response = await post(hook, { method: 'POST' });

@@ -29,8 +29,8 @@ Open an issue that describes the feature and who it helps.
 - **Accessibility.** Frontend changes must meet [WCAG 2.2 AA](https://www.w3.org/TR/WCAG22/).
 - **Privacy.** Never commit `.env` files or tokens.
 - **Terms.** Code, the API and backend docs use HSDS's terms, **service** and **organization**. Site text uses **resource** and **group**.
-- **Python.** Follow [PEP 8](https://peps.python.org/pep-0008/), with type hints where practical, and give new functions a docstring.
-- **TypeScript.** In `frontend/`, follow the ESLint configuration.
+- **Python.** Follow [PEP 8](https://peps.python.org/pep-0008/), with type hints where practical, and give new functions a docstring. Run `ruff format .` before committing.
+- **TypeScript.** In `frontend/`, follow the ESLint configuration. In `frontend/` and `worker/`, run `npm run format` (Prettier; one shared `.prettierrc.json` at the repo root) before committing.
 - **Commits.** Use [conventional commit](https://www.conventionalcommits.org/) prefixes, such as `feat:`, `fix:` and `docs:`.
 
 ## Questions

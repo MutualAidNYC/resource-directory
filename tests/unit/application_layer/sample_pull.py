@@ -3,6 +3,7 @@
 Airtable's own shapes (links and multi-selects as lists), with fake record ids.
 Fixtures built from it are in conftest.py.
 """
+
 import re
 from typing import Any
 

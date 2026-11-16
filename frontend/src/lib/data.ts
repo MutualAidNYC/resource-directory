@@ -101,26 +101,41 @@ export function listOrganizations(): OrganizationListItem[] {
     const { download } = siteData();
     const counts = new Map<string, number>();
     for (const s of download.services) {
-        if (s.organization_id) counts.set(s.organization_id, (counts.get(s.organization_id) ?? 0) + 1);
+        if (s.organization_id)
+            counts.set(s.organization_id, (counts.get(s.organization_id) ?? 0) + 1);
     }
     return download.organizations
         .map((o) => ({ ...o, service_count: counts.get(o.id) ?? 0 }))
         .sort((a, b) => compareNames(a.name, b.name));
 }
 
-/** A group's published resources, in the build's order, as list items. */
-export function servicesOf(organizationId: string): ServiceSummary[] {
+/** A group's published resources, in the build's order, as list items with their locations. */
+export function servicesOf(
+    organizationId: string,
+): (ServiceSummary & Pick<Service, 'service_at_locations'>)[] {
     return siteData()
         .download.services.filter((s) => s.organization_id === organizationId)
-        .map(({ id, organization_id, name, status, description, url, email }) => ({
-            id,
-            organization_id,
-            name,
-            status,
-            description,
-            url,
-            email,
-        }));
+        .map(
+            ({
+                id,
+                organization_id,
+                name,
+                status,
+                description,
+                url,
+                email,
+                service_at_locations,
+            }) => ({
+                id,
+                organization_id,
+                name,
+                status,
+                description,
+                url,
+                email,
+                service_at_locations,
+            }),
+        );
 }
 
 /** How many resources and groups are published. */

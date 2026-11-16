@@ -1,69 +1,69 @@
-@import "tailwindcss";
+@import 'tailwindcss';
 
 :root {
-  /* mutualaid.nyc palette */
-  --color-white: #ffffff;
-  --background: #f5efe0;
-  --foreground: #000000;
-  --primary: #8F2D24;
-  --primary-hover: #7A2520;
-  --secondary: #204045;
-  --secondary-hover: #1a343a;
-  --accent-border: #e6a290;
-  --tertiary: #47133d;
-  --tertiary-border: #a17193;
-  --highlight: #f7cf56;
-  --highlight-alt: #a4cacb;
-  --highlight-alt-bg: #ebf3f3;
-  --card-bg: var(--color-white);
-  --card-border: #E8E2DA;
-  --muted: #586069;
-  --section-alt: #ede8e1;
-  --tag-coral-bg: #fce8e5;
-  --tag-coral-text: #8F2D24;
-  --tag-olive-bg: #ebf3f3;
-  --tag-olive-text: #204045;
-  --tag-blue-bg: #ebf3f3;
-  --tag-blue-text: #204045;
-  --tag-gold-bg: #fdf7e6;
-  --tag-gold-text: #6b5a1e;
-  --nav-bg: #204045;
-  --nav-text: var(--color-white);
-  --footer-social-bg: #c24532;
-  --border-width: 4px;
+    /* mutualaid.nyc palette */
+    --color-white: #ffffff;
+    --background: #f5efe0;
+    --foreground: #000000;
+    --primary: #8f2d24;
+    --primary-hover: #7a2520;
+    --secondary: #204045;
+    --secondary-hover: #1a343a;
+    --accent-border: #e6a290;
+    --tertiary: #47133d;
+    --tertiary-border: #a17193;
+    --highlight: #f7cf56;
+    --highlight-alt: #a4cacb;
+    --highlight-alt-bg: #ebf3f3;
+    --card-bg: var(--color-white);
+    --card-border: #e8e2da;
+    --muted: #586069;
+    --section-alt: #ede8e1;
+    --tag-coral-bg: #fce8e5;
+    --tag-coral-text: #8f2d24;
+    --tag-olive-bg: #ebf3f3;
+    --tag-olive-text: #204045;
+    --tag-blue-bg: #ebf3f3;
+    --tag-blue-text: #204045;
+    --tag-gold-bg: #fdf7e6;
+    --tag-gold-text: #6b5a1e;
+    --nav-bg: #204045;
+    --nav-text: var(--color-white);
+    --footer-social-bg: #c24532;
+    --border-width: 4px;
 
-  /* Baseline font variables — next/font overrides these on body via CSS class */
-  --font-karla: Karla, sans-serif;
-  --font-poppins: Poppins, sans-serif;
-  --font-header: var(--font-poppins), sans-serif;
-  --font-body: var(--font-karla), sans-serif;
+    /* Baseline font variables — next/font overrides these on body via CSS class */
+    --font-karla: Karla, sans-serif;
+    --font-poppins: Poppins, sans-serif;
+    --font-header: var(--font-poppins), sans-serif;
+    --font-body: var(--font-karla), sans-serif;
 }
 
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --color-primary: var(--primary);
-  --color-primary-hover: var(--primary-hover);
-  --color-secondary: var(--secondary);
-  --color-highlight: var(--highlight);
-  --color-highlight-alt: var(--highlight-alt);
-  --color-card-bg: var(--card-bg);
-  --color-card-border: var(--card-border);
-  --color-muted: var(--muted);
-  --color-section-alt: var(--section-alt);
+    --color-background: var(--background);
+    --color-foreground: var(--foreground);
+    --color-primary: var(--primary);
+    --color-primary-hover: var(--primary-hover);
+    --color-secondary: var(--secondary);
+    --color-highlight: var(--highlight);
+    --color-highlight-alt: var(--highlight-alt);
+    --color-card-bg: var(--card-bg);
+    --color-card-border: var(--card-border);
+    --color-muted: var(--muted);
+    --color-section-alt: var(--section-alt);
 }
 
 /* No dark mode — matches mutualaid.nyc light-only design */
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: var(--font-body);
-  letter-spacing: -0.5px;
+    background: var(--background);
+    color: var(--foreground);
+    font-family: var(--font-body);
+    letter-spacing: -0.5px;
 }
 
 html {
-  scroll-behavior: smooth;
+    scroll-behavior: smooth;
 }
 
 h1,
@@ -72,153 +72,154 @@ h3,
 h4,
 h5,
 h6 {
-  font-family: var(--font-header);
-  font-weight: 700;
+    font-family: var(--font-header);
+    font-weight: 700;
 }
 
 h1 {
-  color: var(--secondary);
+    color: var(--secondary);
 }
 
 h2 {
-  color: var(--secondary);
-  line-height: 1.4;
+    color: var(--secondary);
+    line-height: 1.4;
 }
 
 @layer base {
-  a {
-    color: var(--primary);
-  }
+    a {
+        color: var(--primary);
+    }
 }
 
 /* Focus styles that work on all background colors and removes the default browser outline to prevent doubling */
 *:focus-visible {
-  box-shadow: 0 0 0 2px var(--color-white),
-              0 0 0 4px var(--primary);
-  outline: none;
+    box-shadow:
+        0 0 0 2px var(--color-white),
+        0 0 0 4px var(--primary);
+    outline: none;
 }
 
 .line-clamp-2 {
-  display: -webkit-box;
-  -webkit-line-clamp: 2;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
 }
 
 .line-clamp-3 {
-  display: -webkit-box;
-  -webkit-line-clamp: 3;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
 }
 
 /* Custom scrollbar for service panels */
 .scrollbar-thin {
-  scrollbar-width: thin;
-  scrollbar-color: rgba(32, 64, 69, 0.2) transparent;
+    scrollbar-width: thin;
+    scrollbar-color: rgba(32, 64, 69, 0.2) transparent;
 }
 
 .scrollbar-thin::-webkit-scrollbar {
-  width: 6px;
+    width: 6px;
 }
 
 .scrollbar-thin::-webkit-scrollbar-track {
-  background: transparent;
+    background: transparent;
 }
 
 .scrollbar-thin::-webkit-scrollbar-thumb {
-  background: rgba(32, 64, 69, 0.2);
-  border-radius: 3px;
+    background: rgba(32, 64, 69, 0.2);
+    border-radius: 3px;
 }
 
 .scrollbar-thin::-webkit-scrollbar-thumb:hover {
-  background: rgba(32, 64, 69, 0.35);
+    background: rgba(32, 64, 69, 0.35);
 }
 
 /* Buttons — matches mutualaid.nyc style */
 .btn {
-  font-family: var(--font-header);
-  font-weight: 600;
-  border-radius: 1000px;
-  padding: 0.75rem 1.5rem;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  transition: opacity 0.2s ease;
-  text-decoration: none;
-  cursor: pointer;
-  border: 2px solid transparent;
-  line-height: 1.2;
+    font-family: var(--font-header);
+    font-weight: 600;
+    border-radius: 1000px;
+    padding: 0.75rem 1.5rem;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    transition: opacity 0.2s ease;
+    text-decoration: none;
+    cursor: pointer;
+    border: 2px solid transparent;
+    line-height: 1.2;
 }
 
 .btn:hover {
-  opacity: 0.7;
-  text-decoration: none;
+    opacity: 0.7;
+    text-decoration: none;
 }
 
 /* Filled teal — "primary" action */
 .btn-primary {
-  background-color: var(--secondary);
-  color: var(--color-white);
-  border-color: var(--secondary);
+    background-color: var(--secondary);
+    color: var(--color-white);
+    border-color: var(--secondary);
 }
 
 /* Outline purple — "secondary" action */
 .btn-secondary {
-  background-color: transparent;
-  color: var(--tertiary);
-  border-color: var(--tertiary);
+    background-color: transparent;
+    color: var(--tertiary);
+    border-color: var(--tertiary);
 }
 
 /* Light teal fill — "accent" action */
 .btn-accent {
-  background-color: var(--highlight-alt);
-  color: var(--secondary);
-  border-color: var(--highlight-alt);
+    background-color: var(--highlight-alt);
+    color: var(--secondary);
+    border-color: var(--highlight-alt);
 }
 
 /* Nav link — shared style for header navigation links */
 .nav-link {
-  font-size: 18px;
-  line-height: 1.4;
-  font-weight: 600;
-  color: var(--nav-text);
+    font-size: 18px;
+    line-height: 1.4;
+    font-weight: 600;
+    color: var(--nav-text);
 }
 
 .nav-link:hover {
-  text-decoration: underline;
+    text-decoration: underline;
 }
 
 .maplibregl-popup-close-button {
-  font-size: 1.5rem;
-  margin: 0.25rem 0.25rem 0;
-  padding: 0.5rem;
+    font-size: 1.5rem;
+    margin: 0.25rem 0.25rem 0;
+    padding: 0.5rem;
 }
 
 /* MapLibre popup content */
 .popup-content {
-  padding: 8px;
-  max-width: 220px;
+    padding: 8px;
+    max-width: 220px;
 }
 
 .popup-title {
-  font-weight: 600;
-  margin-bottom: 4px;
-  color: var(--foreground);
-  font-size: 14px;
+    font-weight: 600;
+    margin-bottom: 4px;
+    color: var(--foreground);
+    font-size: 14px;
 }
 
 .popup-org {
-  color: var(--muted);
-  font-size: 13px;
-  font-weight: 500;
-  margin-bottom: 2px;
+    color: var(--muted);
+    font-size: 13px;
+    font-weight: 500;
+    margin-bottom: 2px;
 }
 
 .popup-link {
-  color: var(--primary);
-  font-size: 12px;
-  text-decoration: underline;
-  display: inline-block;
-  margin-top: 4px;
+    color: var(--primary);
+    font-size: 12px;
+    text-decoration: underline;
+    display: inline-block;
+    margin-top: 4px;
 }

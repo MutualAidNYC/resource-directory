@@ -21,7 +21,7 @@ export default function OrganizationsPageClient({ organizations }: Organizations
 
     const results = useMemo(
         () => search(organizations, query, ORGANIZATION_FIELDS),
-        [organizations, query]
+        [organizations, query],
     );
     const searched = query.trim();
 
@@ -32,7 +32,11 @@ export default function OrganizationsPageClient({ organizations }: Organizations
     const updateQuery = (value: string) => {
         setQuery(value);
         const q = value.trim();
-        window.history.replaceState(null, '', q ? `/organizations?q=${encodeURIComponent(q)}` : '/organizations');
+        window.history.replaceState(
+            null,
+            '',
+            q ? `/organizations?q=${encodeURIComponent(q)}` : '/organizations',
+        );
     };
 
     /** Close the phone keyboard; on a desktop, focus stays in the search box. */
@@ -58,9 +62,19 @@ export default function OrganizationsPageClient({ organizations }: Organizations
                         Search groups
                     </label>
                     <div className="relative flex items-center">
-                        <svg className="absolute left-3 w-5 h-5 text-[var(--muted)]" aria-hidden="true" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
-                                d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                        <svg
+                            className="absolute left-3 w-5 h-5 text-[var(--muted)]"
+                            aria-hidden="true"
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                        >
+                            <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                strokeWidth={2}
+                                d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+                            />
                         </svg>
                         <input
                             ref={inputRef}
@@ -78,8 +92,19 @@ export default function OrganizationsPageClient({ organizations }: Organizations
                                 className="absolute right-2 p-1.5 text-[var(--muted)] hover:text-[var(--foreground)]"
                                 aria-label="Clear search"
                             >
-                                <svg className="w-4 h-4" aria-hidden="true" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                                <svg
+                                    className="w-4 h-4"
+                                    aria-hidden="true"
+                                    fill="none"
+                                    stroke="currentColor"
+                                    viewBox="0 0 24 24"
+                                >
+                                    <path
+                                        strokeLinecap="round"
+                                        strokeLinejoin="round"
+                                        strokeWidth={2}
+                                        d="M6 18L18 6M6 6l12 12"
+                                    />
                                 </svg>
                             </button>
                         )}
@@ -99,18 +124,21 @@ interface OrganizationGridProps {
 }
 
 /** Page header, optional search box and the grid of group cards. */
-export function OrganizationGrid({ organizations, searched = '', searchBox }: OrganizationGridProps) {
+export function OrganizationGrid({
+    organizations,
+    searched = '',
+    searchBox,
+}: OrganizationGridProps) {
     const total = organizations.length;
 
     return (
         <div className="container mx-auto px-4 py-8">
             {/* Page Header */}
             <div className="mb-8">
-                <h1 className="text-3xl font-bold text-[var(--foreground)] mb-4">
-                    Groups
-                </h1>
+                <h1 className="text-3xl font-bold text-[var(--foreground)] mb-4">Groups</h1>
                 <p className="text-[var(--foreground)]">
-                    {total.toLocaleString()} {total === 1 ? 'group' : 'groups'} providing community resources{searched && ` for search term "${searched}"`}
+                    {total.toLocaleString()} {total === 1 ? 'group' : 'groups'} providing community
+                    resources{searched && ` for search term "${searched}"`}
                 </p>
             </div>
 
@@ -126,10 +154,12 @@ export function OrganizationGrid({ organizations, searched = '', searchBox }: Or
             ) : (
                 <div className="text-center py-16">
                     <h3 className="text-lg font-medium text-[var(--foreground)] mb-2">
-                        {searched ? `No results for "${searched}"` : "No groups found"}
+                        {searched ? `No results for "${searched}"` : 'No groups found'}
                     </h3>
                     <p className="text-[var(--foreground)]">
-                        {searched ? "Try a different search term." : "No groups are currently available."}
+                        {searched
+                            ? 'Try a different search term.'
+                            : 'No groups are currently available.'}
                     </p>
                 </div>
             )}

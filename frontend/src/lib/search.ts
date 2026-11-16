@@ -56,7 +56,20 @@ export const ORGANIZATION_FIELDS: readonly SearchField<Organization>[] = [
 
 /** Words too common to narrow a search. */
 const STOP_WORDS = new Set([
-    'in', 'the', 'a', 'an', 'and', 'or', 'for', 'of', 'to', 'at', 'on', 'near', 'by', 'with',
+    'in',
+    'the',
+    'a',
+    'an',
+    'and',
+    'or',
+    'for',
+    'of',
+    'to',
+    'at',
+    'on',
+    'near',
+    'by',
+    'with',
 ]);
 
 /** Lowercase, no accents, apostrophes dropped, other punctuation as spaces. */
@@ -97,7 +110,8 @@ export function search<T extends object>(
             let best = 0;
             for (let i = 0; i < fields.length; i++) {
                 // Texts start with a space, so " word" is a match at the start of a word.
-                if (fields[i].weight > best && texts[i].includes(` ${word}`)) best = fields[i].weight;
+                if (fields[i].weight > best && texts[i].includes(` ${word}`))
+                    best = fields[i].weight;
             }
             if (best === 0) return; // every word must match
             score += best;

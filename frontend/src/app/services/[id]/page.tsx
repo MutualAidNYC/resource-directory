@@ -1,10 +1,10 @@
-import { Metadata } from "next";
-import Link from "next/link";
-import { notFound } from "next/navigation";
-import { getMapService, getOrganization, getService, serviceIds } from "@/lib/data";
-import { externalHref, formatAddress } from "@/lib/format";
-import ServiceLocationMap from "./ServiceLocationMap";
-import { TagLink } from "@/components/ui/TagLink";
+import { Metadata } from 'next';
+import Link from 'next/link';
+import { notFound } from 'next/navigation';
+import { getMapService, getOrganization, getService, serviceIds } from '@/lib/data';
+import { externalHref, formatAddress } from '@/lib/format';
+import { MapContainer } from '@/components/map/MapContainer';
+import { TagLink } from '@/components/ui/TagLink';
 
 interface ServiceDetailPageProps {
     params: Promise<{ id: string }>;
@@ -23,7 +23,7 @@ export function generateStaticParams() {
 export async function generateMetadata({ params }: ServiceDetailPageProps): Promise<Metadata> {
     const { id } = await params;
     const service = getService(id);
-    if (!service) return { title: "Service Not Found" };
+    if (!service) return { title: 'Resource Not Found' };
     return {
         title: service.name,
         description: service.description || `Details about ${service.name}`,
@@ -61,9 +61,10 @@ export default async function ServiceDetailPage({ params }: ServiceDetailPagePro
         return name || addresses.length > 0 ? [{ id: sal.id, name, addresses }] : [];
     });
 
-    let mapCoords: { latitude: number; longitude: number; name: string; address?: string } | null = null;
+    let mapCoords: { latitude: number; longitude: number; name: string; address?: string } | null =
+        null;
     const pinned = service.service_at_locations?.find(
-        (sal) => sal.location?.latitude && sal.location?.longitude
+        (sal) => sal.location?.latitude && sal.location?.longitude,
     )?.location;
     if (pinned?.latitude && pinned.longitude) {
         const addr = pinned.addresses?.[0];
@@ -87,7 +88,10 @@ export default async function ServiceDetailPage({ params }: ServiceDetailPagePro
                     </li>
                     <span>/</span>
                     <li>
-                        <Link href="/services" className="hover:text-[var(--foreground)] hover:underline">
+                        <Link
+                            href="/services"
+                            className="hover:text-[var(--foreground)] hover:underline"
+                        >
                             Resources
                         </Link>
                     </li>
@@ -214,11 +218,18 @@ export default async function ServiceDetailPage({ params }: ServiceDetailPagePro
                         {/* Map Card - show if service has geocoded coordinates */}
                         {mapCoords && (
                             <div className="rounded-xl border border-[var(--card-border)] bg-[var(--card-bg)] overflow-hidden">
-                                <ServiceLocationMap
-                                    latitude={mapCoords.latitude}
-                                    longitude={mapCoords.longitude}
-                                    name={mapCoords.name}
-                                />
+                                <div className="rounded-xl overflow-hidden border border-[var(--card-border)] h-64">
+                                    <MapContainer
+                                        locations={[
+                                            {
+                                                id: service.id,
+                                                name: mapCoords.name,
+                                                latitude: mapCoords.latitude,
+                                                longitude: mapCoords.longitude,
+                                            },
+                                        ]}
+                                    />
+                                </div>
                                 {mapCoords.address && (
                                     <div className="p-4 border-t border-[var(--card-border)]">
                                         <p className="text-sm text-[var(--foreground)] mb-2">
@@ -230,9 +241,25 @@ export default async function ServiceDetailPage({ params }: ServiceDetailPagePro
                                             rel="noopener noreferrer"
                                             className="inline-flex items-center gap-1.5 text-sm font-medium text-[var(--primary)] hover:text-[var(--primary-hover)]"
                                         >
-                                            <svg className="w-4 h-4" aria-hidden="true" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                                            <svg
+                                                className="w-4 h-4"
+                                                aria-hidden="true"
+                                                fill="none"
+                                                stroke="currentColor"
+                                                viewBox="0 0 24 24"
+                                            >
+                                                <path
+                                                    strokeLinecap="round"
+                                                    strokeLinejoin="round"
+                                                    strokeWidth={2}
+                                                    d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"
+                                                />
+                                                <path
+                                                    strokeLinecap="round"
+                                                    strokeLinejoin="round"
+                                                    strokeWidth={2}
+                                                    d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"
+                                                />
                                             </svg>
                                             Get Directions
                                         </a>
@@ -255,11 +282,23 @@ export default async function ServiceDetailPage({ params }: ServiceDetailPagePro
                                         rel="noopener noreferrer"
                                         className="flex items-center gap-3 text-[var(--primary)] hover:text-[var(--primary-hover)]"
                                     >
-                                        <svg className="w-5 h-5 shrink-0" aria-hidden="true" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
-                                                d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
+                                        <svg
+                                            className="w-5 h-5 shrink-0"
+                                            aria-hidden="true"
+                                            fill="none"
+                                            stroke="currentColor"
+                                            viewBox="0 0 24 24"
+                                        >
+                                            <path
+                                                strokeLinecap="round"
+                                                strokeLinejoin="round"
+                                                strokeWidth={2}
+                                                d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"
+                                            />
                                         </svg>
-                                        <span className="truncate underline hover:no-underline">Visit Website</span>
+                                        <span className="truncate underline hover:no-underline">
+                                            Visit Website
+                                        </span>
                                     </a>
                                 )}
 
@@ -268,44 +307,83 @@ export default async function ServiceDetailPage({ params }: ServiceDetailPagePro
                                         href={`mailto:${service.email}`}
                                         className="flex items-center gap-3 text-[var(--foreground)] hover:text-[var(--primary)]"
                                     >
-                                        <svg className="w-5 h-5 shrink-0" role="img" aria-label="email" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
-                                                d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                                        <svg
+                                            className="w-5 h-5 shrink-0"
+                                            role="img"
+                                            aria-label="email"
+                                            fill="none"
+                                            stroke="currentColor"
+                                            viewBox="0 0 24 24"
+                                        >
+                                            <path
+                                                strokeLinecap="round"
+                                                strokeLinejoin="round"
+                                                strokeWidth={2}
+                                                d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"
+                                            />
                                         </svg>
-                                        <span className="truncate underline hover:no-underline">{service.email}</span>
+                                        <span className="truncate underline hover:no-underline">
+                                            {service.email}
+                                        </span>
                                     </a>
                                 )}
 
                                 {service.phones?.map((phone) => (
-                                    <div key={phone.id} className="flex items-center gap-3 text-[var(--foreground)]">
-                                        <svg className="w-5 h-5 shrink-0" role="img" aria-label="phone" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
+                                    <div
+                                        key={phone.id}
+                                        className="flex items-center gap-3 text-[var(--foreground)]"
+                                    >
+                                        <svg
+                                            className="w-5 h-5 shrink-0"
+                                            role="img"
+                                            aria-label="phone"
+                                            fill="none"
+                                            stroke="currentColor"
+                                            viewBox="0 0 24 24"
+                                        >
+                                            <path
+                                                strokeLinecap="round"
+                                                strokeLinejoin="round"
+                                                strokeWidth={2}
+                                                d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"
+                                            />
                                         </svg>
                                         <span>
-                                            <a href={`tel:${phone.number}`} className="hover:text-[var(--foreground)] underline hover:no-underline">
+                                            <a
+                                                href={`tel:${phone.number}`}
+                                                className="hover:text-[var(--foreground)] underline hover:no-underline"
+                                            >
                                                 {phone.number}
                                             </a>
-                                            {phone.extension && <span className="text-sm border-l border-[var(--card-border)] ml-2 pl-2">ext {phone.extension}</span>}
-                                            {phone.type && <span className="text-sm opacity-70 ml-2">({phone.type})</span>}
                                         </span>
                                     </div>
                                 ))}
 
-                                {!website && !service.email && (service.phones?.length ?? 0) === 0 && (
-                                    <p className="text-[var(--muted)] text-sm">
-                                        No contact information available.
-                                    </p>
-                                )}
+                                {!website &&
+                                    !service.email &&
+                                    (service.phones?.length ?? 0) === 0 && (
+                                        <p className="text-[var(--muted)] text-sm">
+                                            No contact information available.
+                                        </p>
+                                    )}
                             </div>
                         </div>
 
                         {/* Back Button */}
-                        <Link
-                            href="/services"
-                            className="btn btn-secondary w-full gap-2"
-                        >
-                            <svg className="w-4 h-4" aria-hidden="true" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                        <Link href="/services" className="btn btn-secondary w-full gap-2">
+                            <svg
+                                className="w-4 h-4"
+                                aria-hidden="true"
+                                fill="none"
+                                stroke="currentColor"
+                                viewBox="0 0 24 24"
+                            >
+                                <path
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                    strokeWidth={2}
+                                    d="M15 19l-7-7 7-7"
+                                />
                             </svg>
                             Back to All Resources
                         </Link>

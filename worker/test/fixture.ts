@@ -49,8 +49,31 @@ export const DATA: WorkerData = {
     },
     service_search: [
         // In the map's order, not the list's, as the build writes it.
-        { id: ID.pantry, name: 'Pantry', description: 'Groceries every Friday', needFocus: ['Food'], communityFocus: ['Seniors'], organization_name: 'Group A', service_areas: ['Brooklyn'] },
-        { id: ID.fridge, name: 'Community Fridge', needFocus: ['Food'], communityFocus: [], organization_name: 'Group A', service_areas: [] },
-        { id: ID.legal, name: 'Legal Clinic', description: 'Help with housing court', needFocus: ['Legal'], communityFocus: [], organization_name: 'Group B', service_areas: ['Bronx'] },
+        {
+            id: ID.pantry,
+            name: 'Pantry',
+            description: 'Groceries every Friday',
+            needFocus: ['Food'],
+            communityFocus: ['Seniors'],
+            organization_name: 'Group A',
+            service_areas: ['Brooklyn'],
+        },
+        {
+            id: ID.fridge,
+            name: 'Community Fridge',
+            needFocus: ['Food'],
+            communityFocus: [],
+            organization_name: 'Group A',
+            service_areas: [],
+        },
+        {
+            id: ID.legal,
+            name: 'Legal Clinic',
+            description: 'Help with housing court',
+            needFocus: ['Legal'],
+            communityFocus: [],
+            organization_name: 'Group B',
+            service_areas: ['Bronx'],
+        },
     ],
 };

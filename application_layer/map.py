@@ -7,6 +7,7 @@ the matched taxonomy terms (Terms.names), so they always agree with the API's
 service_at_location; a service with none gets no pin (never its organization's
 address).
 """
+
 from __future__ import annotations
 
 from collections.abc import Callable
@@ -42,6 +43,7 @@ class MapService(BaseModel):
 
 class Category(BaseModel):
     """A filter value. Icons are looked up by name in the frontend."""
+
     name: str
 
 

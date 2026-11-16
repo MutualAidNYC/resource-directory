@@ -3,6 +3,7 @@
 import { useState, useMemo, useCallback, useRef, useEffect, useEffectEvent } from 'react';
 import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
+import { MapContainer } from '@/components/map/MapContainer';
 import { TagLink } from '@/components/ui/TagLink';
 import { externalHref } from '@/lib/format';
 import { search, SERVICE_FIELDS } from '@/lib/search';
@@ -11,11 +12,13 @@ import type { Category, MapService } from '@/lib/types';
 /** Haversine distance in miles between two lat/lng points. */
 function haversineDistance(lat1: number, lng1: number, lat2: number, lng2: number): number {
     const R = 3958.8; // Earth radius in miles
-    const dLat = (lat2 - lat1) * Math.PI / 180;
-    const dLng = (lng2 - lng1) * Math.PI / 180;
-    const a = Math.sin(dLat / 2) ** 2 +
-        Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
-        Math.sin(dLng / 2) ** 2;
+    const dLat = ((lat2 - lat1) * Math.PI) / 180;
+    const dLng = ((lng2 - lng1) * Math.PI) / 180;
+    const a =
+        Math.sin(dLat / 2) ** 2 +
+        Math.cos((lat1 * Math.PI) / 180) *
+            Math.cos((lat2 * Math.PI) / 180) *
+            Math.sin(dLng / 2) ** 2;
     return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
 }
 
@@ -37,33 +40,27 @@ export default function MapPageClient({
     services,
     needCategories,
     communityCategories,
-    serviceAreas
+    serviceAreas,
 }: MapPageClientProps) {
     const searchParams = useSearchParams();
     const searchInputRef = useRef<HTMLInputElement>(null);
     const filtersHeadingRef = useRef<HTMLHeadingElement>(null);
 
     // Initialize state from URL query params
-    const [searchQuery, setSearchQuery] = useState<string>(
-        searchParams.get('q') || ''
-    );
-    const [selectedNeed, setSelectedNeed] = useState<string>(
-        searchParams.get('category') || ''
-    );
+    const [searchQuery, setSearchQuery] = useState<string>(searchParams.get('q') || '');
+    const [selectedNeed, setSelectedNeed] = useState<string>(searchParams.get('category') || '');
     const [selectedCommunity, setSelectedCommunity] = useState<string>(
-        searchParams.get('community') || ''
+        searchParams.get('community') || '',
     );
-    const [selectedArea, setSelectedArea] = useState<string>(
-        searchParams.get('area') || ''
-    );
+    const [selectedArea, setSelectedArea] = useState<string>(searchParams.get('area') || '');
 
     // Kept in memory only, never in the URL.
     const [userLocation, setUserLocation] = useState<{ lat: number; lng: number } | null>(null);
     // The home page's location button opens /services?near=1. This page renders only in the
     // browser (useSearchParams under Suspense), so navigator is defined here.
     const near = searchParams.get('near') === '1';
-    const [locationStatus, setLocationStatus] = useState<'idle' | 'loading' | 'error'>(
-        () => (!near ? 'idle' : navigator.geolocation ? 'loading' : 'error')
+    const [locationStatus, setLocationStatus] = useState<'idle' | 'loading' | 'error'>(() =>
+        !near ? 'idle' : navigator.geolocation ? 'loading' : 'error',
     );
     const [hoveredServiceId, setHoveredServiceId] = useState<string | null>(null);
 
@@ -132,7 +129,7 @@ export default function MapPageClient({
                 setLocationStatus('idle');
             },
             () => setLocationStatus('error'),
-            { enableHighAccuracy: true, timeout: 10000 }
+            { enableHighAccuracy: true, timeout: 10000 },
         );
     };
 
@@ -166,18 +163,20 @@ export default function MapPageClient({
     // Dropdown filters first (pass/fail), then search (lib/search.ts): every word
     // must match, best matches first.
     const filteredServices = useMemo(() => {
-        const filtered = services.filter(service =>
-            (!selectedNeed || service.needFocus.includes(selectedNeed)) &&
-            (!selectedCommunity || service.communityFocus.includes(selectedCommunity)) &&
-            (!selectedArea || service.service_areas.includes(selectedArea))
+        const filtered = services.filter(
+            (service) =>
+                (!selectedNeed || service.needFocus.includes(selectedNeed)) &&
+                (!selectedCommunity || service.communityFocus.includes(selectedCommunity)) &&
+                (!selectedArea || service.service_areas.includes(selectedArea)),
         );
         const results = search(filtered, searchQuery, SERVICE_FIELDS);
 
         // With a location, nearest first; the sort is stable, so ties keep the search order.
         if (userLocation) {
-            const distance = (s: MapService) => (s.latitude && s.longitude)
-                ? haversineDistance(userLocation.lat, userLocation.lng, s.latitude, s.longitude)
-                : Infinity;
+            const distance = (s: MapService) =>
+                s.latitude && s.longitude
+                    ? haversineDistance(userLocation.lat, userLocation.lng, s.latitude, s.longitude)
+                    : Infinity;
             results.sort((a, b) => distance(a) - distance(b));
         }
         return results;
@@ -186,29 +185,28 @@ export default function MapPageClient({
     // Get locations for map
     const mapLocations = useMemo(() => {
         const locations = filteredServices
-            .filter(s => s.latitude && s.longitude)
-            .map(s => ({
+            .filter((s) => s.latitude && s.longitude)
+            .map((s) => ({
                 id: s.id,
                 name: s.name,
                 latitude: s.latitude!,
                 longitude: s.longitude!,
-                serviceName: s.name,
-                serviceId: s.id,
                 orgName: s.organization_name,
+                href: `/services/${s.id}`,
             }));
-            
+
         // Add jitter for overlapping coordinates (exact matches)
         const locationMap = new Map<string, number>();
         const jitterDegrees = 0.00005; // ~5 meters
-        
-        return locations.map(loc => {
+
+        return locations.map((loc) => {
             const key = `${loc.latitude},${loc.longitude}`;
             const count = locationMap.get(key) || 0;
             locationMap.set(key, count + 1);
-            
+
             if (count > 0) {
                 // Apply a spiral or simple offset based on index to separate them visually
-                const angle = count * Math.PI / 4; // Spread them around
+                const angle = (count * Math.PI) / 4; // Spread them around
                 const radius = jitterDegrees * Math.ceil(count / 8);
                 return {
                     ...loc,
@@ -221,8 +219,19 @@ export default function MapPageClient({
     }, [filteredServices]);
 
     const filterIcon = (
-        <svg className="w-4 h-4" aria-hidden="true" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" />
+        <svg
+            className="w-4 h-4"
+            aria-hidden="true"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+        >
+            <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"
+            />
         </svg>
     );
     const activeFilterDot = (searchQuery || selectedNeed || selectedCommunity || selectedArea) && (
@@ -256,13 +265,13 @@ export default function MapPageClient({
                 </button>
 
                 <div className="flex items-center bg-[var(--card-bg)] rounded-lg border border-[var(--card-border)] p-0.5">
-                    <button 
+                    <button
                         onClick={() => setViewMode('list')}
                         className={`px-4 py-1.5 text-sm font-medium rounded-md transition-colors ${viewMode === 'list' ? 'bg-[var(--primary)] text-white shadow-sm' : 'text-[var(--muted)] hover:text-[var(--foreground)]'}`}
                     >
                         List
                     </button>
-                    <button 
+                    <button
                         onClick={() => setViewMode('map')}
                         className={`px-4 py-1.5 text-sm font-medium rounded-md transition-colors ${viewMode === 'map' ? 'bg-[var(--primary)] text-white shadow-sm' : 'text-[var(--muted)] hover:text-[var(--foreground)]'}`}
                     >
@@ -283,14 +292,23 @@ export default function MapPageClient({
             </button>
 
             {/* Left Column: Filters */}
-            <div className={`${isFiltersOpen ? 'block' : 'hidden'} md:block w-full md:w-64 min-h-0 md:flex-shrink-0 bg-[var(--section-alt)] md:border-r border-b md:border-b-0 border-[var(--card-border)] p-4 overflow-y-auto scrollbar-thin`}>
-                <h2 ref={filtersHeadingRef} tabIndex={-1} className="text-lg font-semibold text-[var(--foreground)] mb-4">
+            <div
+                className={`${isFiltersOpen ? 'block' : 'hidden'} md:block w-full md:w-64 min-h-0 md:flex-shrink-0 bg-[var(--section-alt)] md:border-r border-b md:border-b-0 border-[var(--card-border)] p-4 overflow-y-auto scrollbar-thin`}
+            >
+                <h2
+                    ref={filtersHeadingRef}
+                    tabIndex={-1}
+                    className="text-lg font-semibold text-[var(--foreground)] mb-4"
+                >
                     Filters
                 </h2>
 
                 {/* Search Input */}
                 <div className="mb-6">
-                    <label htmlFor="search-resources" className="block text-sm font-medium text-[var(--foreground)] opacity-80 mb-2">
+                    <label
+                        htmlFor="search-resources"
+                        className="block text-sm font-medium text-[var(--foreground)] opacity-80 mb-2"
+                    >
                         Search
                     </label>
                     <form role="search" onSubmit={handleSearchSubmit}>
@@ -301,7 +319,12 @@ export default function MapPageClient({
                             value={searchQuery}
                             onChange={(e) => {
                                 setSearchQuery(e.target.value);
-                                syncUrl(e.target.value, selectedNeed, selectedCommunity, selectedArea);
+                                syncUrl(
+                                    e.target.value,
+                                    selectedNeed,
+                                    selectedCommunity,
+                                    selectedArea,
+                                );
                             }}
                             placeholder="Search resources..."
                             className="w-full rounded-lg border border-[var(--card-border)] bg-[var(--card-bg)] px-3 py-2 text-sm text-[var(--foreground)] focus:ring-2 focus:ring-[var(--primary)] focus:border-transparent"
@@ -317,17 +340,33 @@ export default function MapPageClient({
                             disabled={locationStatus === 'loading'}
                             className="w-full flex items-center justify-center gap-2 px-4 py-2 text-sm font-medium rounded-lg border border-[var(--card-border)] bg-[var(--card-bg)] text-[var(--foreground)] hover:bg-[var(--section-alt)] transition-colors disabled:opacity-50"
                         >
-                            <svg className="w-4 h-4" aria-hidden="true" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
-                                    d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
-                                    d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                            <svg
+                                className="w-4 h-4"
+                                aria-hidden="true"
+                                fill="none"
+                                stroke="currentColor"
+                                viewBox="0 0 24 24"
+                            >
+                                <path
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                    strokeWidth={2}
+                                    d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"
+                                />
+                                <path
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                    strokeWidth={2}
+                                    d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"
+                                />
                             </svg>
                             {locationStatus === 'loading' ? 'Locating...' : 'Use My Location'}
                         </button>
                     ) : (
                         <div className="flex items-center justify-between px-3 py-2 rounded-lg bg-[var(--tag-olive-bg)] border border-[var(--secondary)]/30">
-                            <span className="text-sm text-[var(--tag-olive-text)] font-medium">📍 Sorting by distance</span>
+                            <span className="text-sm text-[var(--tag-olive-text)] font-medium">
+                                📍 Sorting by distance
+                            </span>
                             <button
                                 onClick={handleClearLocation}
                                 className="text-xs text-[var(--tag-olive-text)] hover:opacity-70"
@@ -337,13 +376,18 @@ export default function MapPageClient({
                         </div>
                     )}
                     {locationStatus === 'error' && (
-                        <p className="text-xs text-red-500 mt-1">Location access denied or unavailable.</p>
+                        <p className="text-xs text-red-500 mt-1">
+                            Location access denied or unavailable.
+                        </p>
                     )}
                 </div>
 
                 {/* Need Category Filter */}
                 <div className="mb-6">
-                    <label htmlFor="filter-need" className="block text-sm font-medium text-[var(--foreground)] opacity-80 mb-2">
+                    <label
+                        htmlFor="filter-need"
+                        className="block text-sm font-medium text-[var(--foreground)] opacity-80 mb-2"
+                    >
                         Need Category
                     </label>
                     <select
@@ -353,15 +397,20 @@ export default function MapPageClient({
                         className="w-full rounded-lg border border-[var(--card-border)] bg-[var(--card-bg)] px-3 py-2 text-sm text-[var(--foreground)] focus:ring-2 focus:ring-[var(--primary)] focus:border-transparent"
                     >
                         <option value="">All Categories</option>
-                        {needCategories.map(cat => (
-                            <option key={cat.name} value={cat.name}>{cat.name}</option>
+                        {needCategories.map((cat) => (
+                            <option key={cat.name} value={cat.name}>
+                                {cat.name}
+                            </option>
                         ))}
                     </select>
                 </div>
 
                 {/* Community Focus Filter */}
                 <div className="mb-6">
-                    <label htmlFor="filter-community" className="block text-sm font-medium text-[var(--foreground)] opacity-80 mb-2">
+                    <label
+                        htmlFor="filter-community"
+                        className="block text-sm font-medium text-[var(--foreground)] opacity-80 mb-2"
+                    >
                         Community Focus
                     </label>
                     <select
@@ -371,15 +420,20 @@ export default function MapPageClient({
                         className="w-full rounded-lg border border-[var(--card-border)] bg-[var(--card-bg)] px-3 py-2 text-sm text-[var(--foreground)] focus:ring-2 focus:ring-[var(--primary)] focus:border-transparent"
                     >
                         <option value="">All Communities</option>
-                        {communityCategories.map(cat => (
-                            <option key={cat.name} value={cat.name}>{cat.name}</option>
+                        {communityCategories.map((cat) => (
+                            <option key={cat.name} value={cat.name}>
+                                {cat.name}
+                            </option>
                         ))}
                     </select>
                 </div>
 
                 {/* Target Geographic Area Filter */}
                 <div className="mb-6">
-                    <label htmlFor="filter-area" className="block text-sm font-medium text-[var(--foreground)] opacity-80 mb-2">
+                    <label
+                        htmlFor="filter-area"
+                        className="block text-sm font-medium text-[var(--foreground)] opacity-80 mb-2"
+                    >
                         Target Geographic Area
                     </label>
                     <select
@@ -390,21 +444,23 @@ export default function MapPageClient({
                         className="w-full rounded-lg border border-[var(--card-border)] bg-[var(--card-bg)] px-3 py-2 text-sm text-[var(--foreground)] focus:ring-2 focus:ring-[var(--primary)] focus:border-transparent"
                     >
                         <option value="">All areas</option>
-                        {serviceAreas.map(a => (
-                            <option key={a} value={a}>{a}</option>
+                        {serviceAreas.map((a) => (
+                            <option key={a} value={a}>
+                                {a}
+                            </option>
                         ))}
                     </select>
-                    <p id="filter-area-help" className="mt-1 text-xs text-[var(--foreground)] opacity-80">
+                    <p
+                        id="filter-area-help"
+                        className="mt-1 text-xs text-[var(--foreground)] opacity-80"
+                    >
                         Where a resource is offered, not where it is located.
                     </p>
                 </div>
 
                 {/* Clear Filters */}
                 {(searchQuery || selectedNeed || selectedCommunity || selectedArea) && (
-                    <button
-                        onClick={handleClearFilters}
-                        className="btn btn-accent w-full"
-                    >
+                    <button onClick={handleClearFilters} className="btn btn-accent w-full">
                         Clear All Filters
                     </button>
                 )}
@@ -416,14 +472,16 @@ export default function MapPageClient({
             </div>
 
             {/* Middle Column: Resource Cards */}
-            <div className={`${viewMode === 'list' ? 'block' : 'hidden'} md:block w-full md:w-[32rem] flex-1 flex-shrink-0 border-r border-[var(--card-border)] overflow-y-auto scrollbar-thin`}>
+            <div
+                className={`${viewMode === 'list' ? 'block' : 'hidden'} md:block w-full md:w-[32rem] flex-1 flex-shrink-0 border-r border-[var(--card-border)] overflow-y-auto scrollbar-thin`}
+            >
                 <div className="p-4 space-y-4">
                     {filteredServices.length === 0 ? (
                         <div className="text-center py-8 text-[var(--foreground)]">
                             No resources match your filters
                         </div>
                     ) : (
-                        filteredServices.map(service => (
+                        filteredServices.map((service) => (
                             <ResourceCard
                                 key={service.id}
                                 service={service}
@@ -439,9 +497,11 @@ export default function MapPageClient({
             </div>
 
             {/* Right Column: Map */}
-            <div className={`${viewMode === 'map' ? 'block' : 'hidden'} md:block flex-1 relative h-full min-w-0 p-2 md:p-2`}>
+            <div
+                className={`${viewMode === 'map' ? 'block' : 'hidden'} md:block flex-1 relative h-full min-w-0 p-2 md:p-2`}
+            >
                 <div className="w-full h-full rounded-xl overflow-hidden shadow-lg border border-[var(--card-border)]">
-                    <MapViewDynamic locations={mapLocations} highlightedId={hoveredServiceId} />
+                    <MapContainer locations={mapLocations} highlightedId={hoveredServiceId} />
                 </div>
             </div>
         </div>
@@ -451,20 +511,28 @@ export default function MapPageClient({
 /**
  * Resource card component
  */
-function ResourceCard({ service, userLocation, onViewOnMap }: {
+function ResourceCard({
+    service,
+    userLocation,
+    onViewOnMap,
+}: {
     service: MapService;
     userLocation: { lat: number; lng: number } | null;
     onViewOnMap: (id: string) => void;
 }) {
-    const distance = (userLocation && service.latitude && service.longitude)
-        ? haversineDistance(userLocation.lat, userLocation.lng, service.latitude, service.longitude)
-        : null;
+    const distance =
+        userLocation && service.latitude && service.longitude
+            ? haversineDistance(
+                  userLocation.lat,
+                  userLocation.lng,
+                  service.latitude,
+                  service.longitude,
+              )
+            : null;
     const website = externalHref(service.url);
 
     return (
-        <div
-            className="bg-[var(--card-bg)] rounded-xl border border-[var(--card-border)] p-4"
-        >
+        <div className="bg-[var(--card-bg)] rounded-xl border border-[var(--card-border)] p-4">
             <div className="flex items-start justify-between gap-2">
                 <h3 className="font-semibold text-[var(--foreground)] mb-2 line-clamp-2">
                     {service.name}
@@ -479,9 +547,26 @@ function ResourceCard({ service, userLocation, onViewOnMap }: {
             {service.address && (
                 <div className="text-sm text-[var(--foreground)] mb-2 flex items-start justify-between gap-2">
                     <div className="flex items-start gap-2">
-                        <svg className="w-4 h-4 mt-0.5 flex-shrink-0" role="img" aria-label="address" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                        <svg
+                            className="w-4 h-4 mt-0.5 flex-shrink-0"
+                            role="img"
+                            aria-label="address"
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                        >
+                            <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                strokeWidth={2}
+                                d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"
+                            />
+                            <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                strokeWidth={2}
+                                d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"
+                            />
                         </svg>
                         <span className="line-clamp-2">{service.address}</span>
                     </div>
@@ -500,17 +585,46 @@ function ResourceCard({ service, userLocation, onViewOnMap }: {
 
             {service.phone && (
                 <p className="text-sm text-[var(--foreground)] mb-1 flex items-center gap-2">
-                    <svg className="w-4 h-4 flex-shrink-0" role="img" aria-label="phone" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
+                    <svg
+                        className="w-4 h-4 flex-shrink-0"
+                        role="img"
+                        aria-label="phone"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                    >
+                        <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"
+                        />
                     </svg>
-                    <a href={`tel:${service.phone}`} className="underline hover:no-underline hover:text-[var(--primary)]">{service.phone}</a>
+                    <a
+                        href={`tel:${service.phone}`}
+                        className="underline hover:no-underline hover:text-[var(--primary)]"
+                    >
+                        {service.phone}
+                    </a>
                 </p>
             )}
 
             {website && (
                 <p className="text-sm text-[var(--foreground)] mb-2 flex items-center gap-2">
-                    <svg className="w-4 h-4 flex-shrink-0" role="img" aria-label="website" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
+                    <svg
+                        className="w-4 h-4 flex-shrink-0"
+                        role="img"
+                        aria-label="website"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                    >
+                        <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"
+                        />
                     </svg>
                     <a
                         href={website}
@@ -566,27 +680,21 @@ function ResourceCard({ service, userLocation, onViewOnMap }: {
                 className="inline-flex items-center gap-1 text-sm font-medium text-[var(--primary)] hover:text-[var(--primary-hover)] underline hover:no-underline"
             >
                 More Details
-                <svg className="w-4 h-4" aria-hidden="true" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                <svg
+                    className="w-4 h-4"
+                    aria-hidden="true"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                >
+                    <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M9 5l7 7-7 7"
+                    />
                 </svg>
             </Link>
         </div>
     );
 }
-
-/**
- * Dynamic map component (lazy loaded)
- */
-import dynamic from 'next/dynamic';
-
-const MapViewDynamic = dynamic(
-    () => import('@/components/map/MapView'),
-    {
-        ssr: false,
-        loading: () => (
-            <div className="w-full h-full bg-[var(--section-alt)] flex items-center justify-center">
-                <div className="text-[var(--muted)]">Loading map...</div>
-            </div>
-        )
-    }
-);

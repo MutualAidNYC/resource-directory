@@ -5,6 +5,7 @@ builds one InMemoryData per table. Table names are the airtable.toml section
 keys. A table missing from the pull (left out of the config) is empty, so
 another deployment can skip tables it doesn't use.
 """
+
 from __future__ import annotations
 
 from collections.abc import Mapping
@@ -24,6 +25,7 @@ from models.airtable import (
     TaxonomyResponse,
     TaxonomyTermResponse,
 )
+
 
 @dataclass(frozen=True)
 class Dataset:
@@ -47,9 +49,7 @@ class Dataset:
 
         return cls(
             services=InMemoryData.from_records(ServiceResponse, rows("services")),
-            organizations=InMemoryData.from_records(
-                OrganizationResponse, rows("organizations")
-            ),
+            organizations=InMemoryData.from_records(OrganizationResponse, rows("organizations")),
             service_at_location=InMemoryData.from_records(
                 ServiceAtLocationResponse, rows("service_at_location")
             ),
@@ -59,9 +59,7 @@ class Dataset:
             languages=InMemoryData.from_records(LanguageResponse, rows("languages")),
             service_areas=InMemoryData.from_records(ServiceAreaResponse, rows("service_areas")),
             taxonomies=InMemoryData.from_records(TaxonomyResponse, rows("taxonomies")),
-            taxonomy_terms=InMemoryData.from_records(
-                TaxonomyTermResponse, rows("taxonomy_terms")
-            ),
+            taxonomy_terms=InMemoryData.from_records(TaxonomyTermResponse, rows("taxonomy_terms")),
         )
 
     def skipped(self) -> dict[str, list[tuple[str, str]]]:

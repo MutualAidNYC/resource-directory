@@ -17,10 +17,16 @@ export function Footer() {
 
                     {/* Links */}
                     <nav className="flex flex-wrap gap-6 text-sm">
-                        <Link href="/services" className="text-[var(--nav-text)] underline hover:no-underline">
+                        <Link
+                            href="/services"
+                            className="text-[var(--nav-text)] underline hover:no-underline"
+                        >
                             Resources
                         </Link>
-                        <Link href="/organizations" className="text-[var(--nav-text)] underline hover:no-underline">
+                        <Link
+                            href="/organizations"
+                            className="text-[var(--nav-text)] underline hover:no-underline"
+                        >
                             Groups
                         </Link>
                     </nav>

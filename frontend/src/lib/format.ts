@@ -9,6 +9,7 @@ export function formatAddress(address: Address): string {
         address.state_province,
         address.postal_code,
     ]
+        .map((part) => part?.replace(/\s+/g, ' ').trim())
         .filter(Boolean)
         .join(', ');
 }
@@ -28,7 +29,9 @@ export function externalHref(url: string | undefined | null): string | undefined
     const withScheme = SCHEME.test(value) ? value : `https://${value.replace(/^\/+/, '')}`;
     try {
         const parsed = new URL(withScheme);
-        return parsed.protocol === 'http:' || parsed.protocol === 'https:' ? parsed.href : undefined;
+        return parsed.protocol === 'http:' || parsed.protocol === 'https:'
+            ? parsed.href
+            : undefined;
     } catch {
         return undefined;
     }

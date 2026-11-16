@@ -3,12 +3,14 @@
 Shared by the service and organization outputs. Links to records missing from the
 pull (deleted, or in a table the config leaves out) are skipped.
 """
+
 from __future__ import annotations
 
 from data_layer.dataset import Dataset
 from data_layer.ids import hsds_id
 from models.airtable import LocationResponse, ServiceAtLocationResponse, ServiceResponse
 from models.hsds import Address, Language, Location, Phone
+
 
 def service_places(
     dataset: Dataset, service: ServiceResponse

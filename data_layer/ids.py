@@ -10,6 +10,7 @@ Never change NAMESPACE: every published id and URL depends on it. If records
 ever move to another base or table (new record ids), first copy the current
 ids into a text field and read that instead.
 """
+
 from __future__ import annotations
 
 import uuid

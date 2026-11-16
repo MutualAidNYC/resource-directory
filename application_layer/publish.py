@@ -8,12 +8,14 @@ reaches the site or API unless it hangs off a published service:
 - Organizations: only those linked from a published service. Organizations the
   organizations `filter` in airtable.toml leaves out are never pulled, so they never appear.
 """
+
 from __future__ import annotations
 
 from dataclasses import dataclass, field
 
 from data_layer.dataset import Dataset
 from models.airtable import OrganizationResponse, ServiceResponse
+
 
 @dataclass(frozen=True)
 class Published:
@@ -26,10 +28,6 @@ class Published:
     def organization_for(self, service: ServiceResponse) -> OrganizationResponse | None:
         """The service's published organization, or None if it has none."""
         return self.organizations.get(self.organization_of.get(service.id, ""))
-
-    def services_of(self, organization_id: str) -> list[ServiceResponse]:
-        """The organization's published services, in pull order."""
-        return [s for s in self.services if self.organization_of.get(s.id) == organization_id]
 
 
 def select(dataset: Dataset) -> Published:

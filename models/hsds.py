@@ -7,6 +7,7 @@ HSDS doesn't allow null.
 See: https://docs.openreferral.org/en/latest/hsds/schema_reference.html
 See: https://openreferraluk.org/developers/compliance
 """
+
 from typing import Any
 
 from pydantic import BaseModel
@@ -29,14 +30,17 @@ class HSDSModel(BaseModel):
 # Supporting Objects
 # ============================================================================
 
+
 class Phone(HSDSModel):
     """Phone number details."""
+
     id: str
     number: str
 
 
 class Address(HSDSModel):
     """Address details."""
+
     id: str
     address_1: str | None = None
     address_2: str | None = None
@@ -49,6 +53,7 @@ class Address(HSDSModel):
 
 class Language(HSDSModel):
     """Language availability."""
+
     id: str
     name: str | None = None
     code: str | None = None
@@ -56,6 +61,7 @@ class Language(HSDSModel):
 
 class Attribute(HSDSModel):
     """Links a record (here: a service) to a taxonomy term."""
+
     id: str
     link_id: str  # id of the linked record
     taxonomy_term_id: str
@@ -66,8 +72,10 @@ class Attribute(HSDSModel):
 # Taxonomy Objects
 # ============================================================================
 
+
 class Taxonomy(HSDSModel):
     """Taxonomy classification system."""
+
     id: str
     name: str
     description: str | None = None
@@ -75,6 +83,7 @@ class Taxonomy(HSDSModel):
 
 class TaxonomyTerm(HSDSModel):
     """Term within a taxonomy."""
+
     id: str
     name: str
     description: str | None = None
@@ -87,8 +96,10 @@ class TaxonomyTerm(HSDSModel):
 # Core Objects
 # ============================================================================
 
+
 class Location(HSDSModel):
     """Location where services are provided."""
+
     id: str
     location_type: str | None = None
     name: str | None = None
@@ -99,6 +110,7 @@ class Location(HSDSModel):
 
 class OrganizationSummary(HSDSModel):
     """Minimal organization info for embedding."""
+
     id: str
     name: str
     description: str | None = None
@@ -106,50 +118,39 @@ class OrganizationSummary(HSDSModel):
     website: str | None = None
 
 
-class Organization(HSDSModel):
-    """Full organization details."""
-    id: str
-    name: str
-    description: str | None = None
-    email: str | None = None
-    website: str | None = None
+class Organization(OrganizationSummary):
+    """Full organization details: the summary's fields, then these."""
+
     phones: list[Phone] | None = None
     locations: list[Location] | None = None
 
 
 class ServiceAtLocation(HSDSModel):
     """Link between a service and a location."""
+
     id: str
     service_id: str | None = None
     location_id: str | None = None
     location: Location | None = None
 
 
-class Service(HSDSModel):
-    """Full service details."""
+class ServiceSummary(HSDSModel):
+    """Minimal service info for list views."""
+
     id: str
     organization_id: str | None  # None only if its organization isn't published
     name: str
-    status: str = "active"  # Required by HSDS
+    status: str  # Required by HSDS; services.py sets it
     description: str | None = None
     url: str | None = None
     email: str | None = None
     assured_date: str | None = None
 
-    # Related objects
+
+class Service(ServiceSummary):
+    """Full service details: the summary's fields, then its related objects."""
+
     phones: list[Phone] | None = None
     service_at_locations: list[ServiceAtLocation] | None = None
     languages: list[Language] | None = None
     attributes: list[Attribute] | None = None  # taxonomy terms (categories)
-
-
-class ServiceSummary(HSDSModel):
-    """Minimal service info for list views."""
-    id: str
-    organization_id: str | None  # None only if its organization isn't published
-    name: str
-    status: str = "active"  # Required by HSDS
-    description: str | None = None
-    url: str | None = None
-    email: str | None = None
-    assured_date: str | None = None

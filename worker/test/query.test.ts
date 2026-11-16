@@ -39,7 +39,9 @@ describe('parseQuery', () => {
     });
 
     it('caps per_page', () => {
-        expect(parse('services', 'per_page=5000')).toMatchObject({ query: { perPage: PER_PAGE_MAX } });
+        expect(parse('services', 'per_page=5000')).toMatchObject({
+            query: { perPage: PER_PAGE_MAX },
+        });
     });
 
     it('ignores parameters HSDS does not define for the route', () => {
@@ -48,7 +50,9 @@ describe('parseQuery', () => {
     });
 
     it('rejects HSDS parameters this API does not support', () => {
-        expect(error('services', 'modified_after=2026-01-01')).toMatch(/^modified_after is not supported/);
+        expect(error('services', 'modified_after=2026-01-01')).toMatch(
+            /^modified_after is not supported/,
+        );
         expect(error('organizations', 'full_service=true')).toMatch(/^full_service/);
         expect(error('service_at_locations', 'postcode=11201')).toMatch(/^postcode/);
         expect(error('services', 'format=ndjson')).toMatch(/^format=ndjson is not supported/);
