@@ -23,7 +23,7 @@ export function generateStaticParams() {
 export async function generateMetadata({ params }: ServiceDetailPageProps): Promise<Metadata> {
     const { id } = await params;
     const service = getService(id);
-    if (!service) return { title: 'Service Not Found' };
+    if (!service) return { title: 'Resource Not Found' };
     return {
         title: service.name,
         description: service.description || `Details about ${service.name}`,

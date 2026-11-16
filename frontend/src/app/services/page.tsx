@@ -4,8 +4,8 @@ import { getMapData } from '@/lib/data';
 import MapPageClient from './MapPageClient';
 
 export const metadata: Metadata = {
-    title: 'Services',
-    description: 'Find community services and resources on an interactive map.',
+    title: 'Resources',
+    description: 'Find community resources on an interactive map.',
 };
 
 /**
