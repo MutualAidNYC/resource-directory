@@ -118,14 +118,9 @@ class OrganizationSummary(HSDSModel):
     website: str | None = None
 
 
-class Organization(HSDSModel):
-    """Full organization details."""
+class Organization(OrganizationSummary):
+    """Full organization details: the summary's fields, then these."""
 
-    id: str
-    name: str
-    description: str | None = None
-    email: str | None = None
-    website: str | None = None
     phones: list[Phone] | None = None
     locations: list[Location] | None = None
 
@@ -139,33 +134,23 @@ class ServiceAtLocation(HSDSModel):
     location: Location | None = None
 
 
-class Service(HSDSModel):
-    """Full service details."""
-
-    id: str
-    organization_id: str | None  # None only if its organization isn't published
-    name: str
-    status: str = "active"  # Required by HSDS
-    description: str | None = None
-    url: str | None = None
-    email: str | None = None
-    assured_date: str | None = None
-
-    # Related objects
-    phones: list[Phone] | None = None
-    service_at_locations: list[ServiceAtLocation] | None = None
-    languages: list[Language] | None = None
-    attributes: list[Attribute] | None = None  # taxonomy terms (categories)
-
-
 class ServiceSummary(HSDSModel):
     """Minimal service info for list views."""
 
     id: str
     organization_id: str | None  # None only if its organization isn't published
     name: str
-    status: str = "active"  # Required by HSDS
+    status: str  # Required by HSDS; services.py sets it
     description: str | None = None
     url: str | None = None
     email: str | None = None
     assured_date: str | None = None
+
+
+class Service(ServiceSummary):
+    """Full service details: the summary's fields, then its related objects."""
+
+    phones: list[Phone] | None = None
+    service_at_locations: list[ServiceAtLocation] | None = None
+    languages: list[Language] | None = None
+    attributes: list[Attribute] | None = None  # taxonomy terms (categories)
