@@ -64,7 +64,7 @@ export default function OrganizationsPageClient({ organizations }: Organizations
                     </label>
                     <div className="relative flex items-center">
                         <svg
-                            className="absolute left-3 w-5 h-5 text-[var(--muted)]"
+                            className="absolute left-3 w-5 h-5 text-muted"
                             aria-hidden="true"
                             fill="none"
                             stroke="currentColor"
@@ -84,13 +84,13 @@ export default function OrganizationsPageClient({ organizations }: Organizations
                             value={query}
                             onChange={(e) => updateQuery(e.target.value)}
                             placeholder="Search groups..."
-                            className="w-full pl-10 pr-12 py-3 rounded-xl border border-[var(--muted)] bg-[var(--card-bg)] text-[var(--foreground)] shadow-sm focus:border-[var(--primary)] focus:outline-none focus:ring-2 focus:ring-[var(--primary)]/20"
+                            className="w-full pl-10 pr-12 py-3 rounded-xl border border-muted bg-card-bg shadow-sm focus:border-accent"
                         />
                         {query && (
                             <button
                                 type="button"
                                 onClick={handleClear}
-                                className="absolute right-2 p-1.5 text-[var(--muted)] hover:text-[var(--foreground)]"
+                                className="absolute right-2 p-1.5 text-muted hover:text-foreground"
                                 aria-label="Clear search"
                             >
                                 <svg
@@ -141,10 +141,8 @@ export function OrganizationGrid({
         <div className="container mx-auto px-4 py-8">
             {/* Page Header */}
             <div className="mb-8">
-                <h1 className="text-3xl font-bold text-[var(--foreground)] mb-4">Groups</h1>
-                <p role="status" className="text-[var(--foreground)]">
-                    {status}
-                </p>
+                <h1 className="text-3xl mb-4">Groups</h1>
+                <p role="status">{status}</p>
             </div>
 
             {searchBox && <div className="mb-8">{searchBox}</div>}
@@ -158,10 +156,10 @@ export function OrganizationGrid({
                 </div>
             ) : (
                 <div className="text-center py-16">
-                    <h3 className="text-lg font-medium text-[var(--foreground)] mb-2">
+                    <h3 className="text-lg mb-2">
                         {searched ? `No results for "${searched}"` : 'No groups found'}
                     </h3>
-                    <p className="text-[var(--foreground)]">
+                    <p>
                         {searched
                             ? 'Try a different search term.'
                             : 'No groups are currently available.'}

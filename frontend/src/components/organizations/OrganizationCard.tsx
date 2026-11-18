@@ -1,5 +1,6 @@
 import Link from 'next/link';
 import type { OrganizationListItem } from '@/lib/types';
+import { CARD } from '@/lib/styles';
 
 interface OrganizationCardProps {
     organization: OrganizationListItem;
@@ -12,26 +13,23 @@ export function OrganizationCard({ organization }: OrganizationCardProps) {
     return (
         <Link
             href={`/organizations/${organization.id}`}
-            className="group flex flex-col justify-between h-full rounded-xl border border-[var(--card-border)] bg-[var(--card-bg)] p-6 shadow-sm 
-            transition-all hover:border-[var(--primary)]/40 hover:shadow-md"
+            className={`group flex flex-col justify-between h-full ${CARD} p-6 shadow-sm transition-all hover:border-accent/40 hover:shadow-md`}
         >
             <div className="min-w-0">
                 {/* Group Name */}
-                <h3 className="font-semibold text-lg text-[var(--foreground)] group-hover:text-[var(--primary)]">
+                <h3 className="text-lg text-foreground group-hover:text-accent">
                     {organization.name}
                 </h3>
                 {/* Description */}
                 {organization.description && (
-                    <p className="mt-2 text-[var(--foreground)] line-clamp-3">
-                        {organization.description}
-                    </p>
+                    <p className="mt-2 text-foreground line-clamp-3">{organization.description}</p>
                 )}
             </div>
 
             {/* Resource Count */}
             <div className="mt-3 flex flex-wrap gap-3 text-sm">
                 {organization.service_count > 0 && (
-                    <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full bg-[var(--tag-olive-bg)] text-[var(--tag-olive-text)] border border-[var(--tag-olive-text)]">
+                    <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full bg-tag-olive-bg text-tag-olive-text border border-tag-olive-text">
                         <svg
                             className="w-4 h-4"
                             aria-hidden="true"

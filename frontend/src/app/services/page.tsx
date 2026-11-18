@@ -18,7 +18,7 @@ export default function ServicesPage() {
     return (
         <Suspense
             fallback={
-                <div className="container mx-auto px-4 py-8 text-center text-[var(--muted)]">
+                <div className="container mx-auto px-4 py-8 text-center text-muted">
                     Loading resources…
                 </div>
             }

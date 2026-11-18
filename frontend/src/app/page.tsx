@@ -35,15 +35,15 @@ export default function Home() {
     return (
         <div className="flex flex-col">
             {/* Hero Section */}
-            <section className="pt-10 pb-12 md:py-28 px-4 bg-[var(--background)]">
+            <section className="pt-10 pb-12 md:py-28 px-4 bg-background">
                 <div className="container mx-auto">
                     <div className="max-w-5xl mx-auto text-center">
-                        <h1 className="font-black text-4xl md:text-6xl text-[var(--secondary)] mb-6">
+                        <h1 className="font-black text-4xl md:text-6xl mb-6">
                             Community Resources Library
                         </h1>
                     </div>
                     <div className="max-w-3xl mb-10 mx-auto">
-                        <p className="text-2xl font-bold text-[var(--primary)] mb-4">
+                        <p className="text-2xl font-bold text-accent mb-4">
                             Our community-sourced, volunteer-curated library is a collection of the
                             many resources available to New Yorkers.
                         </p>
@@ -76,15 +76,13 @@ export default function Home() {
 
             {/* Resource Categories  */}
             {categories.length > 0 && (
-                <section className="pt-10 pb-16 px-4 bg-[var(--section-alt)]">
+                <section className="pt-10 pb-16 px-4 bg-section-alt">
                     <div className="container mx-auto">
                         <div className="flex items-center justify-between mb-8">
-                            <h2 className="text-2xl font-bold text-[var(--foreground)]">
-                                Browse By Category
-                            </h2>
+                            <h2 className="text-2xl/[1.4]">Browse By Category</h2>
                             <Link
                                 href="/services"
-                                className="text-[var(--primary)] hover:text-[var(--primary-hover)] font-medium transition-colors underline hover:no-underline"
+                                className="text-accent hover:text-accent-hover font-medium transition-colors underline hover:no-underline"
                             >
                                 View all resources →
                             </Link>
@@ -95,7 +93,7 @@ export default function Home() {
                                     <Link
                                         key={category.name}
                                         href={`/services?category=${encodeURIComponent(category.name)}`}
-                                        className="group flex items-center gap-3 p-5 rounded-2xl bg-card-bg border border-[var(--card-border)] hover:shadow-md transition-all"
+                                        className="group flex items-center gap-3 p-5 rounded-2xl bg-card-bg border border-card-border hover:shadow-md transition-all"
                                     >
                                         <span className="flex-shrink-0 w-8 h-8 flex items-center justify-center">
                                             {iconFiles.has(`${iconSlug(category.name)}.png`) ? (

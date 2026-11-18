@@ -8,9 +8,9 @@ export default function NotFound() {
         <div className="container mx-auto px-4 py-16">
             <div className="max-w-md mx-auto text-center">
                 {/* Icon */}
-                <div className="inline-flex items-center justify-center w-20 h-20 rounded-full bg-[var(--section-alt)] mb-6">
+                <div className="inline-flex items-center justify-center w-20 h-20 rounded-full bg-section-alt mb-6">
                     <svg
-                        className="w-10 h-10 text-[var(--muted)]"
+                        className="w-10 h-10 text-muted"
                         aria-hidden="true"
                         fill="none"
                         stroke="currentColor"
@@ -26,12 +26,10 @@ export default function NotFound() {
                 </div>
 
                 {/* Title */}
-                <h1 className="text-4xl font-bold text-[var(--foreground)] mb-4">
-                    404 - Page Not Found
-                </h1>
+                <h1 className="text-4xl mb-4">404 - Page Not Found</h1>
 
                 {/* Description */}
-                <p className="text-[var(--foreground)] mb-8">
+                <p className="mb-8">
                     Sorry, we couldn&apos;t find the page you&apos;re looking for. It may have been
                     moved or deleted.
                 </p>

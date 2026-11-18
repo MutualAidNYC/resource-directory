@@ -17,7 +17,7 @@ export function Header() {
     const [mobileOpen, setMobileOpen] = useState(false);
 
     return (
-        <header className="w-full bg-[var(--nav-bg)]">
+        <header className="w-full bg-secondary">
             {/* Wide margins only from md up: on phones they pushed the logo and menu button to the middle. */}
             <div className="w-full px-4 md:px-[50px]">
                 {/* ── Header row */}

@@ -54,14 +54,14 @@ export function WebsiteLink({ href, name, className = '', oneLine = false }: Web
         return (
             <>
                 {link}
-                {detail && <span className="text-[var(--muted)]"> · {detail}</span>}
+                {detail && <span className="text-muted"> · {detail}</span>}
             </>
         );
     }
     return (
         <span className="flex items-baseline gap-1.5 min-w-0">
             {link}
-            {detail && <span className="min-w-0 truncate text-[var(--muted)]">· {detail}</span>}
+            {detail && <span className="min-w-0 truncate text-muted">· {detail}</span>}
         </span>
     );
 }
