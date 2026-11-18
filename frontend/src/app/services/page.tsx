@@ -9,7 +9,7 @@ export const metadata: Metadata = {
 };
 
 /**
- * Services page — interactive map with filters, search, and proximity sorting.
+ * Services page — interactive map with filters and search.
  * Suspense boundary required because MapPageClient uses useSearchParams().
  */
 export default function ServicesPage() {

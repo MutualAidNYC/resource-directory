@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo, useCallback, useRef, useEffect, useEffectEvent } from 'react';
+import { useState, useMemo, useCallback, useRef } from 'react';
 import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { MapContainer } from '@/components/map/MapContainer';
@@ -10,19 +10,6 @@ import { externalHref } from '@/lib/format';
 import { search, SERVICE_FIELDS } from '@/lib/search';
 import { useDebounced } from '@/lib/useDebounced';
 import type { Category, MapService } from '@/lib/types';
-
-/** Haversine distance in miles between two lat/lng points. */
-function haversineDistance(lat1: number, lng1: number, lat2: number, lng2: number): number {
-    const R = 3958.8; // Earth radius in miles
-    const dLat = ((lat2 - lat1) * Math.PI) / 180;
-    const dLng = ((lng2 - lng1) * Math.PI) / 180;
-    const a =
-        Math.sin(dLat / 2) ** 2 +
-        Math.cos((lat1 * Math.PI) / 180) *
-            Math.cos((lat2 * Math.PI) / 180) *
-            Math.sin(dLng / 2) ** 2;
-    return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-}
 
 interface MapPageClientProps {
     services: MapService[];
@@ -56,14 +43,6 @@ export default function MapPageClient({
     );
     const [selectedArea, setSelectedArea] = useState<string>(searchParams.get('area') || '');
 
-    // Kept in memory only, never in the URL.
-    const [userLocation, setUserLocation] = useState<{ lat: number; lng: number } | null>(null);
-    // The home page's location button opens /services?near=1. This page renders only in the
-    // browser (useSearchParams under Suspense), so navigator is defined here.
-    const near = searchParams.get('near') === '1';
-    const [locationStatus, setLocationStatus] = useState<'idle' | 'loading' | 'error'>(() =>
-        !near ? 'idle' : navigator.geolocation ? 'loading' : 'error',
-    );
     const [hoveredServiceId, setHoveredServiceId] = useState<string | null>(null);
 
     // Responsive state
@@ -123,42 +102,12 @@ export default function MapPageClient({
         syncUrl(searchQuery, selectedNeed, selectedCommunity, value);
     };
 
-    // Ask the browser for the location; state changes only in its callbacks.
-    const requestLocation = () => {
-        navigator.geolocation?.getCurrentPosition(
-            (pos) => {
-                setUserLocation({ lat: pos.coords.latitude, lng: pos.coords.longitude });
-                setLocationStatus('idle');
-            },
-            () => setLocationStatus('error'),
-            { enableHighAccuracy: true, timeout: 10000 },
-        );
-    };
-
-    const handleUseLocation = () => {
-        setLocationStatus(navigator.geolocation ? 'loading' : 'error');
-        requestLocation();
-    };
-
-    // Status for near=1 is set in its initial state above, so the effect sets none.
-    const locateOnArrival = useEffectEvent(requestLocation);
-    useEffect(() => {
-        if (near) locateOnArrival();
-    }, [near]);
-
-    const handleClearLocation = () => {
-        setUserLocation(null);
-        setLocationStatus('idle');
-    };
-
     // Clear all filters
     const handleClearFilters = () => {
         setSearchQuery('');
         setSelectedNeed('');
         setSelectedCommunity('');
         setSelectedArea('');
-        setUserLocation(null);
-        setLocationStatus('idle');
         syncUrl('', '', '', '');
     };
 
@@ -171,18 +120,8 @@ export default function MapPageClient({
                 (!selectedCommunity || service.communityFocus.includes(selectedCommunity)) &&
                 (!selectedArea || service.service_areas.includes(selectedArea)),
         );
-        const results = search(filtered, searchQuery, SERVICE_FIELDS);
-
-        // With a location, nearest first; the sort is stable, so ties keep the search order.
-        if (userLocation) {
-            const distance = (s: MapService) =>
-                s.latitude && s.longitude
-                    ? haversineDistance(userLocation.lat, userLocation.lng, s.latitude, s.longitude)
-                    : Infinity;
-            results.sort((a, b) => distance(a) - distance(b));
-        }
-        return results;
-    }, [services, searchQuery, selectedNeed, selectedCommunity, selectedArea, userLocation]);
+        return search(filtered, searchQuery, SERVICE_FIELDS);
+    }, [services, searchQuery, selectedNeed, selectedCommunity, selectedArea]);
 
     // Get locations for map
     const mapLocations = useMemo(() => {
@@ -346,56 +285,6 @@ export default function MapPageClient({
                     </form>
                 </div>
 
-                {/* Use My Location */}
-                <div className="mb-6">
-                    {!userLocation ? (
-                        <button
-                            onClick={handleUseLocation}
-                            disabled={locationStatus === 'loading'}
-                            className="w-full flex items-center justify-center gap-2 px-4 py-2 text-sm font-medium rounded-lg border border-[var(--card-border)] bg-[var(--card-bg)] text-[var(--foreground)] hover:bg-[var(--section-alt)] transition-colors disabled:opacity-50"
-                        >
-                            <svg
-                                className="w-4 h-4"
-                                aria-hidden="true"
-                                fill="none"
-                                stroke="currentColor"
-                                viewBox="0 0 24 24"
-                            >
-                                <path
-                                    strokeLinecap="round"
-                                    strokeLinejoin="round"
-                                    strokeWidth={2}
-                                    d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"
-                                />
-                                <path
-                                    strokeLinecap="round"
-                                    strokeLinejoin="round"
-                                    strokeWidth={2}
-                                    d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"
-                                />
-                            </svg>
-                            {locationStatus === 'loading' ? 'Locating...' : 'Use My Location'}
-                        </button>
-                    ) : (
-                        <div className="flex items-center justify-between px-3 py-2 rounded-lg bg-[var(--tag-olive-bg)] border border-[var(--secondary)]/30">
-                            <span className="text-sm text-[var(--tag-olive-text)] font-medium">
-                                📍 Sorting by distance
-                            </span>
-                            <button
-                                onClick={handleClearLocation}
-                                className="text-xs text-[var(--tag-olive-text)] hover:opacity-70"
-                            >
-                                ✕
-                            </button>
-                        </div>
-                    )}
-                    {locationStatus === 'error' && (
-                        <p className="text-xs text-red-500 mt-1">
-                            Location access denied or unavailable.
-                        </p>
-                    )}
-                </div>
-
                 {/* Need Category Filter */}
                 <div className="mb-6">
                     <label
@@ -498,7 +387,6 @@ export default function MapPageClient({
                             <ResourceCard
                                 key={service.id}
                                 service={service}
-                                userLocation={userLocation}
                                 onViewOnMap={(id) => {
                                     setHoveredServiceId(id);
                                     setViewMode('map');
@@ -526,22 +414,11 @@ export default function MapPageClient({
  */
 function ResourceCard({
     service,
-    userLocation,
     onViewOnMap,
 }: {
     service: MapService;
-    userLocation: { lat: number; lng: number } | null;
     onViewOnMap: (id: string) => void;
 }) {
-    const distance =
-        userLocation && service.latitude && service.longitude
-            ? haversineDistance(
-                  userLocation.lat,
-                  userLocation.lng,
-                  service.latitude,
-                  service.longitude,
-              )
-            : null;
     const website = externalHref(service.url);
 
     return (
@@ -555,11 +432,6 @@ function ResourceCard({
                         {service.name}
                     </Link>
                 </h3>
-                {distance !== null && (
-                    <span className="flex-shrink-0 text-xs font-medium text-[var(--secondary)] bg-[var(--tag-blue-bg)] border border-[var(--tag-blue-text)] px-2 py-0.5 rounded-full whitespace-nowrap">
-                        {distance < 0.1 ? '< 0.1' : distance.toFixed(1)} mi
-                    </span>
-                )}
             </div>
 
             {service.address && (
