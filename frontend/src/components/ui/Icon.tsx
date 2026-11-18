@@ -20,14 +20,19 @@ interface IconProps {
     name: keyof typeof PATHS;
     /** Size and spacing, e.g. "w-4 h-4 shrink-0". */
     className: string;
+    /**
+     * What the icon means, read by screen readers ("address", "phone"). Give one when the
+     * text beside it doesn't say it; leave it out and the icon is hidden from screen readers.
+     */
+    label?: string;
 }
 
-/** An outline icon, hidden from screen readers: the text beside it says what it is. */
-export function Icon({ name, className }: IconProps) {
+/** An outline icon, named for screen readers when it has a `label`, otherwise hidden. */
+export function Icon({ name, className, label }: IconProps) {
     return (
         <svg
             className={className}
-            aria-hidden="true"
+            {...(label ? { role: 'img', 'aria-label': label } : { 'aria-hidden': true })}
             fill="none"
             stroke="currentColor"
             viewBox="0 0 24 24"

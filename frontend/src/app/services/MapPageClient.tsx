@@ -10,12 +10,12 @@ import { externalHref } from '@/lib/format';
 import { search, SERVICE_FIELDS } from '@/lib/search';
 import { useDebounced } from '@/lib/useDebounced';
 import type { Category, MapService } from '@/lib/types';
+import { Icon } from '@/components/ui/Icon';
+import { CARD } from '@/lib/styles';
 
 // The filter labels and fields.
 const LABEL = 'block text-sm font-medium opacity-80 mb-2';
 const FIELD = 'w-full rounded-lg border border-muted bg-card-bg px-3 py-2 text-sm';
-import { Icon } from '@/components/ui/Icon';
-import { CARD } from '@/lib/styles';
 
 interface MapPageClientProps {
     services: MapService[];
@@ -426,7 +426,7 @@ function ResourceCard({
             {service.address && (
                 <div className="text-sm mb-2 flex items-start justify-between gap-2">
                     <div className="flex items-start gap-2">
-                        <Icon name="pin" className="w-4 h-4 mt-0.5 flex-shrink-0" />
+                        <Icon name="pin" label="address" className="w-4 h-4 mt-0.5 flex-shrink-0" />
                         <span className="line-clamp-2">{service.address}</span>
                     </div>
                     {/* Only offer the map view button when there is a pin with coordinates to jump to.
@@ -444,7 +444,7 @@ function ResourceCard({
 
             {service.phone && (
                 <p className="text-sm mb-1 flex items-center gap-2">
-                    <Icon name="phone" className="w-4 h-4 flex-shrink-0" />
+                    <Icon name="phone" label="phone" className="w-4 h-4 flex-shrink-0" />
                     <a
                         href={`tel:${service.phone}`}
                         className="underline hover:no-underline hover:text-accent"

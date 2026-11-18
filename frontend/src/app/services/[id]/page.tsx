@@ -252,7 +252,11 @@ export default async function ServiceDetailPage({ params }: ServiceDetailPagePro
                                         href={`mailto:${service.email}`}
                                         className="flex items-center gap-3 text-foreground hover:text-accent"
                                     >
-                                        <Icon name="email" className="w-5 h-5 shrink-0" />
+                                        <Icon
+                                            name="email"
+                                            label="email"
+                                            className="w-5 h-5 shrink-0"
+                                        />
                                         <span className="truncate underline hover:no-underline">
                                             {service.email}
                                         </span>
@@ -261,7 +265,11 @@ export default async function ServiceDetailPage({ params }: ServiceDetailPagePro
 
                                 {service.phones?.map((phone) => (
                                     <div key={phone.id} className="flex items-center gap-3">
-                                        <Icon name="phone" className="w-5 h-5 shrink-0" />
+                                        <Icon
+                                            name="phone"
+                                            label="phone"
+                                            className="w-5 h-5 shrink-0"
+                                        />
                                         <span>
                                             <a
                                                 href={`tel:${phone.number}`}

@@ -186,14 +186,22 @@ export default async function OrganizationDetailPage({ params }: OrganizationDet
                                         href={`mailto:${organization.email}`}
                                         className="flex items-center gap-3 text-foreground hover:text-accent"
                                     >
-                                        <Icon name="email" className="w-5 h-5 shrink-0" />
+                                        <Icon
+                                            name="email"
+                                            label="email"
+                                            className="w-5 h-5 shrink-0"
+                                        />
                                         <span className="truncate">{organization.email}</span>
                                     </a>
                                 )}
 
                                 {addresses.map((address) => (
                                     <div key={address.id} className="flex items-start gap-3">
-                                        <Icon name="pin" className="w-5 h-5 shrink-0 mt-0.5" />
+                                        <Icon
+                                            name="pin"
+                                            label="address"
+                                            className="w-5 h-5 shrink-0 mt-0.5"
+                                        />
                                         <address className="not-italic">
                                             {formatAddress(address)}
                                         </address>

@@ -44,7 +44,7 @@ export function ServiceCard({ service }: ServiceCardProps) {
                 return (
                     <div className="mt-4 pt-4 border-t border-card-border">
                         <p className="text-sm text-foreground flex items-center gap-1">
-                            <Icon name="pin" className="w-4 h-4 shrink-0" />
+                            <Icon name="pin" label="address" className="w-4 h-4 shrink-0" />
                             <span className="truncate">{text}</span>
                         </p>
                     </div>
