@@ -1,11 +1,11 @@
 'use client';
 
-import { FormEvent, useEffect, useMemo, useRef, useState } from 'react';
+import { FormEvent, MouseEventHandler, useMemo, useRef, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { OrganizationCard } from '@/components/organizations/OrganizationCard';
 import { ORGANIZATION_FIELDS, search } from '@/lib/search';
 import { useDebounced } from '@/lib/useDebounced';
-import { rememberListUrl } from '@/lib/listUrl';
+import { rememberOnDetailClick } from '@/lib/listUrl';
 import type { OrganizationListItem } from '@/lib/types';
 import { BAR, PAGE } from '@/lib/styles';
 
@@ -31,11 +31,6 @@ export default function OrganizationsPageClient({ organizations }: Organizations
         const q = searchParams.get('q') ?? '';
         if (q !== query.trim()) setQuery(q);
     }
-
-    // So "Back to groups" returns to this search.
-    useEffect(() => {
-        rememberListUrl('/organizations', window.location.pathname + window.location.search);
-    }, [searchParams]);
 
     const results = useMemo(
         () => search(organizations, query, ORGANIZATION_FIELDS),
@@ -72,6 +67,8 @@ export default function OrganizationsPageClient({ organizations }: Organizations
         <OrganizationGrid
             organizations={results}
             searched={searched}
+            // So "Back to groups" on a group opened from here returns to this search.
+            onClickCapture={rememberOnDetailClick('/organizations')}
             searchBox={
                 // The list filters as you type, so submitting (Enter, or the phone keyboard's
                 // Search key) only closes the keyboard on touch screens, so the results show.
@@ -139,6 +136,7 @@ interface OrganizationGridProps {
     searched?: string;
     /** The search box; left out while the page loads (no JavaScript yet). */
     searchBox?: React.ReactNode;
+    onClickCapture?: MouseEventHandler;
 }
 
 /** Page header, optional search box and the grid of group cards. */
@@ -146,6 +144,7 @@ export function OrganizationGrid({
     organizations,
     searched = '',
     searchBox,
+    onClickCapture,
 }: OrganizationGridProps) {
     const total = organizations.length;
     // Announced once typing stops, not after every key.
@@ -154,7 +153,7 @@ export function OrganizationGrid({
     );
 
     return (
-        <div className={`${PAGE} pt-10 pb-16`}>
+        <div className={`${PAGE} pt-10 pb-16`} onClickCapture={onClickCapture}>
             {/* Page Header */}
             <div className="mb-6">
                 <div className={`${BAR} mb-4`} />

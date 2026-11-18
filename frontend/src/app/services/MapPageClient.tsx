@@ -1,10 +1,10 @@
 'use client';
 
-import { useState, useMemo, useCallback, useEffect, useRef } from 'react';
+import { useState, useMemo, useCallback, useRef } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { MapContainer } from '@/components/map/MapContainer';
 import { ServiceCard } from '@/components/services/ServiceCard';
-import { rememberListUrl } from '@/lib/listUrl';
+import { rememberOnDetailClick } from '@/lib/listUrl';
 import { search, SERVICE_FIELDS } from '@/lib/search';
 import { useDebounced } from '@/lib/useDebounced';
 import type { Category, MapService } from '@/lib/types';
@@ -62,11 +62,6 @@ export default function MapPageClient({
         setSelectedCommunity(searchParams.get('community') || '');
         setSelectedArea(searchParams.get('area') || '');
     }
-
-    // So "Back to all resources" returns to this search and these filters.
-    useEffect(() => {
-        rememberListUrl('/services', window.location.pathname + window.location.search);
-    }, [searchParams]);
 
     /**
      * Push filter state into the browser URL so that filtered views are
@@ -206,7 +201,12 @@ export default function MapPageClient({
     // narrow, short screens (high zoom) does the whole page scroll instead (WCAG 1.4.10);
     // the floating Filters button below uses the same condition.
     return (
-        <div className="flex flex-col md:flex-row md:h-[calc(100vh-64px)] md:overflow-hidden [@media(min-height:32rem)]:h-[calc(100vh-64px)] [@media(min-height:32rem)]:overflow-hidden">
+        <div
+            className="flex flex-col md:flex-row md:h-[calc(100vh-64px)] md:overflow-hidden [@media(min-height:32rem)]:h-[calc(100vh-64px)] [@media(min-height:32rem)]:overflow-hidden"
+            // So "Back to all resources" on a resource opened from here returns to this
+            // search and these filters (the cards and the map's popups).
+            onClickCapture={rememberOnDetailClick('/services')}
+        >
             <h1 className="sr-only">Resources</h1>
 
             {/* Mobile Action Bar */}

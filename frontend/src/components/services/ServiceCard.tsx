@@ -113,7 +113,6 @@ export function ServiceCard({
                         <TagLink
                             key={`need-${need}`}
                             kind="need"
-                            size="sm"
                             href={`/services?category=${encodeURIComponent(need)}`}
                         >
                             {need}
@@ -123,7 +122,6 @@ export function ServiceCard({
                         <TagLink
                             key={`community-${community}`}
                             kind="community"
-                            size="sm"
                             href={`/services?community=${encodeURIComponent(community)}`}
                         >
                             {community}

@@ -23,7 +23,7 @@ export default function ApiDocsPage() {
     return (
         <div className="mx-auto max-w-3xl px-4 py-8 space-y-10">
             <div className="space-y-4">
-                <h1 className="text-3xl">{docs.title}</h1>
+                <h1>{docs.title}</h1>
                 <p>
                     The resources and groups in this directory, as a read-only API in the{' '}
                     <a href="https://docs.openreferral.org/" className={LINK}>
