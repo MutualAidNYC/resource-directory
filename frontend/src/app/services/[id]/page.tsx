@@ -129,9 +129,9 @@ export default async function ServiceDetailPage({ params }: ServiceDetailPagePro
                         {/* Need Categories */}
                         {needFocus.length > 0 && (
                             <div className="mb-4">
-                                <h3 className="text-sm font-semibold text-[var(--foreground)] opacity-70 mb-2 uppercase tracking-wide">
+                                <p className="text-sm font-semibold text-[var(--foreground)] opacity-70 mb-2 uppercase tracking-wide">
                                     Need Categories
-                                </h3>
+                                </p>
                                 <div className="flex flex-wrap gap-2">
                                     {needFocus.map((need, index) => (
                                         <TagLink
@@ -149,9 +149,9 @@ export default async function ServiceDetailPage({ params }: ServiceDetailPagePro
                         {/* Community Focus */}
                         {communityFocus.length > 0 && (
                             <div className="mb-4">
-                                <h3 className="text-sm font-semibold text-[var(--foreground)] opacity-70 mb-2 uppercase tracking-wide">
+                                <p className="text-sm font-semibold text-[var(--foreground)] opacity-70 mb-2 uppercase tracking-wide">
                                     Community Focus
-                                </h3>
+                                </p>
                                 <div className="flex flex-wrap gap-2">
                                     {communityFocus.map((community, index) => (
                                         <TagLink

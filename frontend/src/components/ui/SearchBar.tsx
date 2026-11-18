@@ -43,9 +43,9 @@ export function SearchBar({ placeholder = 'Search resources...' }: SearchBarProp
                     value={query}
                     onChange={(e) => setQuery(e.target.value)}
                     placeholder={placeholder}
-                    className={`w-full rounded-full border border-[var(--card-border)] bg-[var(--card-bg)] shadow-sm 
+                    className={`w-full rounded-full border border-[var(--muted)] bg-[var(--card-bg)] shadow-sm 
             focus:border-[var(--primary)] focus:outline-none focus:ring-2 focus:ring-[var(--primary)]/20
-            text-[var(--foreground)] placeholder:text-[var(--muted)]
+            text-[var(--foreground)]
             h-14 text-lg pl-6 pr-28`}
                 />
                 <div className="absolute right-2 flex items-center gap-1">

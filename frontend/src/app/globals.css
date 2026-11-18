@@ -89,6 +89,12 @@ h2 {
     a {
         color: var(--primary);
     }
+
+    /* Ensure sufficient WCAG color contrast */
+    ::placeholder {
+        color: var(--muted);
+        opacity: 1;
+    }
 }
 
 /* Focus styles that work on all background colors and removes the default browser outline to prevent doubling */
