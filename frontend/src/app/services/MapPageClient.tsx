@@ -402,7 +402,11 @@ export default function MapPageClient({
                 className={`${viewMode === 'map' ? 'block' : 'hidden'} md:block flex-1 relative h-full min-w-0 p-2 md:p-2`}
             >
                 <div className="w-full h-full rounded-xl overflow-hidden shadow-lg border border-[var(--card-border)]">
-                    <MapContainer locations={mapLocations} highlightedId={hoveredServiceId} />
+                    <MapContainer
+                        locations={mapLocations}
+                        highlightedId={hoveredServiceId}
+                        showLocateButton
+                    />
                 </div>
             </div>
         </div>
