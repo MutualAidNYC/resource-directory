@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import { ExternalLink } from './ExternalLink';
 
 /**
  * Site footer with warm navy background and cream text.
@@ -34,14 +35,12 @@ export function Footer() {
                     {/* Attribution */}
                     <p className="text-sm text-[var(--nav-text)]">
                         Powered by{' '}
-                        <a
+                        <ExternalLink
                             href="https://openreferral.org"
-                            target="_blank"
-                            rel="noopener noreferrer"
                             className="hover:no-underline underline transition-opacity text-inherit"
                         >
                             Open Referral HSDS
-                        </a>
+                        </ExternalLink>
                     </p>
                 </div>
             </div>

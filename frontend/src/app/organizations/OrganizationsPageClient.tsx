@@ -4,6 +4,7 @@ import { FormEvent, useMemo, useRef, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { OrganizationCard } from '@/components/organizations/OrganizationCard';
 import { ORGANIZATION_FIELDS, search } from '@/lib/search';
+import { useDebounced } from '@/lib/useDebounced';
 import type { OrganizationListItem } from '@/lib/types';
 
 interface OrganizationsPageClientProps {
@@ -83,7 +84,7 @@ export default function OrganizationsPageClient({ organizations }: Organizations
                             value={query}
                             onChange={(e) => updateQuery(e.target.value)}
                             placeholder="Search groups..."
-                            className="w-full pl-10 pr-12 py-3 rounded-xl border border-[var(--card-border)] bg-[var(--card-bg)] text-[var(--foreground)] shadow-sm focus:border-[var(--primary)] focus:outline-none focus:ring-2 focus:ring-[var(--primary)]/20"
+                            className="w-full pl-10 pr-12 py-3 rounded-xl border border-[var(--muted)] bg-[var(--card-bg)] text-[var(--foreground)] shadow-sm focus:border-[var(--primary)] focus:outline-none focus:ring-2 focus:ring-[var(--primary)]/20"
                         />
                         {query && (
                             <button
@@ -130,15 +131,19 @@ export function OrganizationGrid({
     searchBox,
 }: OrganizationGridProps) {
     const total = organizations.length;
+    // Announced once typing stops, not after every key.
+    const status = useDebounced(
+        `${total.toLocaleString()} ${total === 1 ? 'group' : 'groups'} providing community ` +
+            `resources${searched && ` for search term "${searched}"`}`,
+    );
 
     return (
         <div className="container mx-auto px-4 py-8">
             {/* Page Header */}
             <div className="mb-8">
                 <h1 className="text-3xl font-bold text-[var(--foreground)] mb-4">Groups</h1>
-                <p className="text-[var(--foreground)]">
-                    {total.toLocaleString()} {total === 1 ? 'group' : 'groups'} providing community
-                    resources{searched && ` for search term "${searched}"`}
+                <p role="status" className="text-[var(--foreground)]">
+                    {status}
                 </p>
             </div>
 

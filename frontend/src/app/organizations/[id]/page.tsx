@@ -5,6 +5,7 @@ import { getMapData, getOrganization, organizationIds, servicesOf } from '@/lib/
 import { externalHref, formatAddress } from '@/lib/format';
 import { ServiceCard } from '@/components/services/ServiceCard';
 import { MapContainer } from '@/components/map/MapContainer';
+import { WebsiteLink } from '@/components/ui/ExternalLink';
 import type { MapLocation } from '@/components/map/MapView';
 
 interface OrganizationDetailPageProps {
@@ -197,12 +198,7 @@ export default async function OrganizationDetailPage({ params }: OrganizationDet
 
                             <div className="space-y-4">
                                 {website && (
-                                    <a
-                                        href={website}
-                                        target="_blank"
-                                        rel="noopener noreferrer"
-                                        className="flex items-center gap-3 text-[var(--primary)] hover:text-[var(--primary-hover)]"
-                                    >
+                                    <div className="flex items-center gap-3">
                                         <svg
                                             className="w-5 h-5 shrink-0"
                                             aria-hidden="true"
@@ -217,8 +213,14 @@ export default async function OrganizationDetailPage({ params }: OrganizationDet
                                                 d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"
                                             />
                                         </svg>
-                                        <span className="truncate">Visit Website</span>
-                                    </a>
+                                        <span className="min-w-0">
+                                            <WebsiteLink
+                                                href={website}
+                                                name={organization.name}
+                                                className="text-[var(--primary)] hover:text-[var(--primary-hover)] underline hover:no-underline"
+                                            />
+                                        </span>
+                                    </div>
                                 )}
 
                                 {organization.email && (

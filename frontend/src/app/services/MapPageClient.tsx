@@ -5,8 +5,10 @@ import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { MapContainer } from '@/components/map/MapContainer';
 import { TagLink } from '@/components/ui/TagLink';
+import { WebsiteLink } from '@/components/ui/ExternalLink';
 import { externalHref } from '@/lib/format';
 import { search, SERVICE_FIELDS } from '@/lib/search';
+import { useDebounced } from '@/lib/useDebounced';
 import type { Category, MapService } from '@/lib/types';
 
 /** Haversine distance in miles between two lat/lng points. */
@@ -234,9 +236,14 @@ export default function MapPageClient({
             />
         </svg>
     );
-    const activeFilterDot = (searchQuery || selectedNeed || selectedCommunity || selectedArea) && (
-        <span className="w-2 h-2 rounded-full bg-[var(--highlight)] flex-shrink-0"></span>
-    );
+    // Shown in the Filters buttons as text ("Filters (2)"), so it doesn't rely on color.
+    const activeFilterCount = [searchQuery, selectedNeed, selectedCommunity, selectedArea].filter(
+        Boolean,
+    ).length;
+    const activeFilterText = activeFilterCount > 0 ? ` (${activeFilterCount})` : '';
+
+    // Announced once typing stops, not after every key.
+    const resultCount = useDebounced(filteredServices.length);
 
     // Jump up to the filters (instant: the page is long) and move focus to their heading.
     const openFiltersFromFloat = () => {
@@ -253,26 +260,32 @@ export default function MapPageClient({
     // the floating Filters button below uses the same condition.
     return (
         <div className="flex flex-col md:flex-row md:h-[calc(100vh-64px)] md:overflow-hidden [@media(min-height:32rem)]:h-[calc(100vh-64px)] [@media(min-height:32rem)]:overflow-hidden">
+            <h1 className="sr-only">Resources</h1>
+
             {/* Mobile Action Bar */}
             <div className="md:hidden flex items-center justify-between p-3 bg-[var(--section-alt)] border-b border-[var(--card-border)] flex-shrink-0 z-10 w-full shadow-sm">
                 <button
                     onClick={() => setIsFiltersOpen(!isFiltersOpen)}
+                    aria-expanded={isFiltersOpen}
+                    aria-controls="filters-panel"
                     className="flex items-center gap-2 px-3 py-1.5 rounded-lg border border-[var(--card-border)] bg-[var(--card-bg)] text-sm font-medium text-[var(--foreground)]"
                 >
                     {filterIcon}
                     {isFiltersOpen ? 'Hide Filters' : 'Filters'}
-                    {activeFilterDot}
+                    {activeFilterText}
                 </button>
 
                 <div className="flex items-center bg-[var(--card-bg)] rounded-lg border border-[var(--card-border)] p-0.5">
                     <button
                         onClick={() => setViewMode('list')}
+                        aria-pressed={viewMode === 'list'}
                         className={`px-4 py-1.5 text-sm font-medium rounded-md transition-colors ${viewMode === 'list' ? 'bg-[var(--primary)] text-white shadow-sm' : 'text-[var(--muted)] hover:text-[var(--foreground)]'}`}
                     >
                         List
                     </button>
                     <button
                         onClick={() => setViewMode('map')}
+                        aria-pressed={viewMode === 'map'}
                         className={`px-4 py-1.5 text-sm font-medium rounded-md transition-colors ${viewMode === 'map' ? 'bg-[var(--primary)] text-white shadow-sm' : 'text-[var(--muted)] hover:text-[var(--foreground)]'}`}
                     >
                         Map
@@ -288,11 +301,12 @@ export default function MapPageClient({
             >
                 {filterIcon}
                 Filters
-                {activeFilterDot}
+                {activeFilterText}
             </button>
 
             {/* Left Column: Filters */}
             <div
+                id="filters-panel"
                 className={`${isFiltersOpen ? 'block' : 'hidden'} md:block w-full md:w-64 min-h-0 md:flex-shrink-0 bg-[var(--section-alt)] md:border-r border-b md:border-b-0 border-[var(--card-border)] p-4 overflow-y-auto scrollbar-thin`}
             >
                 <h2
@@ -327,7 +341,7 @@ export default function MapPageClient({
                                 );
                             }}
                             placeholder="Search resources..."
-                            className="w-full rounded-lg border border-[var(--card-border)] bg-[var(--card-bg)] px-3 py-2 text-sm text-[var(--foreground)] focus:ring-2 focus:ring-[var(--primary)] focus:border-transparent"
+                            className="w-full rounded-lg border border-[var(--muted)] bg-[var(--card-bg)] px-3 py-2 text-sm text-[var(--foreground)] focus:ring-2 focus:ring-[var(--primary)] focus:border-transparent"
                         />
                     </form>
                 </div>
@@ -394,7 +408,7 @@ export default function MapPageClient({
                         id="filter-need"
                         value={selectedNeed}
                         onChange={(e) => handleNeedChange(e.target.value)}
-                        className="w-full rounded-lg border border-[var(--card-border)] bg-[var(--card-bg)] px-3 py-2 text-sm text-[var(--foreground)] focus:ring-2 focus:ring-[var(--primary)] focus:border-transparent"
+                        className="w-full rounded-lg border border-[var(--muted)] bg-[var(--card-bg)] px-3 py-2 text-sm text-[var(--foreground)] focus:ring-2 focus:ring-[var(--primary)] focus:border-transparent"
                     >
                         <option value="">All Categories</option>
                         {needCategories.map((cat) => (
@@ -417,7 +431,7 @@ export default function MapPageClient({
                         id="filter-community"
                         value={selectedCommunity}
                         onChange={(e) => handleCommunityChange(e.target.value)}
-                        className="w-full rounded-lg border border-[var(--card-border)] bg-[var(--card-bg)] px-3 py-2 text-sm text-[var(--foreground)] focus:ring-2 focus:ring-[var(--primary)] focus:border-transparent"
+                        className="w-full rounded-lg border border-[var(--muted)] bg-[var(--card-bg)] px-3 py-2 text-sm text-[var(--foreground)] focus:ring-2 focus:ring-[var(--primary)] focus:border-transparent"
                     >
                         <option value="">All Communities</option>
                         {communityCategories.map((cat) => (
@@ -441,7 +455,7 @@ export default function MapPageClient({
                         aria-describedby="filter-area-help"
                         value={selectedArea}
                         onChange={(e) => handleAreaChange(e.target.value)}
-                        className="w-full rounded-lg border border-[var(--card-border)] bg-[var(--card-bg)] px-3 py-2 text-sm text-[var(--foreground)] focus:ring-2 focus:ring-[var(--primary)] focus:border-transparent"
+                        className="w-full rounded-lg border border-[var(--muted)] bg-[var(--card-bg)] px-3 py-2 text-sm text-[var(--foreground)] focus:ring-2 focus:ring-[var(--primary)] focus:border-transparent"
                     >
                         <option value="">All areas</option>
                         {serviceAreas.map((a) => (
@@ -464,11 +478,6 @@ export default function MapPageClient({
                         Clear All Filters
                     </button>
                 )}
-
-                {/* Results count */}
-                <div className="mt-4 text-sm text-[var(--foreground)]">
-                    {filteredServices.length} resources found
-                </div>
             </div>
 
             {/* Middle Column: Resource Cards */}
@@ -476,6 +485,10 @@ export default function MapPageClient({
                 className={`${viewMode === 'list' ? 'block' : 'hidden'} md:block w-full md:w-[32rem] flex-1 flex-shrink-0 border-r border-[var(--card-border)] overflow-y-auto scrollbar-thin`}
             >
                 <div className="p-4 space-y-4">
+                    <h2 className="sr-only">Results</h2>
+                    <p role="status" className="text-sm text-[var(--foreground)]">
+                        {resultCount} {resultCount === 1 ? 'resource' : 'resources'} found
+                    </p>
                     {filteredServices.length === 0 ? (
                         <div className="text-center py-8 text-[var(--foreground)]">
                             No resources match your filters
@@ -535,7 +548,12 @@ function ResourceCard({
         <div className="bg-[var(--card-bg)] rounded-xl border border-[var(--card-border)] p-4">
             <div className="flex items-start justify-between gap-2">
                 <h3 className="font-semibold text-[var(--foreground)] mb-2 line-clamp-2">
-                    {service.name}
+                    <Link
+                        href={`/services/${service.id}`}
+                        className="text-[var(--foreground)] underline hover:no-underline hover:text-[var(--primary)]"
+                    >
+                        {service.name}
+                    </Link>
                 </h3>
                 {distance !== null && (
                     <span className="flex-shrink-0 text-xs font-medium text-[var(--secondary)] bg-[var(--tag-blue-bg)] border border-[var(--tag-blue-text)] px-2 py-0.5 rounded-full whitespace-nowrap">
@@ -613,8 +631,7 @@ function ResourceCard({
                 <p className="text-sm text-[var(--foreground)] mb-2 flex items-center gap-2">
                     <svg
                         className="w-4 h-4 flex-shrink-0"
-                        role="img"
-                        aria-label="website"
+                        aria-hidden="true"
                         fill="none"
                         stroke="currentColor"
                         viewBox="0 0 24 24"
@@ -626,14 +643,12 @@ function ResourceCard({
                             d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"
                         />
                     </svg>
-                    <a
+                    <WebsiteLink
                         href={website}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="underline hover:no-underline text-[var(--primary)] truncate"
-                    >
-                        {new URL(website).host}
-                    </a>
+                        name={service.name}
+                        className="underline hover:no-underline text-[var(--primary)]"
+                        oneLine
+                    />
                 </p>
             )}
 
@@ -674,27 +689,6 @@ function ResourceCard({
                     ))}
                 </div>
             )}
-
-            <Link
-                href={`/services/${service.id}`}
-                className="inline-flex items-center gap-1 text-sm font-medium text-[var(--primary)] hover:text-[var(--primary-hover)] underline hover:no-underline"
-            >
-                More Details
-                <svg
-                    className="w-4 h-4"
-                    aria-hidden="true"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                >
-                    <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M9 5l7 7-7 7"
-                    />
-                </svg>
-            </Link>
         </div>
     );
 }
