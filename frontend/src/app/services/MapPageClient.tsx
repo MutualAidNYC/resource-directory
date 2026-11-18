@@ -1,9 +1,10 @@
 'use client';
 
-import { useState, useMemo, useCallback, useRef } from 'react';
+import { useState, useMemo, useCallback, useEffect, useRef } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { MapContainer } from '@/components/map/MapContainer';
 import { ServiceCard } from '@/components/services/ServiceCard';
+import { rememberListUrl } from '@/lib/listUrl';
 import { search, SERVICE_FIELDS } from '@/lib/search';
 import { useDebounced } from '@/lib/useDebounced';
 import type { Category, MapService } from '@/lib/types';
@@ -61,6 +62,11 @@ export default function MapPageClient({
         setSelectedCommunity(searchParams.get('community') || '');
         setSelectedArea(searchParams.get('area') || '');
     }
+
+    // So "Back to all resources" returns to this search and these filters.
+    useEffect(() => {
+        rememberListUrl('/services', window.location.pathname + window.location.search);
+    }, [searchParams]);
 
     /**
      * Push filter state into the browser URL so that filtered views are
@@ -212,7 +218,7 @@ export default function MapPageClient({
                     className="flex items-center gap-2 px-3 py-1.5 border border-muted bg-card-bg font-medium"
                 >
                     {filterIcon}
-                    {isFiltersOpen ? 'Hide Filters' : 'Filters'}
+                    {isFiltersOpen ? 'Hide filters' : 'Filters'}
                     {activeFilterText}
                 </button>
 
@@ -274,7 +280,7 @@ export default function MapPageClient({
                                     selectedArea,
                                 );
                             }}
-                            placeholder="Search resources..."
+                            placeholder="Search resources"
                             className={FIELD}
                         />
                     </form>
@@ -283,7 +289,7 @@ export default function MapPageClient({
                 {/* Need Category Filter */}
                 <div className="mb-6">
                     <label htmlFor="filter-need" className={LABEL}>
-                        Need Category
+                        Need category
                     </label>
                     <select
                         id="filter-need"
@@ -291,7 +297,7 @@ export default function MapPageClient({
                         onChange={(e) => handleNeedChange(e.target.value)}
                         className={FIELD}
                     >
-                        <option value="">All Categories</option>
+                        <option value="">All categories</option>
                         {needCategories.map((cat) => (
                             <option key={cat.name} value={cat.name}>
                                 {cat.name}
@@ -303,7 +309,7 @@ export default function MapPageClient({
                 {/* Community Focus Filter */}
                 <div className="mb-6">
                     <label htmlFor="filter-community" className={LABEL}>
-                        Community Focus
+                        Community focus
                     </label>
                     <select
                         id="filter-community"
@@ -311,7 +317,7 @@ export default function MapPageClient({
                         onChange={(e) => handleCommunityChange(e.target.value)}
                         className={FIELD}
                     >
-                        <option value="">All Communities</option>
+                        <option value="">All communities</option>
                         {communityCategories.map((cat) => (
                             <option key={cat.name} value={cat.name}>
                                 {cat.name}
@@ -323,7 +329,7 @@ export default function MapPageClient({
                 {/* Target Geographic Area Filter */}
                 <div className="mb-6">
                     <label htmlFor="filter-area" className={LABEL}>
-                        Target Geographic Area
+                        Target geographic area
                     </label>
                     <select
                         id="filter-area"
@@ -347,7 +353,7 @@ export default function MapPageClient({
                 {/* Clear Filters */}
                 {(searchQuery || selectedNeed || selectedCommunity || selectedArea) && (
                     <button onClick={handleClearFilters} className="btn btn-accent w-full">
-                        Clear All Filters
+                        Clear all filters
                     </button>
                 )}
             </div>

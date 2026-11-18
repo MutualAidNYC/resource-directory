@@ -27,7 +27,7 @@ export default function NotFound() {
                 </div>
 
                 {/* Title */}
-                <h1 className="text-4xl mb-4">404 - Page Not Found</h1>
+                <h1 className="mb-4">Page not found</h1>
 
                 {/* Description */}
                 <p className="mb-8">
@@ -38,10 +38,10 @@ export default function NotFound() {
                 {/* Actions */}
                 <div className="flex flex-col sm:flex-row gap-4 justify-center">
                     <Link href="/" className="btn btn-primary">
-                        Back To Homepage
+                        Back to homepage
                     </Link>
                     <Link href="/services" className="btn btn-primary">
-                        Search For Resources
+                        Search for resources
                     </Link>
                 </div>
             </div>

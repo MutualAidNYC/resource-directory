@@ -3,6 +3,7 @@ import { Francois_One, Karla, Poppins } from 'next/font/google';
 import './globals.css';
 import { Header } from '@/components/ui/Header';
 import { Footer } from '@/components/ui/Footer';
+import { LibraryNav } from '@/components/ui/LibraryNav';
 
 const karla = Karla({
     variable: '--font-karla',
@@ -54,6 +55,7 @@ export default function RootLayout({
                     Skip to main content
                 </a>
                 <Header />
+                <LibraryNav />
                 <main id="main-content" className="flex-1">
                     {children}
                 </main>

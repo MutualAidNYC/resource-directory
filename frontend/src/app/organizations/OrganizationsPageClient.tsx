@@ -1,10 +1,11 @@
 'use client';
 
-import { FormEvent, useMemo, useRef, useState } from 'react';
+import { FormEvent, useEffect, useMemo, useRef, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { OrganizationCard } from '@/components/organizations/OrganizationCard';
 import { ORGANIZATION_FIELDS, search } from '@/lib/search';
 import { useDebounced } from '@/lib/useDebounced';
+import { rememberListUrl } from '@/lib/listUrl';
 import type { OrganizationListItem } from '@/lib/types';
 import { BAR, PAGE } from '@/lib/styles';
 
@@ -20,6 +21,21 @@ export default function OrganizationsPageClient({ organizations }: Organizations
     const searchParams = useSearchParams();
     const inputRef = useRef<HTMLInputElement>(null);
     const [query, setQuery] = useState(searchParams.get('q') ?? '');
+
+    // A link to the list (the sub-nav's "Groups") clears the search. Done while rendering,
+    // not in an effect, so the page never renders with a stale query. Typing also changes
+    // the URL, with the query trimmed: keep what's typed then, or a space would vanish.
+    const [prevSearchParams, setPrevSearchParams] = useState(searchParams);
+    if (searchParams !== prevSearchParams) {
+        setPrevSearchParams(searchParams);
+        const q = searchParams.get('q') ?? '';
+        if (q !== query.trim()) setQuery(q);
+    }
+
+    // So "Back to groups" returns to this search.
+    useEffect(() => {
+        rememberListUrl('/organizations', window.location.pathname + window.location.search);
+    }, [searchParams]);
 
     const results = useMemo(
         () => search(organizations, query, ORGANIZATION_FIELDS),
@@ -84,7 +100,7 @@ export default function OrganizationsPageClient({ organizations }: Organizations
                             type="text"
                             value={query}
                             onChange={(e) => updateQuery(e.target.value)}
-                            placeholder="Search groups..."
+                            placeholder="Search groups"
                             className="w-full pl-11 pr-12 py-3 rounded-full border border-muted bg-card-bg text-lg"
                         />
                         {query && (
@@ -134,8 +150,7 @@ export function OrganizationGrid({
     const total = organizations.length;
     // Announced once typing stops, not after every key.
     const status = useDebounced(
-        `${total.toLocaleString()} ${total === 1 ? 'group' : 'groups'} providing community ` +
-            `resources${searched && ` for search term "${searched}"`}`,
+        `${total.toLocaleString()} ${total === 1 ? 'group' : 'groups'}${searched && ` for “${searched}”`}`,
     );
 
     return (
