@@ -27,6 +27,12 @@ interface MapViewProps {
     locations: MapLocation[];
     /** ID of the currently highlighted service (e.g. from card hover). */
     highlightedId?: string | null;
+    /**
+     * Add MapLibre's "Show my location on the map" button (the /services map only). The
+     * browser asks for the location only when it's pressed; the location stays in the
+     * browser and isn't tracked as the visitor moves.
+     */
+    showLocateButton?: boolean;
 }
 
 /** Pin icon dimensions. */
@@ -118,7 +124,7 @@ function fitToLocations(map: maplibregl.Map, locations: MapLocation[]) {
  * Pins are rendered on the WebGL canvas (not DOM elements), so they
  * move perfectly in sync with the map during pan/zoom — no lag.
  */
-export default function MapView({ locations, highlightedId }: MapViewProps) {
+export default function MapView({ locations, highlightedId, showLocateButton }: MapViewProps) {
     const mapContainer = useRef<HTMLDivElement>(null);
     const mapRef = useRef<maplibregl.Map | null>(null);
     const popupRef = useRef<maplibregl.Popup | null>(null);
@@ -135,9 +141,12 @@ export default function MapView({ locations, highlightedId }: MapViewProps) {
             style: BASEMAP_STYLE_URL,
             center: [-74.006, 40.7128],
             zoom: 10,
+            locale: { 'GeolocateControl.FindMyLocation': 'Show my location on the map' },
         });
 
         map.addControl(new maplibregl.NavigationControl(), 'top-right');
+        // Defaults: one position per press, no tracking, accuracy circle on.
+        if (showLocateButton) map.addControl(new maplibregl.GeolocateControl({}), 'top-right');
         mapRef.current = map;
 
         map.on('load', () => {
@@ -248,7 +257,7 @@ export default function MapView({ locations, highlightedId }: MapViewProps) {
             map.remove();
             mapRef.current = null;
         };
-    }, [canRender]);
+    }, [canRender, showLocateButton]);
 
     // New pins (search or filters): swap the data and zoom to fit, keeping the map.
     useEffect(() => {
