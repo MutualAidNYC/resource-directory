@@ -5,6 +5,7 @@ import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { MapContainer } from '@/components/map/MapContainer';
 import { TagLink } from '@/components/ui/TagLink';
+import { WebsiteLink } from '@/components/ui/ExternalLink';
 import { externalHref } from '@/lib/format';
 import { search, SERVICE_FIELDS } from '@/lib/search';
 import { useDebounced } from '@/lib/useDebounced';
@@ -630,8 +631,7 @@ function ResourceCard({
                 <p className="text-sm text-[var(--foreground)] mb-2 flex items-center gap-2">
                     <svg
                         className="w-4 h-4 flex-shrink-0"
-                        role="img"
-                        aria-label="website"
+                        aria-hidden="true"
                         fill="none"
                         stroke="currentColor"
                         viewBox="0 0 24 24"
@@ -643,14 +643,12 @@ function ResourceCard({
                             d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"
                         />
                     </svg>
-                    <a
+                    <WebsiteLink
                         href={website}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="underline hover:no-underline text-[var(--primary)] truncate"
-                    >
-                        {new URL(website).host}
-                    </a>
+                        name={service.name}
+                        className="underline hover:no-underline text-[var(--primary)]"
+                        oneLine
+                    />
                 </p>
             )}
 

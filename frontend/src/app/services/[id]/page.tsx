@@ -4,6 +4,7 @@ import { notFound } from 'next/navigation';
 import { getMapService, getOrganization, getService, serviceIds } from '@/lib/data';
 import { externalHref, formatAddress } from '@/lib/format';
 import { MapContainer } from '@/components/map/MapContainer';
+import { ExternalLink, WebsiteLink } from '@/components/ui/ExternalLink';
 import { TagLink } from '@/components/ui/TagLink';
 
 interface ServiceDetailPageProps {
@@ -235,10 +236,8 @@ export default async function ServiceDetailPage({ params }: ServiceDetailPagePro
                                         <p className="text-sm text-[var(--foreground)] mb-2">
                                             {mapCoords.address}
                                         </p>
-                                        <a
+                                        <ExternalLink
                                             href={`https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(mapCoords.address)}`}
-                                            target="_blank"
-                                            rel="noopener noreferrer"
                                             className="inline-flex items-center gap-1.5 text-sm font-medium text-[var(--primary)] hover:text-[var(--primary-hover)]"
                                         >
                                             <svg
@@ -262,7 +261,7 @@ export default async function ServiceDetailPage({ params }: ServiceDetailPagePro
                                                 />
                                             </svg>
                                             Get Directions
-                                        </a>
+                                        </ExternalLink>
                                     </div>
                                 )}
                             </div>
@@ -276,12 +275,7 @@ export default async function ServiceDetailPage({ params }: ServiceDetailPagePro
 
                             <div className="space-y-4">
                                 {website && (
-                                    <a
-                                        href={website}
-                                        target="_blank"
-                                        rel="noopener noreferrer"
-                                        className="flex items-center gap-3 text-[var(--primary)] hover:text-[var(--primary-hover)]"
-                                    >
+                                    <div className="flex items-center gap-3">
                                         <svg
                                             className="w-5 h-5 shrink-0"
                                             aria-hidden="true"
@@ -296,10 +290,14 @@ export default async function ServiceDetailPage({ params }: ServiceDetailPagePro
                                                 d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"
                                             />
                                         </svg>
-                                        <span className="truncate underline hover:no-underline">
-                                            Visit Website
+                                        <span className="min-w-0">
+                                            <WebsiteLink
+                                                href={website}
+                                                name={service.name}
+                                                className="text-[var(--primary)] hover:text-[var(--primary-hover)] underline hover:no-underline"
+                                            />
                                         </span>
-                                    </a>
+                                    </div>
                                 )}
 
                                 {service.email && (
