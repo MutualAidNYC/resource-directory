@@ -18,3 +18,6 @@ export const TITLE_LINK =
 
 /** A Francois One label ("Resource", "Type of help"). Add the size per use. */
 export const BRAND_LABEL = 'font-label uppercase tracking-[0.04em] text-secondary';
+
+/** The short red bar above a list page's h1 (brand guide). */
+export const BAR = 'h-1.5 w-16 bg-accent-bright';

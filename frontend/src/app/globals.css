@@ -161,7 +161,7 @@
         transition: opacity 0.2s ease;
         text-decoration: none;
         cursor: pointer;
-        border: 2px solid transparent;
+        border: var(--border-width) solid transparent;
         line-height: 1.2;
     }
 
@@ -177,11 +177,11 @@
         border-color: var(--color-secondary);
     }
 
-    /* Outline purple — "secondary" action */
+    /* Outline purple — "secondary" action (the theme's outline style) */
     .btn-secondary {
         background-color: transparent;
         color: var(--color-tertiary);
-        border-color: var(--color-tertiary);
+        border-color: var(--color-tertiary-border);
     }
 
     /* Light teal fill — "accent" action */

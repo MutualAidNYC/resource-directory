@@ -6,7 +6,7 @@ import { OrganizationCard } from '@/components/organizations/OrganizationCard';
 import { ORGANIZATION_FIELDS, search } from '@/lib/search';
 import { useDebounced } from '@/lib/useDebounced';
 import type { OrganizationListItem } from '@/lib/types';
-import { PAGE } from '@/lib/styles';
+import { BAR, PAGE } from '@/lib/styles';
 
 interface OrganizationsPageClientProps {
     organizations: OrganizationListItem[];
@@ -139,14 +139,17 @@ export function OrganizationGrid({
     );
 
     return (
-        <div className={`${PAGE} py-8`}>
+        <div className={`${PAGE} pt-10 pb-16`}>
             {/* Page Header */}
-            <div className="mb-8">
-                <h1 className="text-3xl mb-4">Groups</h1>
-                <p role="status">{status}</p>
+            <div className="mb-6">
+                <div className={`${BAR} mb-4`} />
+                <h1 className="mb-6">Groups</h1>
+                <p role="status" className="font-header font-bold text-lg text-secondary">
+                    {status}
+                </p>
             </div>
 
-            {searchBox && <div className="mb-8">{searchBox}</div>}
+            {searchBox && <div className="mb-6">{searchBox}</div>}
 
             {/* Groups Grid: equal columns, equal heights per row */}
             {total > 0 ? (
@@ -157,7 +160,7 @@ export function OrganizationGrid({
                 </div>
             ) : (
                 <div className="text-center py-16">
-                    <h3 className="text-lg mb-2">
+                    <h3 className="mb-2">
                         {searched ? `No results for "${searched}"` : 'No groups found'}
                     </h3>
                     <p>
