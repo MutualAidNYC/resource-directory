@@ -7,6 +7,8 @@ import { ServiceCard } from '@/components/services/ServiceCard';
 import { MapContainer } from '@/components/map/MapContainer';
 import { WebsiteLink } from '@/components/ui/ExternalLink';
 import type { MapLocation } from '@/components/map/MapView';
+import { Icon } from '@/components/ui/Icon';
+import { CARD } from '@/lib/styles';
 
 interface OrganizationDetailPageProps {
     params: Promise<{ id: string }>;
@@ -144,7 +146,7 @@ export default async function OrganizationDetailPage({ params }: OrganizationDet
                 <div className="lg:col-span-1">
                     <div className="sticky top-24 space-y-6">
                         {mapLocations.length > 0 ? (
-                            <div className="rounded-xl border border-card-border bg-card-bg overflow-hidden">
+                            <div className={`${CARD} overflow-hidden`}>
                                 <div className="p-4 border-b border-card-border">
                                     <h3>
                                         {mapLocationLabel} ({mapLocations.length})
@@ -156,51 +158,19 @@ export default async function OrganizationDetailPage({ params }: OrganizationDet
                             </div>
                         ) : (
                             <div className="rounded-xl border border-card-border bg-section-alt p-8 text-center">
-                                <svg
-                                    className="w-12 h-12 mx-auto text-muted mb-3"
-                                    aria-hidden="true"
-                                    fill="none"
-                                    stroke="currentColor"
-                                    viewBox="0 0 24 24"
-                                >
-                                    <path
-                                        strokeLinecap="round"
-                                        strokeLinejoin="round"
-                                        strokeWidth={2}
-                                        d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"
-                                    />
-                                    <path
-                                        strokeLinecap="round"
-                                        strokeLinejoin="round"
-                                        strokeWidth={2}
-                                        d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"
-                                    />
-                                </svg>
+                                <Icon name="pin" className="w-12 h-12 mx-auto text-muted mb-3" />
                                 <p className="text-muted">No location data available</p>
                             </div>
                         )}
 
                         {/* Contact Card */}
-                        <div className="rounded-xl border border-card-border bg-card-bg p-6">
+                        <div className={`${CARD} p-6`}>
                             <h3 className="mb-4">Contact Information</h3>
 
                             <div className="space-y-4">
                                 {website && (
                                     <div className="flex items-center gap-3">
-                                        <svg
-                                            className="w-5 h-5 shrink-0"
-                                            aria-hidden="true"
-                                            fill="none"
-                                            stroke="currentColor"
-                                            viewBox="0 0 24 24"
-                                        >
-                                            <path
-                                                strokeLinecap="round"
-                                                strokeLinejoin="round"
-                                                strokeWidth={2}
-                                                d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"
-                                            />
-                                        </svg>
+                                        <Icon name="link" className="w-5 h-5 shrink-0" />
                                         <span className="min-w-0">
                                             <WebsiteLink
                                                 href={website}
@@ -216,48 +186,14 @@ export default async function OrganizationDetailPage({ params }: OrganizationDet
                                         href={`mailto:${organization.email}`}
                                         className="flex items-center gap-3 text-foreground hover:text-accent"
                                     >
-                                        <svg
-                                            className="w-5 h-5 shrink-0"
-                                            role="img"
-                                            aria-label="email"
-                                            fill="none"
-                                            stroke="currentColor"
-                                            viewBox="0 0 24 24"
-                                        >
-                                            <path
-                                                strokeLinecap="round"
-                                                strokeLinejoin="round"
-                                                strokeWidth={2}
-                                                d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"
-                                            />
-                                        </svg>
+                                        <Icon name="email" className="w-5 h-5 shrink-0" />
                                         <span className="truncate">{organization.email}</span>
                                     </a>
                                 )}
 
                                 {addresses.map((address) => (
                                     <div key={address.id} className="flex items-start gap-3">
-                                        <svg
-                                            className="w-5 h-5 shrink-0 mt-0.5"
-                                            role="img"
-                                            aria-label="address"
-                                            fill="none"
-                                            stroke="currentColor"
-                                            viewBox="0 0 24 24"
-                                        >
-                                            <path
-                                                strokeLinecap="round"
-                                                strokeLinejoin="round"
-                                                strokeWidth={2}
-                                                d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"
-                                            />
-                                            <path
-                                                strokeLinecap="round"
-                                                strokeLinejoin="round"
-                                                strokeWidth={2}
-                                                d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"
-                                            />
-                                        </svg>
+                                        <Icon name="pin" className="w-5 h-5 shrink-0 mt-0.5" />
                                         <address className="not-italic">
                                             {formatAddress(address)}
                                         </address>
@@ -274,20 +210,7 @@ export default async function OrganizationDetailPage({ params }: OrganizationDet
 
                         {/* Back Button */}
                         <Link href="/organizations" className="btn btn-secondary w-full gap-2">
-                            <svg
-                                className="w-4 h-4"
-                                aria-hidden="true"
-                                fill="none"
-                                stroke="currentColor"
-                                viewBox="0 0 24 24"
-                            >
-                                <path
-                                    strokeLinecap="round"
-                                    strokeLinejoin="round"
-                                    strokeWidth={2}
-                                    d="M15 19l-7-7 7-7"
-                                />
-                            </svg>
+                            <Icon name="chevron-left" className="w-4 h-4" />
                             Back to Groups
                         </Link>
                     </div>

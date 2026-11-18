@@ -1,5 +1,6 @@
 import Link from 'next/link';
 import type { OrganizationListItem } from '@/lib/types';
+import { CARD } from '@/lib/styles';
 
 interface OrganizationCardProps {
     organization: OrganizationListItem;
@@ -12,8 +13,7 @@ export function OrganizationCard({ organization }: OrganizationCardProps) {
     return (
         <Link
             href={`/organizations/${organization.id}`}
-            className="group flex flex-col justify-between h-full rounded-xl border border-card-border bg-card-bg p-6 shadow-sm 
-            transition-all hover:border-accent/40 hover:shadow-md"
+            className={`group flex flex-col justify-between h-full ${CARD} p-6 shadow-sm transition-all hover:border-accent/40 hover:shadow-md`}
         >
             <div className="min-w-0">
                 {/* Group Name */}

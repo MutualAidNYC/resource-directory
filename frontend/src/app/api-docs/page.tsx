@@ -1,5 +1,6 @@
 import { Metadata } from 'next';
 import { apiDocs, type Endpoint, type Field } from '@/lib/openapi';
+import { CARD } from '@/lib/styles';
 
 export const metadata: Metadata = {
     title: 'API',
@@ -50,10 +51,7 @@ export default function ApiDocsPage() {
                 </ul>
             </div>
 
-            <nav
-                aria-label="On this page"
-                className="rounded-xl border border-card-border bg-card-bg p-6"
-            >
+            <nav aria-label="On this page" className={`${CARD} p-6`}>
                 <h2 className="text-xl mb-4">On this page</h2>
                 <ul className="list-disc pl-6 space-y-1">
                     <li>
@@ -148,7 +146,7 @@ export default function ApiDocsPage() {
 
 function EndpointSection({ endpoint: e }: { endpoint: Endpoint }) {
     return (
-        <section className="rounded-xl border border-card-border bg-card-bg p-6 space-y-4">
+        <section className={`${CARD} p-6 space-y-4`}>
             <h3 id={e.anchor} className="text-lg wrap-anywhere">
                 <code>GET {e.path}</code>
             </h3>
