@@ -6,34 +6,31 @@ import { ExternalLink } from './ExternalLink';
  */
 export function Footer() {
     return (
-        <footer className="border-t border-[var(--card-border)] bg-[var(--nav-bg)]">
+        <footer className="border-t border-card-border bg-secondary">
             <div className="container mx-auto px-4 py-8">
                 <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
                     {/* Branding */}
                     <div className="flex items-center gap-2">
-                        <span className="text-lg font-bold text-[var(--nav-text)]">
-                            Mutual Aid <span className="text-[var(--highlight)]">NYC</span>
+                        <span className="text-lg font-bold text-white">
+                            Mutual Aid <span className="text-highlight">NYC</span>
                         </span>
                     </div>
 
                     {/* Links */}
                     <nav className="flex flex-wrap gap-6 text-sm">
-                        <Link
-                            href="/services"
-                            className="text-[var(--nav-text)] underline hover:no-underline"
-                        >
+                        <Link href="/services" className="text-white underline hover:no-underline">
                             Resources
                         </Link>
                         <Link
                             href="/organizations"
-                            className="text-[var(--nav-text)] underline hover:no-underline"
+                            className="text-white underline hover:no-underline"
                         >
                             Groups
                         </Link>
                     </nav>
 
                     {/* Attribution */}
-                    <p className="text-sm text-[var(--nav-text)]">
+                    <p className="text-sm text-white">
                         Powered by{' '}
                         <ExternalLink
                             href="https://openreferral.org"

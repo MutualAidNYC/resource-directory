@@ -1,35 +1,40 @@
 @import 'tailwindcss';
 
+/*
+ * Colors. The first group uses the mutualaid.nyc original WordPress theme's names (its
+ * `--color-accent-text` is `accent` here), so `text-accent` means the same color in
+ * both. The second group is the directory's own. No dark mode: mutualaid.nyc is
+ * light-only.
+ */
+@theme {
+    --color-accent: #8f2d24;
+    --color-accent-hover: #7a2520;
+    --color-accent-border: #e6a290;
+    /* The brand guide's bright red: large text only on cream (4.37:1). */
+    --color-accent-bright: #c24532;
+    --color-secondary: #204045;
+    --color-secondary-border: #6b9495;
+    --color-tertiary: #47133d;
+    --color-tertiary-border: #a17193;
+    --color-highlight: #f7cf56;
+    --color-highlight-alt: #a4cacb;
+    --color-highlight-alt-border: #ebf3f3;
+
+    --color-background: #f5efe0;
+    --color-foreground: #000;
+    --color-card-bg: #fff;
+    --color-card-border: #e8e2da;
+    --color-muted: #586069;
+    --color-section-alt: #ede8e1;
+    --color-tag-coral-bg: #fce8e5;
+    --color-tag-coral-text: #8f2d24;
+    --color-tag-olive-bg: #ebf3f3;
+    --color-tag-olive-text: #204045;
+}
+
 :root {
-    /* mutualaid.nyc palette */
-    --color-white: #ffffff;
-    --background: #f5efe0;
-    --foreground: #000000;
-    --primary: #8f2d24;
-    --primary-hover: #7a2520;
-    --secondary: #204045;
-    --secondary-hover: #1a343a;
-    --accent-border: #e6a290;
-    --tertiary: #47133d;
-    --tertiary-border: #a17193;
-    --highlight: #f7cf56;
-    --highlight-alt: #a4cacb;
-    --highlight-alt-bg: #ebf3f3;
-    --card-bg: var(--color-white);
-    --card-border: #e8e2da;
-    --muted: #586069;
-    --section-alt: #ede8e1;
-    --tag-coral-bg: #fce8e5;
-    --tag-coral-text: #8f2d24;
-    --tag-olive-bg: #ebf3f3;
-    --tag-olive-text: #204045;
-    --tag-blue-bg: #ebf3f3;
-    --tag-blue-text: #204045;
-    --tag-gold-bg: #fdf7e6;
-    --tag-gold-text: #6b5a1e;
-    --nav-bg: #204045;
-    --nav-text: var(--color-white);
-    --footer-social-bg: #c24532;
+    /* Theme layout values; Tailwind has no namespace for them, so use them with var(). */
+    --default-content-width: 70rem;
     --border-width: 4px;
 
     /* Baseline font variables — next/font overrides these on body via CSS class */
@@ -39,25 +44,9 @@
     --font-body: var(--font-karla), sans-serif;
 }
 
-@theme inline {
-    --color-background: var(--background);
-    --color-foreground: var(--foreground);
-    --color-primary: var(--primary);
-    --color-primary-hover: var(--primary-hover);
-    --color-secondary: var(--secondary);
-    --color-highlight: var(--highlight);
-    --color-highlight-alt: var(--highlight-alt);
-    --color-card-bg: var(--card-bg);
-    --color-card-border: var(--card-border);
-    --color-muted: var(--muted);
-    --color-section-alt: var(--section-alt);
-}
-
-/* No dark mode — matches mutualaid.nyc light-only design */
-
 body {
-    background: var(--background);
-    color: var(--foreground);
+    background: var(--color-background);
+    color: var(--color-foreground);
     font-family: var(--font-body);
     letter-spacing: -0.5px;
 }
@@ -77,22 +66,22 @@ h6 {
 }
 
 h1 {
-    color: var(--secondary);
+    color: var(--color-secondary);
 }
 
 h2 {
-    color: var(--secondary);
+    color: var(--color-secondary);
     line-height: 1.4;
 }
 
 @layer base {
     a {
-        color: var(--primary);
+        color: var(--color-accent);
     }
 
     /* Ensure sufficient WCAG color contrast */
     ::placeholder {
-        color: var(--muted);
+        color: var(--color-muted);
         opacity: 1;
     }
 }
@@ -100,8 +89,8 @@ h2 {
 /* Focus styles that work on all background colors and removes the default browser outline to prevent doubling */
 *:focus-visible {
     box-shadow:
-        0 0 0 2px var(--color-white),
-        0 0 0 4px var(--primary);
+        0 0 0 2px white,
+        0 0 0 4px var(--color-accent);
     outline: none;
 }
 
@@ -165,23 +154,23 @@ h2 {
 
 /* Filled teal — "primary" action */
 .btn-primary {
-    background-color: var(--secondary);
-    color: var(--color-white);
-    border-color: var(--secondary);
+    background-color: var(--color-secondary);
+    color: white;
+    border-color: var(--color-secondary);
 }
 
 /* Outline purple — "secondary" action */
 .btn-secondary {
     background-color: transparent;
-    color: var(--tertiary);
-    border-color: var(--tertiary);
+    color: var(--color-tertiary);
+    border-color: var(--color-tertiary);
 }
 
 /* Light teal fill — "accent" action */
 .btn-accent {
-    background-color: var(--highlight-alt);
-    color: var(--secondary);
-    border-color: var(--highlight-alt);
+    background-color: var(--color-highlight-alt);
+    color: var(--color-secondary);
+    border-color: var(--color-highlight-alt);
 }
 
 /* Nav link — shared style for header navigation links */
@@ -189,7 +178,7 @@ h2 {
     font-size: 18px;
     line-height: 1.4;
     font-weight: 600;
-    color: var(--nav-text);
+    color: white;
 }
 
 .nav-link:hover {
@@ -211,19 +200,19 @@ h2 {
 .popup-title {
     font-weight: 600;
     margin-bottom: 4px;
-    color: var(--foreground);
+    color: var(--color-foreground);
     font-size: 14px;
 }
 
 .popup-org {
-    color: var(--muted);
+    color: var(--color-muted);
     font-size: 13px;
     font-weight: 500;
     margin-bottom: 2px;
 }
 
 .popup-link {
-    color: var(--primary);
+    color: var(--color-accent);
     font-size: 12px;
     text-decoration: underline;
     display: inline-block;

@@ -9,8 +9,8 @@ import dynamic from 'next/dynamic';
 export const MapContainer = dynamic(() => import('./MapView'), {
     ssr: false,
     loading: () => (
-        <div className="w-full h-full bg-[var(--section-alt)] flex items-center justify-center">
-            <p className="text-[var(--muted)] text-sm">Loading map…</p>
+        <div className="w-full h-full bg-section-alt flex items-center justify-center">
+            <p className="text-muted text-sm">Loading map…</p>
         </div>
     ),
 });

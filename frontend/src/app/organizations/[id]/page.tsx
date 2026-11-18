@@ -80,9 +80,9 @@ export default async function OrganizationDetailPage({ params }: OrganizationDet
         <div className="container mx-auto px-4 py-8">
             {/* Breadcrumb */}
             <nav className="mb-6 text-sm">
-                <ol className="flex items-center gap-2 text-[var(--muted)]">
+                <ol className="flex items-center gap-2 text-muted">
                     <li>
-                        <Link href="/" className="hover:text-[var(--foreground)] hover:underline">
+                        <Link href="/" className="hover:text-foreground hover:underline">
                             Home
                         </Link>
                     </li>
@@ -90,15 +90,13 @@ export default async function OrganizationDetailPage({ params }: OrganizationDet
                     <li>
                         <Link
                             href="/organizations"
-                            className="hover:text-[var(--foreground)] hover:underline"
+                            className="hover:text-foreground hover:underline"
                         >
                             Groups
                         </Link>
                     </li>
                     <span>/</span>
-                    <li className="text-[var(--foreground)] font-medium truncate">
-                        {organization.name}
-                    </li>
+                    <li className="text-foreground font-medium truncate">{organization.name}</li>
                 </ol>
             </nav>
 
@@ -109,18 +107,18 @@ export default async function OrganizationDetailPage({ params }: OrganizationDet
                     {/* Group Header */}
                     <div>
                         {/* Name */}
-                        <h1 className="text-3xl font-bold text-[var(--foreground)] mb-4">
+                        <h1 className="text-3xl font-bold text-foreground mb-4">
                             {organization.name}
                         </h1>
 
                         {/* Description */}
                         {organization.description && (
                             <section className="mb-8 mt-6">
-                                <h2 className="text-xl font-semibold text-[var(--foreground)] mb-4">
+                                <h2 className="text-xl font-semibold text-foreground mb-4">
                                     Description
                                 </h2>
                                 <div className="prose max-w-none">
-                                    <p className="text-[var(--foreground)] whitespace-pre-wrap">
+                                    <p className="text-foreground whitespace-pre-wrap">
                                         {organization.description}
                                     </p>
                                 </div>
@@ -130,7 +128,7 @@ export default async function OrganizationDetailPage({ params }: OrganizationDet
 
                     {/* Resources Section */}
                     <section>
-                        <h2 className="text-2xl font-bold text-[var(--foreground)] mb-6">
+                        <h2 className="text-2xl font-bold text-foreground mb-6">
                             Resources ({relatedServices.length})
                         </h2>
 
@@ -141,8 +139,8 @@ export default async function OrganizationDetailPage({ params }: OrganizationDet
                                 ))}
                             </div>
                         ) : (
-                            <div className="text-center py-12 bg-[var(--section-alt)] rounded-xl">
-                                <p className="text-[var(--muted)]">
+                            <div className="text-center py-12 bg-section-alt rounded-xl">
+                                <p className="text-muted">
                                     No resources listed for this group yet.
                                 </p>
                             </div>
@@ -154,9 +152,9 @@ export default async function OrganizationDetailPage({ params }: OrganizationDet
                 <div className="lg:col-span-1">
                     <div className="sticky top-24 space-y-6">
                         {mapLocations.length > 0 ? (
-                            <div className="rounded-xl border border-[var(--card-border)] bg-[var(--card-bg)] overflow-hidden">
-                                <div className="p-4 border-b border-[var(--card-border)]">
-                                    <h3 className="font-semibold text-[var(--foreground)]">
+                            <div className="rounded-xl border border-card-border bg-card-bg overflow-hidden">
+                                <div className="p-4 border-b border-card-border">
+                                    <h3 className="font-semibold text-foreground">
                                         {mapLocationLabel} ({mapLocations.length})
                                     </h3>
                                 </div>
@@ -165,9 +163,9 @@ export default async function OrganizationDetailPage({ params }: OrganizationDet
                                 </div>
                             </div>
                         ) : (
-                            <div className="rounded-xl border border-[var(--card-border)] bg-[var(--section-alt)] p-8 text-center">
+                            <div className="rounded-xl border border-card-border bg-section-alt p-8 text-center">
                                 <svg
-                                    className="w-12 h-12 mx-auto text-[var(--muted)] mb-3"
+                                    className="w-12 h-12 mx-auto text-muted mb-3"
                                     aria-hidden="true"
                                     fill="none"
                                     stroke="currentColor"
@@ -186,13 +184,13 @@ export default async function OrganizationDetailPage({ params }: OrganizationDet
                                         d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"
                                     />
                                 </svg>
-                                <p className="text-[var(--muted)]">No location data available</p>
+                                <p className="text-muted">No location data available</p>
                             </div>
                         )}
 
                         {/* Contact Card */}
-                        <div className="rounded-xl border border-[var(--card-border)] bg-[var(--card-bg)] p-6">
-                            <h3 className="font-semibold text-[var(--foreground)] mb-4">
+                        <div className="rounded-xl border border-card-border bg-card-bg p-6">
+                            <h3 className="font-semibold text-foreground mb-4">
                                 Contact Information
                             </h3>
 
@@ -217,7 +215,7 @@ export default async function OrganizationDetailPage({ params }: OrganizationDet
                                             <WebsiteLink
                                                 href={website}
                                                 name={organization.name}
-                                                className="text-[var(--primary)] hover:text-[var(--primary-hover)] underline hover:no-underline"
+                                                className="text-accent hover:text-accent-hover underline hover:no-underline"
                                             />
                                         </span>
                                     </div>
@@ -226,7 +224,7 @@ export default async function OrganizationDetailPage({ params }: OrganizationDet
                                 {organization.email && (
                                     <a
                                         href={`mailto:${organization.email}`}
-                                        className="flex items-center gap-3 text-[var(--foreground)] hover:text-[var(--primary)]"
+                                        className="flex items-center gap-3 text-foreground hover:text-accent"
                                     >
                                         <svg
                                             className="w-5 h-5 shrink-0"
@@ -250,7 +248,7 @@ export default async function OrganizationDetailPage({ params }: OrganizationDet
                                 {addresses.map((address) => (
                                     <div
                                         key={address.id}
-                                        className="flex items-start gap-3 text-[var(--foreground)]"
+                                        className="flex items-start gap-3 text-foreground"
                                     >
                                         <svg
                                             className="w-5 h-5 shrink-0 mt-0.5"
@@ -280,7 +278,7 @@ export default async function OrganizationDetailPage({ params }: OrganizationDet
                                 ))}
 
                                 {!website && !organization.email && addresses.length === 0 && (
-                                    <p className="text-[var(--muted)] text-sm">
+                                    <p className="text-muted text-sm">
                                         No contact information available.
                                     </p>
                                 )}

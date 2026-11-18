@@ -15,8 +15,8 @@ export function TagLink({ href, children, colorScheme = 'coral', size = 'md' }: 
     const sizeClasses = size === 'sm' ? 'px-2 py-0.5 text-xs' : 'px-3 py-1 text-sm';
     const colorClasses =
         colorScheme === 'coral'
-            ? 'bg-[var(--tag-coral-bg)] text-[var(--tag-coral-text)] border border-[var(--tag-coral-text)]'
-            : 'bg-[var(--tag-olive-bg)] text-[var(--tag-olive-text)] border border-[var(--tag-olive-text)]';
+            ? 'bg-tag-coral-bg text-tag-coral-text border border-tag-coral-text'
+            : 'bg-tag-olive-bg text-tag-olive-text border border-tag-olive-text';
 
     return (
         <Link

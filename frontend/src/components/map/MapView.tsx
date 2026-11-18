@@ -318,8 +318,8 @@ export default function MapView({ locations, highlightedId, showLocateButton }: 
 
     if (!canRender) {
         return (
-            <div className="w-full h-full min-h-[400px] bg-[var(--section-alt)] flex items-center justify-center p-4 text-center">
-                <p className="text-[var(--muted)]">This browser can&apos;t show the map.</p>
+            <div className="w-full h-full min-h-[400px] bg-section-alt flex items-center justify-center p-4 text-center">
+                <p className="text-muted">This browser can&apos;t show the map.</p>
             </div>
         );
     }

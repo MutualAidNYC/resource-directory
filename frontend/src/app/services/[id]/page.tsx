@@ -81,25 +81,20 @@ export default async function ServiceDetailPage({ params }: ServiceDetailPagePro
         <div className="container mx-auto px-4 py-8">
             {/* Breadcrumb */}
             <nav className="mb-6 text-sm">
-                <ol className="flex items-center gap-2 text-[var(--muted)]">
+                <ol className="flex items-center gap-2 text-muted">
                     <li>
-                        <Link href="/" className="hover:text-[var(--foreground)] hover:underline">
+                        <Link href="/" className="hover:text-foreground hover:underline">
                             Home
                         </Link>
                     </li>
                     <span>/</span>
                     <li>
-                        <Link
-                            href="/services"
-                            className="hover:text-[var(--foreground)] hover:underline"
-                        >
+                        <Link href="/services" className="hover:text-foreground hover:underline">
                             Resources
                         </Link>
                     </li>
                     <span>/</span>
-                    <li className="text-[var(--foreground)] font-medium truncate">
-                        {service.name}
-                    </li>
+                    <li className="text-foreground font-medium truncate">{service.name}</li>
                 </ol>
             </nav>
 
@@ -109,18 +104,16 @@ export default async function ServiceDetailPage({ params }: ServiceDetailPagePro
                     {/* Header */}
                     <div>
                         <div className="flex items-start justify-between gap-4 mb-4">
-                            <h1 className="text-3xl font-bold text-[var(--foreground)]">
-                                {service.name}
-                            </h1>
+                            <h1 className="text-3xl font-bold text-foreground">{service.name}</h1>
                         </div>
 
                         {/* Group, linked to its page */}
                         {organization && (
-                            <p className="text-lg text-[var(--foreground)] mb-4">
+                            <p className="text-lg text-foreground mb-4">
                                 <span className="font-medium">Group:</span>{' '}
                                 <Link
                                     href={`/organizations/${organization.id}`}
-                                    className="text-[var(--primary)] hover:text-[var(--primary-hover)] underline hover:no-underline"
+                                    className="text-accent hover:text-accent-hover underline hover:no-underline"
                                 >
                                     {organization.name}
                                 </Link>
@@ -130,7 +123,7 @@ export default async function ServiceDetailPage({ params }: ServiceDetailPagePro
                         {/* Need Categories */}
                         {needFocus.length > 0 && (
                             <div className="mb-4">
-                                <p className="text-sm font-semibold text-[var(--foreground)] opacity-70 mb-2 uppercase tracking-wide">
+                                <p className="text-sm font-semibold text-foreground opacity-70 mb-2 uppercase tracking-wide">
                                     Need Categories
                                 </p>
                                 <div className="flex flex-wrap gap-2">
@@ -150,7 +143,7 @@ export default async function ServiceDetailPage({ params }: ServiceDetailPagePro
                         {/* Community Focus */}
                         {communityFocus.length > 0 && (
                             <div className="mb-4">
-                                <p className="text-sm font-semibold text-[var(--foreground)] opacity-70 mb-2 uppercase tracking-wide">
+                                <p className="text-sm font-semibold text-foreground opacity-70 mb-2 uppercase tracking-wide">
                                     Community Focus
                                 </p>
                                 <div className="flex flex-wrap gap-2">
@@ -171,11 +164,11 @@ export default async function ServiceDetailPage({ params }: ServiceDetailPagePro
                     {/* Description */}
                     {service.description && (
                         <section>
-                            <h2 className="text-xl font-semibold text-[var(--foreground)] mb-4">
+                            <h2 className="text-xl font-semibold text-foreground mb-4">
                                 Description
                             </h2>
                             <div className="prose max-w-none">
-                                <p className="text-[var(--foreground)] whitespace-pre-wrap">
+                                <p className="text-foreground whitespace-pre-wrap">
                                     {service.description}
                                 </p>
                             </div>
@@ -185,22 +178,22 @@ export default async function ServiceDetailPage({ params }: ServiceDetailPagePro
                     {/* Locations */}
                     {places.length > 0 && (
                         <section>
-                            <h2 className="text-xl font-semibold text-[var(--foreground)] mb-4">
+                            <h2 className="text-xl font-semibold text-foreground mb-4">
                                 Locations
                             </h2>
                             <div className="space-y-4">
                                 {places.map(({ id, name, addresses }) => (
                                     <div
                                         key={id}
-                                        className="rounded-xl border border-[var(--card-border)] p-4"
+                                        className="rounded-xl border border-card-border p-4"
                                     >
                                         {name && (
-                                            <h3 className="font-medium text-[var(--foreground)] mb-2">
+                                            <h3 className="font-medium text-foreground mb-2">
                                                 {name}
                                             </h3>
                                         )}
                                         {addresses.length > 0 && (
-                                            <div className="text-[var(--foreground)]">
+                                            <div className="text-foreground">
                                                 {addresses.map((address) => (
                                                     <p key={address.id}>{address.text}</p>
                                                 ))}
@@ -218,8 +211,8 @@ export default async function ServiceDetailPage({ params }: ServiceDetailPagePro
                     <div className="sticky top-24 space-y-6">
                         {/* Map Card - show if service has geocoded coordinates */}
                         {mapCoords && (
-                            <div className="rounded-xl border border-[var(--card-border)] bg-[var(--card-bg)] overflow-hidden">
-                                <div className="rounded-xl overflow-hidden border border-[var(--card-border)] h-64">
+                            <div className="rounded-xl border border-card-border bg-card-bg overflow-hidden">
+                                <div className="rounded-xl overflow-hidden border border-card-border h-64">
                                     <MapContainer
                                         locations={[
                                             {
@@ -232,13 +225,13 @@ export default async function ServiceDetailPage({ params }: ServiceDetailPagePro
                                     />
                                 </div>
                                 {mapCoords.address && (
-                                    <div className="p-4 border-t border-[var(--card-border)]">
-                                        <p className="text-sm text-[var(--foreground)] mb-2">
+                                    <div className="p-4 border-t border-card-border">
+                                        <p className="text-sm text-foreground mb-2">
                                             {mapCoords.address}
                                         </p>
                                         <ExternalLink
                                             href={`https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(mapCoords.address)}`}
-                                            className="inline-flex items-center gap-1.5 text-sm font-medium text-[var(--primary)] hover:text-[var(--primary-hover)]"
+                                            className="inline-flex items-center gap-1.5 text-sm font-medium text-accent hover:text-accent-hover"
                                         >
                                             <svg
                                                 className="w-4 h-4"
@@ -268,8 +261,8 @@ export default async function ServiceDetailPage({ params }: ServiceDetailPagePro
                         )}
 
                         {/* Contact Card */}
-                        <div className="rounded-xl border border-[var(--card-border)] bg-[var(--card-bg)] p-6">
-                            <h3 className="font-semibold text-[var(--foreground)] mb-4">
+                        <div className="rounded-xl border border-card-border bg-card-bg p-6">
+                            <h3 className="font-semibold text-foreground mb-4">
                                 Contact Information
                             </h3>
 
@@ -294,7 +287,7 @@ export default async function ServiceDetailPage({ params }: ServiceDetailPagePro
                                             <WebsiteLink
                                                 href={website}
                                                 name={service.name}
-                                                className="text-[var(--primary)] hover:text-[var(--primary-hover)] underline hover:no-underline"
+                                                className="text-accent hover:text-accent-hover underline hover:no-underline"
                                             />
                                         </span>
                                     </div>
@@ -303,7 +296,7 @@ export default async function ServiceDetailPage({ params }: ServiceDetailPagePro
                                 {service.email && (
                                     <a
                                         href={`mailto:${service.email}`}
-                                        className="flex items-center gap-3 text-[var(--foreground)] hover:text-[var(--primary)]"
+                                        className="flex items-center gap-3 text-foreground hover:text-accent"
                                     >
                                         <svg
                                             className="w-5 h-5 shrink-0"
@@ -329,7 +322,7 @@ export default async function ServiceDetailPage({ params }: ServiceDetailPagePro
                                 {service.phones?.map((phone) => (
                                     <div
                                         key={phone.id}
-                                        className="flex items-center gap-3 text-[var(--foreground)]"
+                                        className="flex items-center gap-3 text-foreground"
                                     >
                                         <svg
                                             className="w-5 h-5 shrink-0"
@@ -349,7 +342,7 @@ export default async function ServiceDetailPage({ params }: ServiceDetailPagePro
                                         <span>
                                             <a
                                                 href={`tel:${phone.number}`}
-                                                className="hover:text-[var(--foreground)] underline hover:no-underline"
+                                                className="hover:text-foreground underline hover:no-underline"
                                             >
                                                 {phone.number}
                                             </a>
@@ -360,7 +353,7 @@ export default async function ServiceDetailPage({ params }: ServiceDetailPagePro
                                 {!website &&
                                     !service.email &&
                                     (service.phones?.length ?? 0) === 0 && (
-                                        <p className="text-[var(--muted)] text-sm">
+                                        <p className="text-muted text-sm">
                                             No contact information available.
                                         </p>
                                     )}

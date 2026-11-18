@@ -14,21 +14,19 @@ export function ServiceCard({ service }: ServiceCardProps) {
     return (
         <Link
             href={`/services/${service.id}`}
-            className="group block rounded-xl border border-[var(--card-border)] bg-[var(--card-bg)] p-6 shadow-sm 
-        transition-all hover:border-[var(--primary)]/40 hover:shadow-md"
+            className="group block rounded-xl border border-card-border bg-card-bg p-6 shadow-sm 
+        transition-all hover:border-accent/40 hover:shadow-md"
         >
             <div className="flex items-start justify-between gap-4">
                 <div className="flex-1 min-w-0">
                     {/* Service Name */}
-                    <h3 className="font-semibold text-lg text-[var(--foreground)] group-hover:text-[var(--primary)] truncate">
+                    <h3 className="font-semibold text-lg text-foreground group-hover:text-accent truncate">
                         {service.name}
                     </h3>
 
                     {/* Description */}
                     {service.description && (
-                        <p className="mt-3 text-[var(--foreground)] line-clamp-2">
-                            {service.description}
-                        </p>
+                        <p className="mt-3 text-foreground line-clamp-2">{service.description}</p>
                     )}
                 </div>
             </div>
@@ -43,8 +41,8 @@ export function ServiceCard({ service }: ServiceCardProps) {
                 const text = formatAddress(addr);
                 if (!text) return null;
                 return (
-                    <div className="mt-4 pt-4 border-t border-[var(--card-border)]">
-                        <p className="text-sm text-[var(--foreground)] flex items-center gap-1">
+                    <div className="mt-4 pt-4 border-t border-card-border">
+                        <p className="text-sm text-foreground flex items-center gap-1">
                             <svg
                                 className="w-4 h-4 shrink-0"
                                 aria-label="address"
