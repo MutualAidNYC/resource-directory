@@ -1,8 +1,10 @@
 import fs from 'node:fs';
 import path from 'node:path';
+import { Fragment } from 'react';
 import Link from 'next/link';
 import { SearchBar } from '@/components/ui/SearchBar';
 import { counts, getMapData } from '@/lib/data';
+import { FRAME, PAGE } from '@/lib/styles';
 
 /** Category icons live in the repo, not Airtable — see that folder's README. */
 const ICON_DIR = 'icons/need_categories';
@@ -13,6 +15,20 @@ function iconSlug(name: string): string {
         .toLowerCase()
         .replace(/[^a-z0-9]+/g, '-')
         .replace(/^-|-$/g, '');
+}
+
+/** A category name that may break after each "/" ("Delivery/Transport"), not mid-word. */
+function breakAfterSlashes(name: string) {
+    return name.split('/').map((part, i) => (
+        <Fragment key={i}>
+            {i > 0 && (
+                <>
+                    /<wbr />
+                </>
+            )}
+            {part}
+        </Fragment>
+    ));
 }
 
 /**
@@ -35,8 +51,8 @@ export default function Home() {
     return (
         <div className="flex flex-col">
             {/* Hero Section */}
-            <section className="pt-10 pb-12 md:py-28 px-4 bg-background">
-                <div className="container mx-auto">
+            <section className="pt-10 pb-12 md:py-28 bg-background">
+                <div className={PAGE}>
                     <div className="max-w-5xl mx-auto text-center">
                         <h1 className="font-black text-4xl md:text-6xl mb-6">
                             Community Resources Library
@@ -76,8 +92,8 @@ export default function Home() {
 
             {/* Resource Categories  */}
             {categories.length > 0 && (
-                <section className="pt-10 pb-16 px-4 bg-section-alt">
-                    <div className="container mx-auto">
+                <section className="pt-10 pb-16 bg-section-alt">
+                    <div className={PAGE}>
                         <div className="flex items-center justify-between mb-8">
                             <h2 className="text-2xl/[1.4]">Browse By Category</h2>
                             <Link
@@ -93,7 +109,7 @@ export default function Home() {
                                     <Link
                                         key={category.name}
                                         href={`/services?category=${encodeURIComponent(category.name)}`}
-                                        className="group flex items-center gap-3 p-5 rounded-2xl bg-card-bg border border-card-border hover:shadow-md transition-all"
+                                        className={`flex items-center gap-3 p-5 bg-card-bg ${FRAME} no-underline hover:bg-highlight-alt-border`}
                                     >
                                         <span className="flex-shrink-0 w-8 h-8 flex items-center justify-center">
                                             {iconFiles.has(`${iconSlug(category.name)}.png`) ? (
@@ -108,7 +124,7 @@ export default function Home() {
                                             )}
                                         </span>
                                         <span className="text-sm font-semibold text-foreground">
-                                            {category.name}
+                                            {breakAfterSlashes(category.name)}
                                         </span>
                                     </Link>
                                 );

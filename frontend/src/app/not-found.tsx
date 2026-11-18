@@ -1,11 +1,12 @@
 import Link from 'next/link';
+import { PAGE } from '@/lib/styles';
 
 /**
  * Custom 404 Not Found page.
  */
 export default function NotFound() {
     return (
-        <div className="container mx-auto px-4 py-16">
+        <div className={`${PAGE} py-16`}>
             <div className="max-w-md mx-auto text-center">
                 {/* Icon */}
                 <div className="inline-flex items-center justify-center w-20 h-20 rounded-full bg-section-alt mb-6">

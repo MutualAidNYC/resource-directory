@@ -8,7 +8,7 @@ import { MapContainer } from '@/components/map/MapContainer';
 import { WebsiteLink } from '@/components/ui/ExternalLink';
 import type { MapLocation } from '@/components/map/MapView';
 import { Icon } from '@/components/ui/Icon';
-import { CARD } from '@/lib/styles';
+import { CARD, FRAME, PAGE } from '@/lib/styles';
 
 interface OrganizationDetailPageProps {
     params: Promise<{ id: string }>;
@@ -87,7 +87,7 @@ export default async function OrganizationDetailPage({ params }: OrganizationDet
     }
 
     return (
-        <div className="container mx-auto px-4 py-8">
+        <div className={`${PAGE} pt-10 pb-16`}>
             {/* Breadcrumb */}
             <nav className="mb-6 text-sm">
                 <ol className="flex items-center gap-2 text-muted">
@@ -149,7 +149,7 @@ export default async function OrganizationDetailPage({ params }: OrganizationDet
                                 ))}
                             </div>
                         ) : (
-                            <div className="text-center py-12 bg-section-alt rounded-xl">
+                            <div className="text-center py-12 bg-section-alt">
                                 <p className="text-muted">
                                     No resources listed for this group yet.
                                 </p>
@@ -162,7 +162,7 @@ export default async function OrganizationDetailPage({ params }: OrganizationDet
                 <div className="lg:col-span-1">
                     <div className="sticky top-24 space-y-6">
                         {mapLocations.length > 0 ? (
-                            <div className={`${CARD} overflow-hidden`}>
+                            <div className={`overflow-hidden bg-card-bg ${FRAME}`}>
                                 <div className="p-4 border-b border-card-border">
                                     <h3>
                                         {mapLocationLabel} ({mapLocations.length})
@@ -173,7 +173,7 @@ export default async function OrganizationDetailPage({ params }: OrganizationDet
                                 </div>
                             </div>
                         ) : (
-                            <div className="rounded-xl border border-card-border bg-section-alt p-8 text-center">
+                            <div className="border border-card-border bg-section-alt p-8 text-center">
                                 <Icon name="pin" className="w-12 h-12 mx-auto text-muted mb-3" />
                                 <p className="text-muted">No location data available</p>
                             </div>

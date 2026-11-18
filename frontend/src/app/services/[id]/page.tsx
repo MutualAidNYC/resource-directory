@@ -7,7 +7,7 @@ import { MapContainer } from '@/components/map/MapContainer';
 import { ExternalLink, WebsiteLink } from '@/components/ui/ExternalLink';
 import { TagLink } from '@/components/ui/TagLink';
 import { Icon } from '@/components/ui/Icon';
-import { CARD } from '@/lib/styles';
+import { CARD, FRAME, PAGE } from '@/lib/styles';
 
 interface ServiceDetailPageProps {
     params: Promise<{ id: string }>;
@@ -80,7 +80,7 @@ export default async function ServiceDetailPage({ params }: ServiceDetailPagePro
     }
 
     return (
-        <div className="container mx-auto px-4 py-8">
+        <div className={`${PAGE} pt-10 pb-16`}>
             {/* Breadcrumb */}
             <nav className="mb-6 text-sm">
                 <ol className="flex items-center gap-2 text-muted">
@@ -177,10 +177,7 @@ export default async function ServiceDetailPage({ params }: ServiceDetailPagePro
                             <h2 className="text-xl mb-4">Locations</h2>
                             <div className="space-y-4">
                                 {places.map(({ id, name, addresses }) => (
-                                    <div
-                                        key={id}
-                                        className="rounded-xl border border-card-border p-4"
-                                    >
+                                    <div key={id} className="border border-card-border p-4">
                                         {name && <h3 className="mb-2">{name}</h3>}
                                         {addresses.length > 0 && (
                                             <div>
@@ -201,8 +198,8 @@ export default async function ServiceDetailPage({ params }: ServiceDetailPagePro
                     <div className="sticky top-24 space-y-6">
                         {/* Map Card - show if service has geocoded coordinates */}
                         {mapCoords && (
-                            <div className={`${CARD} overflow-hidden`}>
-                                <div className="rounded-xl overflow-hidden border border-card-border h-64">
+                            <div className={`overflow-hidden bg-card-bg ${FRAME}`}>
+                                <div className="h-64 overflow-hidden">
                                     <MapContainer
                                         locations={[
                                             {

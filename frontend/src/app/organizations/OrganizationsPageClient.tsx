@@ -6,6 +6,7 @@ import { OrganizationCard } from '@/components/organizations/OrganizationCard';
 import { ORGANIZATION_FIELDS, search } from '@/lib/search';
 import { useDebounced } from '@/lib/useDebounced';
 import type { OrganizationListItem } from '@/lib/types';
+import { PAGE } from '@/lib/styles';
 
 interface OrganizationsPageClientProps {
     organizations: OrganizationListItem[];
@@ -138,7 +139,7 @@ export function OrganizationGrid({
     );
 
     return (
-        <div className="container mx-auto px-4 py-8">
+        <div className={`${PAGE} py-8`}>
             {/* Page Header */}
             <div className="mb-8">
                 <h1 className="text-3xl mb-4">Groups</h1>

@@ -1,7 +1,13 @@
 /** Class strings shared across pages, so one change restyles them all. */
 
-/** A white card with a thin border. Add padding and anything else per use. */
-export const CARD = 'rounded-xl border border-card-border bg-card-bg';
+/** The page's width (the theme's 70rem) and side gutter. */
+export const PAGE = 'mx-auto w-full max-w-(--default-content-width) px-4';
+
+/** A white card with a thin border, square. Add padding and anything else per use. */
+export const CARD = 'border border-card-border bg-card-bg';
+
+/** A featured block's frame (category tiles, maps): 4px teal tint, decorative. */
+export const FRAME = 'border-4 border-secondary-border';
 
 /**
  * A card or popup title link: purple, always underlined, so it reads as a link and not

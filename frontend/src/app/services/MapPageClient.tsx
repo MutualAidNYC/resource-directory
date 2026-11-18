@@ -7,6 +7,7 @@ import { ServiceCard } from '@/components/services/ServiceCard';
 import { search, SERVICE_FIELDS } from '@/lib/search';
 import { useDebounced } from '@/lib/useDebounced';
 import type { Category, MapService } from '@/lib/types';
+import { FRAME } from '@/lib/styles';
 
 // The filter labels and fields: square, like the theme's fields. 16px, so phones don't zoom.
 const LABEL = 'block text-[15px] font-semibold mb-1.5';
@@ -203,12 +204,12 @@ export default function MapPageClient({
             <h1 className="sr-only">Resources</h1>
 
             {/* Mobile Action Bar */}
-            <div className="md:hidden flex items-center justify-between p-3 bg-section-alt border-b border-card-border flex-shrink-0 z-10 w-full shadow-sm">
+            <div className="md:hidden flex items-center justify-between p-3 bg-section-alt border-b border-card-border flex-shrink-0 z-10 w-full">
                 <button
                     onClick={() => setIsFiltersOpen(!isFiltersOpen)}
                     aria-expanded={isFiltersOpen}
                     aria-controls="filters-panel"
-                    className="flex items-center gap-2 px-3 py-1.5 rounded-lg border border-card-border bg-card-bg text-sm font-medium"
+                    className="flex items-center gap-2 px-3 py-1.5 border border-muted bg-card-bg font-medium"
                 >
                     {filterIcon}
                     {isFiltersOpen ? 'Hide Filters' : 'Filters'}
@@ -393,7 +394,7 @@ export default function MapPageClient({
             <div
                 className={`${viewMode === 'map' ? 'block' : 'hidden'} md:block flex-1 relative h-full min-w-0 p-2`}
             >
-                <div className="w-full h-full rounded-xl overflow-hidden shadow-lg border border-card-border">
+                <div className={`w-full h-full overflow-hidden ${FRAME}`}>
                     <MapContainer
                         locations={mapLocations}
                         highlightedId={hoveredServiceId}

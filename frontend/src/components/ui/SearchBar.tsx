@@ -30,9 +30,7 @@ export function SearchBar({ placeholder = 'Search resources...' }: SearchBarProp
                     value={query}
                     onChange={(e) => setQuery(e.target.value)}
                     placeholder={placeholder}
-                    className={`w-full rounded-full border border-muted bg-card-bg shadow-sm 
-            focus:border-accent
-            h-14 text-lg pl-6 pr-28`}
+                    className="w-full rounded-full border border-muted bg-card-bg h-14 text-lg pl-6 pr-28"
                 />
                 <div className="absolute right-2 flex items-center gap-1">
                     <button
