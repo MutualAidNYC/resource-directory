@@ -145,15 +145,8 @@ export default function MapView({ locations, highlightedId, showLocateButton }: 
         });
 
         map.addControl(new maplibregl.NavigationControl(), 'top-right');
-        if (showLocateButton) {
-            map.addControl(
-                new maplibregl.GeolocateControl({
-                    trackUserLocation: false,
-                    showAccuracyCircle: true,
-                }),
-                'top-right',
-            );
-        }
+        // Defaults: one position per press, no tracking, accuracy circle on.
+        if (showLocateButton) map.addControl(new maplibregl.GeolocateControl({}), 'top-right');
         mapRef.current = map;
 
         map.on('load', () => {
