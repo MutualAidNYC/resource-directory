@@ -17,7 +17,7 @@ export function OrganizationCard({ organization }: OrganizationCardProps) {
         >
             <div className="min-w-0">
                 {/* Group Name */}
-                <h3 className="font-semibold text-lg text-foreground group-hover:text-accent">
+                <h3 className="text-lg text-foreground group-hover:text-accent">
                     {organization.name}
                 </h3>
                 {/* Description */}

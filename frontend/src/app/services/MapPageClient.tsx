@@ -207,7 +207,7 @@ export default function MapPageClient({
                     onClick={() => setIsFiltersOpen(!isFiltersOpen)}
                     aria-expanded={isFiltersOpen}
                     aria-controls="filters-panel"
-                    className="flex items-center gap-2 px-3 py-1.5 rounded-lg border border-card-border bg-card-bg text-sm font-medium text-foreground"
+                    className="flex items-center gap-2 px-3 py-1.5 rounded-lg border border-card-border bg-card-bg text-sm font-medium"
                 >
                     {filterIcon}
                     {isFiltersOpen ? 'Hide Filters' : 'Filters'}
@@ -236,7 +236,7 @@ export default function MapPageClient({
                 button floats at the bottom right. It opens the filters and moves focus there. */}
             <button
                 onClick={openFiltersFromFloat}
-                className="hidden [@media(width<48rem)_and_(height<32rem)]:flex fixed bottom-3 right-3 z-20 items-center gap-2 px-3 py-1.5 rounded-full border border-card-border bg-card-bg text-sm font-medium text-foreground shadow-lg"
+                className="hidden [@media(width<48rem)_and_(height<32rem)]:flex fixed bottom-3 right-3 z-20 items-center gap-2 px-3 py-1.5 rounded-full border border-card-border bg-card-bg text-sm font-medium shadow-lg"
             >
                 {filterIcon}
                 Filters
@@ -248,11 +248,7 @@ export default function MapPageClient({
                 id="filters-panel"
                 className={`${isFiltersOpen ? 'block' : 'hidden'} md:block w-full md:w-64 min-h-0 md:flex-shrink-0 bg-section-alt md:border-r border-b md:border-b-0 border-card-border p-4 overflow-y-auto scrollbar-thin`}
             >
-                <h2
-                    ref={filtersHeadingRef}
-                    tabIndex={-1}
-                    className="text-lg font-semibold text-foreground mb-4"
-                >
+                <h2 ref={filtersHeadingRef} tabIndex={-1} className="text-lg/[1.4] mb-4">
                     Filters
                 </h2>
 
@@ -260,7 +256,7 @@ export default function MapPageClient({
                 <div className="mb-6">
                     <label
                         htmlFor="search-resources"
-                        className="block text-sm font-medium text-foreground opacity-80 mb-2"
+                        className="block text-sm font-medium opacity-80 mb-2"
                     >
                         Search
                     </label>
@@ -280,7 +276,7 @@ export default function MapPageClient({
                                 );
                             }}
                             placeholder="Search resources..."
-                            className="w-full rounded-lg border border-muted bg-card-bg px-3 py-2 text-sm text-foreground focus:ring-2 focus:ring-accent focus:border-transparent"
+                            className="w-full rounded-lg border border-muted bg-card-bg px-3 py-2 text-sm"
                         />
                     </form>
                 </div>
@@ -289,7 +285,7 @@ export default function MapPageClient({
                 <div className="mb-6">
                     <label
                         htmlFor="filter-need"
-                        className="block text-sm font-medium text-foreground opacity-80 mb-2"
+                        className="block text-sm font-medium opacity-80 mb-2"
                     >
                         Need Category
                     </label>
@@ -297,7 +293,7 @@ export default function MapPageClient({
                         id="filter-need"
                         value={selectedNeed}
                         onChange={(e) => handleNeedChange(e.target.value)}
-                        className="w-full rounded-lg border border-muted bg-card-bg px-3 py-2 text-sm text-foreground focus:ring-2 focus:ring-accent focus:border-transparent"
+                        className="w-full rounded-lg border border-muted bg-card-bg px-3 py-2 text-sm"
                     >
                         <option value="">All Categories</option>
                         {needCategories.map((cat) => (
@@ -312,7 +308,7 @@ export default function MapPageClient({
                 <div className="mb-6">
                     <label
                         htmlFor="filter-community"
-                        className="block text-sm font-medium text-foreground opacity-80 mb-2"
+                        className="block text-sm font-medium opacity-80 mb-2"
                     >
                         Community Focus
                     </label>
@@ -320,7 +316,7 @@ export default function MapPageClient({
                         id="filter-community"
                         value={selectedCommunity}
                         onChange={(e) => handleCommunityChange(e.target.value)}
-                        className="w-full rounded-lg border border-muted bg-card-bg px-3 py-2 text-sm text-foreground focus:ring-2 focus:ring-accent focus:border-transparent"
+                        className="w-full rounded-lg border border-muted bg-card-bg px-3 py-2 text-sm"
                     >
                         <option value="">All Communities</option>
                         {communityCategories.map((cat) => (
@@ -335,7 +331,7 @@ export default function MapPageClient({
                 <div className="mb-6">
                     <label
                         htmlFor="filter-area"
-                        className="block text-sm font-medium text-foreground opacity-80 mb-2"
+                        className="block text-sm font-medium opacity-80 mb-2"
                     >
                         Target Geographic Area
                     </label>
@@ -344,7 +340,7 @@ export default function MapPageClient({
                         aria-describedby="filter-area-help"
                         value={selectedArea}
                         onChange={(e) => handleAreaChange(e.target.value)}
-                        className="w-full rounded-lg border border-muted bg-card-bg px-3 py-2 text-sm text-foreground focus:ring-2 focus:ring-accent focus:border-transparent"
+                        className="w-full rounded-lg border border-muted bg-card-bg px-3 py-2 text-sm"
                     >
                         <option value="">All areas</option>
                         {serviceAreas.map((a) => (
@@ -353,7 +349,7 @@ export default function MapPageClient({
                             </option>
                         ))}
                     </select>
-                    <p id="filter-area-help" className="mt-1 text-xs text-foreground opacity-80">
+                    <p id="filter-area-help" className="mt-1 text-xs opacity-80">
                         Where a resource is offered, not where it is located.
                     </p>
                 </div>
@@ -372,13 +368,11 @@ export default function MapPageClient({
             >
                 <div className="p-4 space-y-4">
                     <h2 className="sr-only">Results</h2>
-                    <p role="status" className="text-sm text-foreground">
+                    <p role="status" className="text-sm">
                         {resultCount} {resultCount === 1 ? 'resource' : 'resources'} found
                     </p>
                     {filteredServices.length === 0 ? (
-                        <div className="text-center py-8 text-foreground">
-                            No resources match your filters
-                        </div>
+                        <div className="text-center py-8">No resources match your filters</div>
                     ) : (
                         filteredServices.map((service) => (
                             <ResourceCard
@@ -396,7 +390,7 @@ export default function MapPageClient({
 
             {/* Right Column: Map */}
             <div
-                className={`${viewMode === 'map' ? 'block' : 'hidden'} md:block flex-1 relative h-full min-w-0 p-2 md:p-2`}
+                className={`${viewMode === 'map' ? 'block' : 'hidden'} md:block flex-1 relative h-full min-w-0 p-2`}
             >
                 <div className="w-full h-full rounded-xl overflow-hidden shadow-lg border border-card-border">
                     <MapContainer
@@ -425,7 +419,7 @@ function ResourceCard({
     return (
         <div className="bg-card-bg rounded-xl border border-card-border p-4">
             <div className="flex items-start justify-between gap-2">
-                <h3 className="font-semibold text-foreground mb-2 line-clamp-2">
+                <h3 className="mb-2 line-clamp-2">
                     <Link
                         href={`/services/${service.id}`}
                         className="text-foreground underline hover:no-underline hover:text-accent"
@@ -436,7 +430,7 @@ function ResourceCard({
             </div>
 
             {service.address && (
-                <div className="text-sm text-foreground mb-2 flex items-start justify-between gap-2">
+                <div className="text-sm mb-2 flex items-start justify-between gap-2">
                     <div className="flex items-start gap-2">
                         <svg
                             className="w-4 h-4 mt-0.5 flex-shrink-0"
@@ -466,7 +460,7 @@ function ResourceCard({
                     {service.latitude != null && service.longitude != null && (
                         <button
                             onClick={() => onViewOnMap(service.id)}
-                            className="flex-shrink-0 inline-flex items-center gap-1 px-2.5 py-1 rounded-md border border-card-border bg-section-alt text-xs font-medium text-foreground hover:bg-accent hover:text-white transition-colors"
+                            className="flex-shrink-0 inline-flex items-center gap-1 px-2.5 py-1 rounded-md border border-card-border bg-section-alt text-xs font-medium hover:bg-accent hover:text-white transition-colors"
                         >
                             View on map
                         </button>
@@ -475,7 +469,7 @@ function ResourceCard({
             )}
 
             {service.phone && (
-                <p className="text-sm text-foreground mb-1 flex items-center gap-2">
+                <p className="text-sm mb-1 flex items-center gap-2">
                     <svg
                         className="w-4 h-4 flex-shrink-0"
                         role="img"
@@ -501,7 +495,7 @@ function ResourceCard({
             )}
 
             {website && (
-                <p className="text-sm text-foreground mb-2 flex items-center gap-2">
+                <p className="text-sm mb-2 flex items-center gap-2">
                     <svg
                         className="w-4 h-4 flex-shrink-0"
                         aria-hidden="true"
@@ -526,7 +520,7 @@ function ResourceCard({
             )}
 
             {service.description && (
-                <p className="text-sm text-foreground mb-3 line-clamp-2">{service.description}</p>
+                <p className="text-sm mb-3 line-clamp-2">{service.description}</p>
             )}
 
             {/* Need Category tags */}

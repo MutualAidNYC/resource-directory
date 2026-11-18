@@ -84,7 +84,7 @@ export default function OrganizationsPageClient({ organizations }: Organizations
                             value={query}
                             onChange={(e) => updateQuery(e.target.value)}
                             placeholder="Search groups..."
-                            className="w-full pl-10 pr-12 py-3 rounded-xl border border-muted bg-card-bg text-foreground shadow-sm focus:border-accent focus:outline-none focus:ring-2 focus:ring-accent/20"
+                            className="w-full pl-10 pr-12 py-3 rounded-xl border border-muted bg-card-bg shadow-sm focus:border-accent"
                         />
                         {query && (
                             <button
@@ -141,10 +141,8 @@ export function OrganizationGrid({
         <div className="container mx-auto px-4 py-8">
             {/* Page Header */}
             <div className="mb-8">
-                <h1 className="text-3xl font-bold text-foreground mb-4">Groups</h1>
-                <p role="status" className="text-foreground">
-                    {status}
-                </p>
+                <h1 className="text-3xl mb-4">Groups</h1>
+                <p role="status">{status}</p>
             </div>
 
             {searchBox && <div className="mb-8">{searchBox}</div>}
@@ -158,10 +156,10 @@ export function OrganizationGrid({
                 </div>
             ) : (
                 <div className="text-center py-16">
-                    <h3 className="text-lg font-medium text-foreground mb-2">
+                    <h3 className="text-lg mb-2">
                         {searched ? `No results for "${searched}"` : 'No groups found'}
                     </h3>
-                    <p className="text-foreground">
+                    <p>
                         {searched
                             ? 'Try a different search term.'
                             : 'No groups are currently available.'}

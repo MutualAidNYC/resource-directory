@@ -107,28 +107,20 @@ export default async function OrganizationDetailPage({ params }: OrganizationDet
                     {/* Group Header */}
                     <div>
                         {/* Name */}
-                        <h1 className="text-3xl font-bold text-foreground mb-4">
-                            {organization.name}
-                        </h1>
+                        <h1 className="text-3xl mb-4">{organization.name}</h1>
 
                         {/* Description */}
                         {organization.description && (
                             <section className="mb-8 mt-6">
-                                <h2 className="text-xl font-semibold text-foreground mb-4">
-                                    Description
-                                </h2>
-                                <div className="prose max-w-none">
-                                    <p className="text-foreground whitespace-pre-wrap">
-                                        {organization.description}
-                                    </p>
-                                </div>
+                                <h2 className="text-xl mb-4">Description</h2>
+                                <p className="whitespace-pre-wrap">{organization.description}</p>
                             </section>
                         )}
                     </div>
 
                     {/* Resources Section */}
                     <section>
-                        <h2 className="text-2xl font-bold text-foreground mb-6">
+                        <h2 className="text-2xl/[1.4] mb-6">
                             Resources ({relatedServices.length})
                         </h2>
 
@@ -154,7 +146,7 @@ export default async function OrganizationDetailPage({ params }: OrganizationDet
                         {mapLocations.length > 0 ? (
                             <div className="rounded-xl border border-card-border bg-card-bg overflow-hidden">
                                 <div className="p-4 border-b border-card-border">
-                                    <h3 className="font-semibold text-foreground">
+                                    <h3>
                                         {mapLocationLabel} ({mapLocations.length})
                                     </h3>
                                 </div>
@@ -190,9 +182,7 @@ export default async function OrganizationDetailPage({ params }: OrganizationDet
 
                         {/* Contact Card */}
                         <div className="rounded-xl border border-card-border bg-card-bg p-6">
-                            <h3 className="font-semibold text-foreground mb-4">
-                                Contact Information
-                            </h3>
+                            <h3 className="mb-4">Contact Information</h3>
 
                             <div className="space-y-4">
                                 {website && (
@@ -246,10 +236,7 @@ export default async function OrganizationDetailPage({ params }: OrganizationDet
                                 )}
 
                                 {addresses.map((address) => (
-                                    <div
-                                        key={address.id}
-                                        className="flex items-start gap-3 text-foreground"
-                                    >
+                                    <div key={address.id} className="flex items-start gap-3">
                                         <svg
                                             className="w-5 h-5 shrink-0 mt-0.5"
                                             role="img"

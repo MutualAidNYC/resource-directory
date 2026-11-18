@@ -26,10 +26,10 @@ export default function NotFound() {
                 </div>
 
                 {/* Title */}
-                <h1 className="text-4xl font-bold text-foreground mb-4">404 - Page Not Found</h1>
+                <h1 className="text-4xl mb-4">404 - Page Not Found</h1>
 
                 {/* Description */}
-                <p className="text-foreground mb-8">
+                <p className="mb-8">
                     Sorry, we couldn&apos;t find the page you&apos;re looking for. It may have been
                     moved or deleted.
                 </p>

@@ -41,7 +41,7 @@ export default function RootLayout({
             >
                 <a
                     href="#main-content"
-                    className="absolute left-1 top-0 z-[100] bg-white transform -translate-y-full py-4 px-6 
+                    className="absolute left-1 top-0 z-[100] bg-white -translate-y-full py-4 px-6 
           font-bold underline focus:translate-y-1 transition"
                 >
                     Skip to main content

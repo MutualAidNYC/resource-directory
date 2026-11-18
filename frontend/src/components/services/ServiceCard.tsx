@@ -20,7 +20,7 @@ export function ServiceCard({ service }: ServiceCardProps) {
             <div className="flex items-start justify-between gap-4">
                 <div className="flex-1 min-w-0">
                     {/* Service Name */}
-                    <h3 className="font-semibold text-lg text-foreground group-hover:text-accent truncate">
+                    <h3 className="text-lg text-foreground group-hover:text-accent truncate">
                         {service.name}
                     </h3>
 

@@ -104,12 +104,12 @@ export default async function ServiceDetailPage({ params }: ServiceDetailPagePro
                     {/* Header */}
                     <div>
                         <div className="flex items-start justify-between gap-4 mb-4">
-                            <h1 className="text-3xl font-bold text-foreground">{service.name}</h1>
+                            <h1 className="text-3xl">{service.name}</h1>
                         </div>
 
                         {/* Group, linked to its page */}
                         {organization && (
-                            <p className="text-lg text-foreground mb-4">
+                            <p className="text-lg mb-4">
                                 <span className="font-medium">Group:</span>{' '}
                                 <Link
                                     href={`/organizations/${organization.id}`}
@@ -123,7 +123,7 @@ export default async function ServiceDetailPage({ params }: ServiceDetailPagePro
                         {/* Need Categories */}
                         {needFocus.length > 0 && (
                             <div className="mb-4">
-                                <p className="text-sm font-semibold text-foreground opacity-70 mb-2 uppercase tracking-wide">
+                                <p className="text-sm font-semibold opacity-70 mb-2 uppercase tracking-wide">
                                     Need Categories
                                 </p>
                                 <div className="flex flex-wrap gap-2">
@@ -143,7 +143,7 @@ export default async function ServiceDetailPage({ params }: ServiceDetailPagePro
                         {/* Community Focus */}
                         {communityFocus.length > 0 && (
                             <div className="mb-4">
-                                <p className="text-sm font-semibold text-foreground opacity-70 mb-2 uppercase tracking-wide">
+                                <p className="text-sm font-semibold opacity-70 mb-2 uppercase tracking-wide">
                                     Community Focus
                                 </p>
                                 <div className="flex flex-wrap gap-2">
@@ -164,36 +164,24 @@ export default async function ServiceDetailPage({ params }: ServiceDetailPagePro
                     {/* Description */}
                     {service.description && (
                         <section>
-                            <h2 className="text-xl font-semibold text-foreground mb-4">
-                                Description
-                            </h2>
-                            <div className="prose max-w-none">
-                                <p className="text-foreground whitespace-pre-wrap">
-                                    {service.description}
-                                </p>
-                            </div>
+                            <h2 className="text-xl mb-4">Description</h2>
+                            <p className="whitespace-pre-wrap">{service.description}</p>
                         </section>
                     )}
 
                     {/* Locations */}
                     {places.length > 0 && (
                         <section>
-                            <h2 className="text-xl font-semibold text-foreground mb-4">
-                                Locations
-                            </h2>
+                            <h2 className="text-xl mb-4">Locations</h2>
                             <div className="space-y-4">
                                 {places.map(({ id, name, addresses }) => (
                                     <div
                                         key={id}
                                         className="rounded-xl border border-card-border p-4"
                                     >
-                                        {name && (
-                                            <h3 className="font-medium text-foreground mb-2">
-                                                {name}
-                                            </h3>
-                                        )}
+                                        {name && <h3 className="mb-2">{name}</h3>}
                                         {addresses.length > 0 && (
-                                            <div className="text-foreground">
+                                            <div>
                                                 {addresses.map((address) => (
                                                     <p key={address.id}>{address.text}</p>
                                                 ))}
@@ -226,9 +214,7 @@ export default async function ServiceDetailPage({ params }: ServiceDetailPagePro
                                 </div>
                                 {mapCoords.address && (
                                     <div className="p-4 border-t border-card-border">
-                                        <p className="text-sm text-foreground mb-2">
-                                            {mapCoords.address}
-                                        </p>
+                                        <p className="text-sm mb-2">{mapCoords.address}</p>
                                         <ExternalLink
                                             href={`https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(mapCoords.address)}`}
                                             className="inline-flex items-center gap-1.5 text-sm font-medium text-accent hover:text-accent-hover"
@@ -262,9 +248,7 @@ export default async function ServiceDetailPage({ params }: ServiceDetailPagePro
 
                         {/* Contact Card */}
                         <div className="rounded-xl border border-card-border bg-card-bg p-6">
-                            <h3 className="font-semibold text-foreground mb-4">
-                                Contact Information
-                            </h3>
+                            <h3 className="mb-4">Contact Information</h3>
 
                             <div className="space-y-4">
                                 {website && (
@@ -320,10 +304,7 @@ export default async function ServiceDetailPage({ params }: ServiceDetailPagePro
                                 )}
 
                                 {service.phones?.map((phone) => (
-                                    <div
-                                        key={phone.id}
-                                        className="flex items-center gap-3 text-foreground"
-                                    >
+                                    <div key={phone.id} className="flex items-center gap-3">
                                         <svg
                                             className="w-5 h-5 shrink-0"
                                             role="img"

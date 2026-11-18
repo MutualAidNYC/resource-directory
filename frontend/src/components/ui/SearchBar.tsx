@@ -31,15 +31,14 @@ export function SearchBar({ placeholder = 'Search resources...' }: SearchBarProp
                     onChange={(e) => setQuery(e.target.value)}
                     placeholder={placeholder}
                     className={`w-full rounded-full border border-muted bg-card-bg shadow-sm 
-            focus:border-accent focus:outline-none focus:ring-2 focus:ring-accent/20
-            text-foreground
+            focus:border-accent
             h-14 text-lg pl-6 pr-28`}
                 />
                 <div className="absolute right-2 flex items-center gap-1">
                     <button
                         type="submit"
                         className={`rounded-full bg-accent text-white 
-            hover:bg-accent-hover focus:outline-none focus:ring-2 focus:ring-accent
+            hover:bg-accent-hover
             transition-colors px-5 py-2`}
                     >
                         Search

@@ -34,7 +34,7 @@ export function Footer() {
                         Powered by{' '}
                         <ExternalLink
                             href="https://openreferral.org"
-                            className="hover:no-underline underline transition-opacity text-inherit"
+                            className="hover:no-underline underline text-inherit"
                         >
                             Open Referral HSDS
                         </ExternalLink>
