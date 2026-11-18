@@ -109,10 +109,10 @@ export function listOrganizations(): OrganizationListItem[] {
         .sort((a, b) => compareNames(a.name, b.name));
 }
 
-/** A group's published resources, in the build's order, as list items with their locations. */
+/** An organization's published services, in the build's order, with locations and phones. */
 export function servicesOf(
     organizationId: string,
-): (ServiceSummary & Pick<Service, 'service_at_locations'>)[] {
+): (ServiceSummary & Pick<Service, 'service_at_locations' | 'phones'>)[] {
     return siteData()
         .download.services.filter((s) => s.organization_id === organizationId)
         .map(
@@ -124,6 +124,7 @@ export function servicesOf(
                 description,
                 url,
                 email,
+                phones,
                 service_at_locations,
             }) => ({
                 id,
@@ -133,6 +134,7 @@ export function servicesOf(
                 description,
                 url,
                 email,
+                phones,
                 service_at_locations,
             }),
         );

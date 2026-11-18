@@ -64,7 +64,7 @@ export default function OrganizationsPageClient({ organizations }: Organizations
                     </label>
                     <div className="relative flex items-center">
                         <svg
-                            className="absolute left-3 w-5 h-5 text-muted"
+                            className="absolute left-4 w-5 h-5 text-muted"
                             aria-hidden="true"
                             fill="none"
                             stroke="currentColor"
@@ -84,13 +84,13 @@ export default function OrganizationsPageClient({ organizations }: Organizations
                             value={query}
                             onChange={(e) => updateQuery(e.target.value)}
                             placeholder="Search groups..."
-                            className="w-full pl-10 pr-12 py-3 rounded-xl border border-muted bg-card-bg shadow-sm focus:border-accent"
+                            className="w-full pl-11 pr-12 py-3 rounded-full border border-muted bg-card-bg text-lg"
                         />
                         {query && (
                             <button
                                 type="button"
                                 onClick={handleClear}
-                                className="absolute right-2 p-1.5 text-muted hover:text-foreground"
+                                className="absolute right-3 p-1.5 text-muted hover:text-foreground"
                                 aria-label="Clear search"
                             >
                                 <svg
@@ -147,9 +147,9 @@ export function OrganizationGrid({
 
             {searchBox && <div className="mb-8">{searchBox}</div>}
 
-            {/* Groups Grid */}
+            {/* Groups Grid: equal columns, equal heights per row */}
             {total > 0 ? (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                     {organizations.map((org) => (
                         <OrganizationCard key={org.id} organization={org} />
                     ))}

@@ -1,54 +1,32 @@
 import Link from 'next/link';
 import type { OrganizationListItem } from '@/lib/types';
-import { CARD } from '@/lib/styles';
+import { CARD, TITLE_LINK } from '@/lib/styles';
 
 interface OrganizationCardProps {
     organization: OrganizationListItem;
 }
 
 /**
- * Card component for displaying group summary in lists.
+ * An organization in the list. The title is the link; the service count sits at the
+ * bottom, so it lines up across a row.
  */
 export function OrganizationCard({ organization }: OrganizationCardProps) {
+    const count = organization.service_count;
     return (
-        <Link
-            href={`/organizations/${organization.id}`}
-            className={`group flex flex-col justify-between h-full ${CARD} p-6 shadow-sm transition-all hover:border-accent/40 hover:shadow-md`}
-        >
-            <div className="min-w-0">
-                {/* Group Name */}
-                <h3 className="text-lg text-foreground group-hover:text-accent">
+        <article className={`${CARD} flex flex-col h-full p-5`}>
+            <h3>
+                <Link href={`/organizations/${organization.id}`} className={TITLE_LINK}>
                     {organization.name}
-                </h3>
-                {/* Description */}
-                {organization.description && (
-                    <p className="mt-2 text-foreground line-clamp-3">{organization.description}</p>
-                )}
-            </div>
-
-            {/* Resource Count */}
-            <div className="mt-3 flex flex-wrap gap-3 text-sm">
-                {organization.service_count > 0 && (
-                    <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full bg-tag-olive-bg text-tag-olive-text border border-tag-olive-text">
-                        <svg
-                            className="w-4 h-4"
-                            aria-hidden="true"
-                            fill="none"
-                            stroke="currentColor"
-                            viewBox="0 0 24 24"
-                        >
-                            <path
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                                strokeWidth={2}
-                                d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"
-                            />
-                        </svg>
-                        {organization.service_count}{' '}
-                        {organization.service_count === 1 ? 'Resource' : 'Resources'}
-                    </span>
-                )}
-            </div>
-        </Link>
+                </Link>
+            </h3>
+            {organization.description && (
+                <p className="mt-2 line-clamp-3">{organization.description}</p>
+            )}
+            {count > 0 && (
+                <p className="mt-auto pt-4 text-muted">
+                    {count} {count === 1 ? 'resource' : 'resources'}
+                </p>
+            )}
+        </article>
     );
 }

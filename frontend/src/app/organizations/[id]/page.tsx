@@ -34,6 +34,14 @@ export async function generateMetadata({ params }: OrganizationDetailPageProps):
     };
 }
 
+/** A service's first address, for its card (the build keeps link order). */
+function firstAddress(service: ReturnType<typeof servicesOf>[number]): string | undefined {
+    const address = service.service_at_locations
+        ?.flatMap((sal) => sal.location?.addresses ?? [])
+        .find((a) => formatAddress(a));
+    return address ? formatAddress(address) : undefined;
+}
+
 /**
  * Group detail page showing group info and its resources.
  * Two-column layout: Left (info + resources), Right (multi-pin map)
@@ -127,9 +135,17 @@ export default async function OrganizationDetailPage({ params }: OrganizationDet
                         </h2>
 
                         {relatedServices.length > 0 ? (
-                            <div className="space-y-4">
+                            <div className="flex flex-col gap-4">
                                 {relatedServices.map((service) => (
-                                    <ServiceCard key={service.id} service={service} />
+                                    <ServiceCard
+                                        key={service.id}
+                                        id={service.id}
+                                        name={service.name}
+                                        description={service.description}
+                                        url={service.url}
+                                        address={firstAddress(service)}
+                                        phones={service.phones?.map((phone) => phone.number)}
+                                    />
                                 ))}
                             </div>
                         ) : (

@@ -2,20 +2,15 @@
 
 import { useState, useMemo, useCallback, useRef } from 'react';
 import { useSearchParams } from 'next/navigation';
-import Link from 'next/link';
 import { MapContainer } from '@/components/map/MapContainer';
-import { TagLink } from '@/components/ui/TagLink';
-import { WebsiteLink } from '@/components/ui/ExternalLink';
-import { externalHref } from '@/lib/format';
+import { ServiceCard } from '@/components/services/ServiceCard';
 import { search, SERVICE_FIELDS } from '@/lib/search';
 import { useDebounced } from '@/lib/useDebounced';
 import type { Category, MapService } from '@/lib/types';
-import { Icon } from '@/components/ui/Icon';
-import { CARD } from '@/lib/styles';
 
-// The filter labels and fields.
-const LABEL = 'block text-sm font-medium opacity-80 mb-2';
-const FIELD = 'w-full rounded-lg border border-muted bg-card-bg px-3 py-2 text-sm';
+// The filter labels and fields: square, like the theme's fields. 16px, so phones don't zoom.
+const LABEL = 'block text-[15px] font-semibold mb-1.5';
+const FIELD = 'w-full border border-muted bg-card-bg px-3 py-2 text-base';
 
 interface MapPageClientProps {
     services: MapService[];
@@ -369,13 +364,25 @@ export default function MapPageClient({
                         <div className="text-center py-8">No resources match your filters</div>
                     ) : (
                         filteredServices.map((service) => (
-                            <ResourceCard
+                            <ServiceCard
                                 key={service.id}
-                                service={service}
-                                onViewOnMap={(id) => {
-                                    setHoveredServiceId(id);
-                                    setViewMode('map');
-                                }}
+                                id={service.id}
+                                name={service.name}
+                                description={service.description}
+                                url={service.url}
+                                address={service.address}
+                                organizationName={service.organization_name}
+                                needFocus={service.needFocus}
+                                communityFocus={service.communityFocus}
+                                // Only with a pin to go to: a location can have an address but no coordinates.
+                                onViewOnMap={
+                                    service.latitude != null && service.longitude != null
+                                        ? () => {
+                                              setHoveredServiceId(service.id);
+                                              setViewMode('map');
+                                          }
+                                        : undefined
+                                }
                             />
                         ))
                     )}
@@ -394,113 +401,6 @@ export default function MapPageClient({
                     />
                 </div>
             </div>
-        </div>
-    );
-}
-
-/**
- * Resource card component
- */
-function ResourceCard({
-    service,
-    onViewOnMap,
-}: {
-    service: MapService;
-    onViewOnMap: (id: string) => void;
-}) {
-    const website = externalHref(service.url);
-
-    return (
-        <div className={`${CARD} p-4`}>
-            <div className="flex items-start justify-between gap-2">
-                <h3 className="mb-2 line-clamp-2">
-                    <Link
-                        href={`/services/${service.id}`}
-                        className="text-foreground underline hover:no-underline hover:text-accent"
-                    >
-                        {service.name}
-                    </Link>
-                </h3>
-            </div>
-
-            {service.address && (
-                <div className="text-sm mb-2 flex items-start justify-between gap-2">
-                    <div className="flex items-start gap-2">
-                        <Icon name="pin" label="address" className="w-4 h-4 mt-0.5 flex-shrink-0" />
-                        <span className="line-clamp-2">{service.address}</span>
-                    </div>
-                    {/* Only offer the map view button when there is a pin with coordinates to jump to.
-                        A location can have an address but no coordinates. */}
-                    {service.latitude != null && service.longitude != null && (
-                        <button
-                            onClick={() => onViewOnMap(service.id)}
-                            className="flex-shrink-0 inline-flex items-center gap-1 px-2.5 py-1 rounded-md border border-card-border bg-section-alt text-xs font-medium hover:bg-accent hover:text-white transition-colors"
-                        >
-                            View on map
-                        </button>
-                    )}
-                </div>
-            )}
-
-            {service.phone && (
-                <p className="text-sm mb-1 flex items-center gap-2">
-                    <Icon name="phone" label="phone" className="w-4 h-4 flex-shrink-0" />
-                    <a
-                        href={`tel:${service.phone}`}
-                        className="underline hover:no-underline hover:text-accent"
-                    >
-                        {service.phone}
-                    </a>
-                </p>
-            )}
-
-            {website && (
-                <p className="text-sm mb-2 flex items-center gap-2">
-                    <Icon name="link" className="w-4 h-4 flex-shrink-0" />
-                    <WebsiteLink
-                        href={website}
-                        name={service.name}
-                        className="underline hover:no-underline text-accent"
-                        oneLine
-                    />
-                </p>
-            )}
-
-            {service.description && (
-                <p className="text-sm mb-3 line-clamp-2">{service.description}</p>
-            )}
-
-            {/* Need Category tags */}
-            {service.needFocus && service.needFocus.length > 0 && (
-                <div className="flex flex-wrap gap-1.5 mb-2">
-                    {service.needFocus.map((need, i) => (
-                        <TagLink
-                            key={`need-${i}`}
-                            colorScheme="coral"
-                            size="sm"
-                            href={`/services?category=${encodeURIComponent(need)}`}
-                        >
-                            {need}
-                        </TagLink>
-                    ))}
-                </div>
-            )}
-
-            {/* Community Focus tags */}
-            {service.communityFocus && service.communityFocus.length > 0 && (
-                <div className="flex flex-wrap gap-1.5 mb-3">
-                    {service.communityFocus.map((community, i) => (
-                        <TagLink
-                            key={`community-${i}`}
-                            colorScheme="olive"
-                            size="sm"
-                            href={`/services?community=${encodeURIComponent(community)}`}
-                        >
-                            {community}
-                        </TagLink>
-                    ))}
-                </div>
-            )}
         </div>
     );
 }
