@@ -7,7 +7,7 @@ import { MapContainer } from '@/components/map/MapContainer';
 import { ExternalLink, WebsiteLink } from '@/components/ui/ExternalLink';
 import { TagLink } from '@/components/ui/TagLink';
 import { Icon } from '@/components/ui/Icon';
-import { CARD, FRAME, PAGE } from '@/lib/styles';
+import { BRAND_LABEL, CARD, FRAME, PAGE } from '@/lib/styles';
 
 interface ServiceDetailPageProps {
     params: Promise<{ id: string }>;
@@ -105,9 +105,8 @@ export default async function ServiceDetailPage({ params }: ServiceDetailPagePro
                 <div className="lg:col-span-2 space-y-8">
                     {/* Header */}
                     <div>
-                        <div className="flex items-start justify-between gap-4 mb-4">
-                            <h1 className="text-3xl">{service.name}</h1>
-                        </div>
+                        <p className={`${BRAND_LABEL} text-[15px] mb-2`}>Resource</p>
+                        <h1 className="mb-4">{service.name}</h1>
 
                         {/* Group, linked to its page */}
                         {organization && (
@@ -125,15 +124,13 @@ export default async function ServiceDetailPage({ params }: ServiceDetailPagePro
                         {/* Need Categories */}
                         {needFocus.length > 0 && (
                             <div className="mb-4">
-                                <p className="text-sm font-semibold opacity-70 mb-2 uppercase tracking-wide">
-                                    Need Categories
-                                </p>
+                                <p className={`${BRAND_LABEL} text-sm mb-2`}>Type of help</p>
                                 <div className="flex flex-wrap gap-2">
                                     {needFocus.map((need, index) => (
                                         <TagLink
                                             key={`need-${index}`}
                                             href={`/services?category=${encodeURIComponent(need)}`}
-                                            colorScheme="coral"
+                                            kind="need"
                                         >
                                             {need}
                                         </TagLink>
@@ -145,15 +142,13 @@ export default async function ServiceDetailPage({ params }: ServiceDetailPagePro
                         {/* Community Focus */}
                         {communityFocus.length > 0 && (
                             <div className="mb-4">
-                                <p className="text-sm font-semibold opacity-70 mb-2 uppercase tracking-wide">
-                                    Community Focus
-                                </p>
+                                <p className={`${BRAND_LABEL} text-sm mb-2`}>Community</p>
                                 <div className="flex flex-wrap gap-2">
                                     {communityFocus.map((community, index) => (
                                         <TagLink
                                             key={`community-${index}`}
                                             href={`/services?community=${encodeURIComponent(community)}`}
-                                            colorScheme="olive"
+                                            kind="community"
                                         >
                                             {community}
                                         </TagLink>
@@ -166,15 +161,17 @@ export default async function ServiceDetailPage({ params }: ServiceDetailPagePro
                     {/* Description */}
                     {service.description && (
                         <section>
-                            <h2 className="text-xl mb-4">Description</h2>
-                            <p className="whitespace-pre-wrap">{service.description}</p>
+                            <h2 className="mb-4">Description</h2>
+                            <p className="max-w-prose text-lg whitespace-pre-wrap">
+                                {service.description}
+                            </p>
                         </section>
                     )}
 
                     {/* Locations */}
                     {places.length > 0 && (
                         <section>
-                            <h2 className="text-xl mb-4">Locations</h2>
+                            <h2 className="mb-4">Locations</h2>
                             <div className="space-y-4">
                                 {places.map(({ id, name, addresses }) => (
                                     <div key={id} className="border border-card-border p-4">

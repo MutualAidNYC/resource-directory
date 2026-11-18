@@ -163,7 +163,8 @@ export default function MapView({ locations, highlightedId, showLocateButton }: 
                     map.addImage('pin-highlight', hlImg);
                     addLayers();
                 };
-                hlImg.src = pinDataUrl('#f59e0b', '#b45309');
+                // Brand yellow, with a teal edge so it shows on the yellow-ish basemap roads.
+                hlImg.src = pinDataUrl('#f7cf56', '#204045');
             };
             defaultImg.src = pinDataUrl('#8F2D24', '#6b1f18');
         });

@@ -8,7 +8,7 @@ import { MapContainer } from '@/components/map/MapContainer';
 import { WebsiteLink } from '@/components/ui/ExternalLink';
 import type { MapLocation } from '@/components/map/MapView';
 import { Icon } from '@/components/ui/Icon';
-import { CARD, FRAME, PAGE } from '@/lib/styles';
+import { BRAND_LABEL, CARD, FRAME, PAGE } from '@/lib/styles';
 
 interface OrganizationDetailPageProps {
     params: Promise<{ id: string }>;
@@ -117,22 +117,23 @@ export default async function OrganizationDetailPage({ params }: OrganizationDet
                     {/* Group Header */}
                     <div>
                         {/* Name */}
-                        <h1 className="text-3xl mb-4">{organization.name}</h1>
+                        <p className={`${BRAND_LABEL} text-[15px] mb-2`}>Group</p>
+                        <h1 className="mb-4">{organization.name}</h1>
 
                         {/* Description */}
                         {organization.description && (
                             <section className="mb-8 mt-6">
-                                <h2 className="text-xl mb-4">Description</h2>
-                                <p className="whitespace-pre-wrap">{organization.description}</p>
+                                <h2 className="mb-4">Description</h2>
+                                <p className="max-w-prose text-lg whitespace-pre-wrap">
+                                    {organization.description}
+                                </p>
                             </section>
                         )}
                     </div>
 
                     {/* Resources Section */}
                     <section>
-                        <h2 className="text-2xl/[1.4] mb-6">
-                            Resources ({relatedServices.length})
-                        </h2>
+                        <h2 className="mb-6">Resources ({relatedServices.length})</h2>
 
                         {relatedServices.length > 0 ? (
                             <div className="flex flex-col gap-4">

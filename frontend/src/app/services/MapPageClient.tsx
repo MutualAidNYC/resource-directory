@@ -216,18 +216,18 @@ export default function MapPageClient({
                     {activeFilterText}
                 </button>
 
-                <div className="flex items-center bg-card-bg rounded-lg border border-card-border p-0.5">
+                <div className="flex items-center bg-card-bg border border-muted">
                     <button
                         onClick={() => setViewMode('list')}
                         aria-pressed={viewMode === 'list'}
-                        className={`px-4 py-1.5 text-sm font-medium rounded-md transition-colors ${viewMode === 'list' ? 'bg-accent text-white shadow-sm' : 'text-muted hover:text-foreground'}`}
+                        className={`px-4 py-1.5 font-semibold ${viewMode === 'list' ? 'bg-secondary text-white' : 'text-secondary'}`}
                     >
                         List
                     </button>
                     <button
                         onClick={() => setViewMode('map')}
                         aria-pressed={viewMode === 'map'}
-                        className={`px-4 py-1.5 text-sm font-medium rounded-md transition-colors ${viewMode === 'map' ? 'bg-accent text-white shadow-sm' : 'text-muted hover:text-foreground'}`}
+                        className={`px-4 py-1.5 font-semibold ${viewMode === 'map' ? 'bg-secondary text-white' : 'text-secondary'}`}
                     >
                         Map
                     </button>
@@ -250,7 +250,7 @@ export default function MapPageClient({
                 id="filters-panel"
                 className={`${isFiltersOpen ? 'block' : 'hidden'} md:block w-full md:w-64 min-h-0 md:flex-shrink-0 bg-section-alt md:border-r border-b md:border-b-0 border-card-border p-4 overflow-y-auto scrollbar-thin`}
             >
-                <h2 ref={filtersHeadingRef} tabIndex={-1} className="text-lg/[1.4] mb-4">
+                <h2 ref={filtersHeadingRef} tabIndex={-1} className="text-xl mb-4">
                     Filters
                 </h2>
 
@@ -339,7 +339,7 @@ export default function MapPageClient({
                             </option>
                         ))}
                     </select>
-                    <p id="filter-area-help" className="mt-1 text-xs opacity-80">
+                    <p id="filter-area-help" className="mt-1 text-sm text-muted">
                         Where a resource is offered, not where it is located.
                     </p>
                 </div>
@@ -358,7 +358,7 @@ export default function MapPageClient({
             >
                 <div className="p-4 space-y-4">
                     <h2 className="sr-only">Results</h2>
-                    <p role="status" className="text-sm">
+                    <p role="status" className="font-header font-bold text-lg text-secondary">
                         {resultCount} {resultCount === 1 ? 'resource' : 'resources'} found
                     </p>
                     {filteredServices.length === 0 ? (

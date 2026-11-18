@@ -15,3 +15,6 @@ export const FRAME = 'border-4 border-secondary-border';
  */
 export const TITLE_LINK =
     'text-tertiary underline decoration-tertiary-border decoration-2 underline-offset-4 hover:decoration-tertiary';
+
+/** A Francois One label ("Resource", "Type of help"). Add the size per use. */
+export const BRAND_LABEL = 'font-label uppercase tracking-[0.04em] text-secondary';

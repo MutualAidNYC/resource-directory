@@ -112,7 +112,7 @@ export function ServiceCard({
                     {needFocus.map((need) => (
                         <TagLink
                             key={`need-${need}`}
-                            colorScheme="coral"
+                            kind="need"
                             size="sm"
                             href={`/services?category=${encodeURIComponent(need)}`}
                         >
@@ -122,7 +122,7 @@ export function ServiceCard({
                     {communityFocus.map((community) => (
                         <TagLink
                             key={`community-${community}`}
-                            colorScheme="olive"
+                            kind="community"
                             size="sm"
                             href={`/services?community=${encodeURIComponent(community)}`}
                         >
