@@ -8,7 +8,7 @@ interface SearchBarProps {
 }
 
 /** The home page search: opens /services with the query as `?q=`. */
-export function SearchBar({ placeholder = 'Search resources...' }: SearchBarProps) {
+export function SearchBar({ placeholder = 'Search resources' }: SearchBarProps) {
     const [query, setQuery] = useState('');
     const router = useRouter();
 
@@ -30,16 +30,12 @@ export function SearchBar({ placeholder = 'Search resources...' }: SearchBarProp
                     value={query}
                     onChange={(e) => setQuery(e.target.value)}
                     placeholder={placeholder}
-                    className={`w-full rounded-full border border-muted bg-card-bg shadow-sm 
-            focus:border-accent
-            h-14 text-lg pl-6 pr-28`}
+                    className="w-full rounded-full border border-muted bg-card-bg h-14 text-lg pl-6 pr-28"
                 />
                 <div className="absolute right-2 flex items-center gap-1">
                     <button
                         type="submit"
-                        className={`rounded-full bg-accent text-white 
-            hover:bg-accent-hover
-            transition-colors px-5 py-2`}
+                        className="rounded-full bg-secondary text-white font-header font-semibold px-5 py-2.5 transition-opacity hover:opacity-70"
                     >
                         Search
                     </button>

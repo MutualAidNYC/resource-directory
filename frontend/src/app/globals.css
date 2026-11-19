@@ -26,10 +26,15 @@
     --color-card-border: #e8e2da;
     --color-muted: #586069;
     --color-section-alt: #ede8e1;
-    --color-tag-coral-bg: #fce8e5;
-    --color-tag-coral-text: #8f2d24;
+    --color-tag-purple-bg: #f3e9f0;
     --color-tag-olive-bg: #ebf3f3;
     --color-tag-olive-text: #204045;
+}
+
+/* Inline, so the font variable resolves where it's used (next/font sets it on body). */
+@theme inline {
+    /* Francois One: short labels above headings and beside values (brand guide). */
+    --font-label: var(--font-francois), sans-serif;
 }
 
 :root {
@@ -72,8 +77,30 @@
         color: var(--color-secondary);
     }
 
+    /* Poppins Black (brand guide); balanced, so no word sits alone on the last line. */
+    h1 {
+        font-weight: 900;
+        font-size: 34px;
+        line-height: 1.1;
+        text-wrap: balance;
+    }
+
+    @media (width >= 48rem) {
+        h1 {
+            font-size: 48px;
+        }
+    }
+
     h2 {
+        font-size: 1.5rem;
         line-height: 1.4;
+    }
+
+    /* Purple, as in the theme. */
+    h3 {
+        color: var(--color-tertiary);
+        font-size: 1.125rem;
+        line-height: 1.3;
     }
 
     a {
@@ -134,7 +161,7 @@
         transition: opacity 0.2s ease;
         text-decoration: none;
         cursor: pointer;
-        border: 2px solid transparent;
+        border: var(--border-width) solid transparent;
         line-height: 1.2;
     }
 
@@ -150,11 +177,11 @@
         border-color: var(--color-secondary);
     }
 
-    /* Outline purple — "secondary" action */
+    /* Outline purple — "secondary" action (the theme's outline style) */
     .btn-secondary {
         background-color: transparent;
         color: var(--color-tertiary);
-        border-color: var(--color-tertiary);
+        border-color: var(--color-tertiary-border);
     }
 
     /* Light teal fill — "accent" action */
@@ -178,35 +205,38 @@
 }
 
 .maplibregl-popup-close-button {
-    font-size: 1.5rem;
-    margin: 0.25rem 0.25rem 0;
-    padding: 0.5rem;
+    /* 36×36: WCAG 2.5.8 needs at least 24×24; MapLibre's default is ~20×18. */
+    width: 36px;
+    height: 36px;
+    font-size: 24px;
+    line-height: 1;
+    color: var(--color-secondary);
+    border-radius: 0;
 }
 
-/* MapLibre popup content */
+.maplibregl-popup-close-button:hover {
+    background: var(--color-highlight-alt-border);
+}
+
+/* MapLibre popup content. The right padding keeps the title clear of the close button. */
 .popup-content {
-    padding: 8px;
-    max-width: 220px;
+    font-family: var(--font-body);
+    font-size: 15px;
+    line-height: 1.4;
+    letter-spacing: -0.5px;
+    padding: 2px 28px 0 0;
+    max-width: 260px;
 }
 
 .popup-title {
-    font-weight: 600;
+    display: block;
+    font-family: var(--font-header);
+    font-weight: 700;
+    font-size: 16px;
+    line-height: 1.3;
     margin-bottom: 4px;
-    color: var(--color-foreground);
-    font-size: 14px;
 }
 
 .popup-org {
     color: var(--color-muted);
-    font-size: 13px;
-    font-weight: 500;
-    margin-bottom: 2px;
-}
-
-.popup-link {
-    color: var(--color-accent);
-    font-size: 12px;
-    text-decoration: underline;
-    display: inline-block;
-    margin-top: 4px;
 }

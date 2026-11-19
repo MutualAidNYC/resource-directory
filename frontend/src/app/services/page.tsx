@@ -2,6 +2,7 @@ import { Suspense } from 'react';
 import { Metadata } from 'next';
 import { getMapData } from '@/lib/data';
 import MapPageClient from './MapPageClient';
+import { PAGE } from '@/lib/styles';
 
 export const metadata: Metadata = {
     title: 'Resources',
@@ -18,9 +19,7 @@ export default function ServicesPage() {
     return (
         <Suspense
             fallback={
-                <div className="container mx-auto px-4 py-8 text-center text-muted">
-                    Loading resources…
-                </div>
+                <div className={`${PAGE} py-8 text-center text-muted`}>Loading resources…</div>
             }
         >
             <MapPageClient

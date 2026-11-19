@@ -71,7 +71,7 @@ export function NavSubmenu({ label, items }: NavSubmenuProps) {
 
             {/* Submenu */}
             {open && (
-                <ul className="absolute right-0 top-full mt-2 bg-black text-white rounded-lg py-2 min-w-max z-50 before:absolute before:inset-x-0 before:-top-2 before:h-2">
+                <ul className="absolute right-0 top-full mt-2 bg-black text-white py-2 min-w-max z-50 before:absolute before:inset-x-0 before:-top-2 before:h-2">
                     {items.map((item) => (
                         <li key={item.href}>
                             <a href={item.href} className="nav-link block px-5 py-2">

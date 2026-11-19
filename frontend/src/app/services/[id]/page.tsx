@@ -7,7 +7,8 @@ import { MapContainer } from '@/components/map/MapContainer';
 import { ExternalLink, WebsiteLink } from '@/components/ui/ExternalLink';
 import { TagLink } from '@/components/ui/TagLink';
 import { Icon } from '@/components/ui/Icon';
-import { CARD } from '@/lib/styles';
+import { BackLink } from '@/components/ui/BackLink';
+import { BRAND_LABEL, CARD, FRAME, PAGE } from '@/lib/styles';
 
 interface ServiceDetailPageProps {
     params: Promise<{ id: string }>;
@@ -26,7 +27,7 @@ export function generateStaticParams() {
 export async function generateMetadata({ params }: ServiceDetailPageProps): Promise<Metadata> {
     const { id } = await params;
     const service = getService(id);
-    if (!service) return { title: 'Resource Not Found' };
+    if (!service) return { title: 'Resource not found' };
     return {
         title: service.name,
         description: service.description || `Details about ${service.name}`,
@@ -80,60 +81,41 @@ export default async function ServiceDetailPage({ params }: ServiceDetailPagePro
     }
 
     return (
-        <div className="container mx-auto px-4 py-8">
-            {/* Breadcrumb */}
-            <nav className="mb-6 text-sm">
-                <ol className="flex items-center gap-2 text-muted">
-                    <li>
-                        <Link href="/" className="hover:text-foreground hover:underline">
-                            Home
-                        </Link>
-                    </li>
-                    <span>/</span>
-                    <li>
-                        <Link href="/services" className="hover:text-foreground hover:underline">
-                            Resources
-                        </Link>
-                    </li>
-                    <span>/</span>
-                    <li className="text-foreground font-medium truncate">{service.name}</li>
-                </ol>
-            </nav>
-
+        <div className={`${PAGE} pt-10 pb-16`}>
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
                 {/* Main Content */}
                 <div className="lg:col-span-2 space-y-8">
                     {/* Header */}
                     <div>
-                        <div className="flex items-start justify-between gap-4 mb-4">
-                            <h1 className="text-3xl">{service.name}</h1>
-                        </div>
+                        <p className={`${BRAND_LABEL} text-[15px] mb-2`}>Resource</p>
+                        <h1 className="mb-4">{service.name}</h1>
 
                         {/* Group, linked to its page */}
                         {organization && (
-                            <p className="text-lg mb-4">
-                                <span className="font-medium">Group:</span>{' '}
-                                <Link
-                                    href={`/organizations/${organization.id}`}
-                                    className="text-accent hover:text-accent-hover underline hover:no-underline"
-                                >
-                                    {organization.name}
-                                </Link>
+                            <p className="text-lg mb-4 flex items-start gap-2">
+                                <Icon name="group" className="w-5 h-5 mt-1 shrink-0" />
+                                <span>
+                                    Group:{' '}
+                                    <Link
+                                        href={`/organizations/${organization.id}`}
+                                        className="text-accent hover:text-accent-hover underline hover:no-underline"
+                                    >
+                                        {organization.name}
+                                    </Link>
+                                </span>
                             </p>
                         )}
 
                         {/* Need Categories */}
                         {needFocus.length > 0 && (
                             <div className="mb-4">
-                                <p className="text-sm font-semibold opacity-70 mb-2 uppercase tracking-wide">
-                                    Need Categories
-                                </p>
+                                <p className={`${BRAND_LABEL} text-sm mb-2`}>Type of help</p>
                                 <div className="flex flex-wrap gap-2">
                                     {needFocus.map((need, index) => (
                                         <TagLink
                                             key={`need-${index}`}
                                             href={`/services?category=${encodeURIComponent(need)}`}
-                                            colorScheme="coral"
+                                            kind="need"
                                         >
                                             {need}
                                         </TagLink>
@@ -145,15 +127,13 @@ export default async function ServiceDetailPage({ params }: ServiceDetailPagePro
                         {/* Community Focus */}
                         {communityFocus.length > 0 && (
                             <div className="mb-4">
-                                <p className="text-sm font-semibold opacity-70 mb-2 uppercase tracking-wide">
-                                    Community Focus
-                                </p>
+                                <p className={`${BRAND_LABEL} text-sm mb-2`}>Community</p>
                                 <div className="flex flex-wrap gap-2">
                                     {communityFocus.map((community, index) => (
                                         <TagLink
                                             key={`community-${index}`}
                                             href={`/services?community=${encodeURIComponent(community)}`}
-                                            colorScheme="olive"
+                                            kind="community"
                                         >
                                             {community}
                                         </TagLink>
@@ -166,21 +146,20 @@ export default async function ServiceDetailPage({ params }: ServiceDetailPagePro
                     {/* Description */}
                     {service.description && (
                         <section>
-                            <h2 className="text-xl mb-4">Description</h2>
-                            <p className="whitespace-pre-wrap">{service.description}</p>
+                            <h2 className="mb-4">Description</h2>
+                            <p className="max-w-prose text-lg whitespace-pre-wrap">
+                                {service.description}
+                            </p>
                         </section>
                     )}
 
                     {/* Locations */}
                     {places.length > 0 && (
                         <section>
-                            <h2 className="text-xl mb-4">Locations</h2>
+                            <h2 className="mb-4">Locations</h2>
                             <div className="space-y-4">
                                 {places.map(({ id, name, addresses }) => (
-                                    <div
-                                        key={id}
-                                        className="rounded-xl border border-card-border p-4"
-                                    >
+                                    <div key={id} className="border border-card-border p-4">
                                         {name && <h3 className="mb-2">{name}</h3>}
                                         {addresses.length > 0 && (
                                             <div>
@@ -201,8 +180,8 @@ export default async function ServiceDetailPage({ params }: ServiceDetailPagePro
                     <div className="sticky top-24 space-y-6">
                         {/* Map Card - show if service has geocoded coordinates */}
                         {mapCoords && (
-                            <div className={`${CARD} overflow-hidden`}>
-                                <div className="rounded-xl overflow-hidden border border-card-border h-64">
+                            <div className={`overflow-hidden bg-card-bg ${FRAME}`}>
+                                <div className="h-64 overflow-hidden">
                                     <MapContainer
                                         locations={[
                                             {
@@ -222,7 +201,7 @@ export default async function ServiceDetailPage({ params }: ServiceDetailPagePro
                                             className="inline-flex items-center gap-1.5 text-sm font-medium text-accent hover:text-accent-hover"
                                         >
                                             <Icon name="pin" className="w-4 h-4" />
-                                            Get Directions
+                                            Get directions
                                         </ExternalLink>
                                     </div>
                                 )}
@@ -231,7 +210,7 @@ export default async function ServiceDetailPage({ params }: ServiceDetailPagePro
 
                         {/* Contact Card */}
                         <div className={`${CARD} p-6`}>
-                            <h3 className="mb-4">Contact Information</h3>
+                            <h3 className="mb-4">Contact information</h3>
 
                             <div className="space-y-4">
                                 {website && (
@@ -292,10 +271,7 @@ export default async function ServiceDetailPage({ params }: ServiceDetailPagePro
                         </div>
 
                         {/* Back Button */}
-                        <Link href="/services" className="btn btn-secondary w-full gap-2">
-                            <Icon name="chevron-left" className="w-4 h-4" />
-                            Back to All Resources
-                        </Link>
+                        <BackLink list="/services">Back to all resources</BackLink>
                     </div>
                 </div>
             </div>

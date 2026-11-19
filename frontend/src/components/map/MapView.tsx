@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from 'react';
 import * as maplibregl from 'maplibre-gl';
 import 'maplibre-gl/dist/maplibre-gl.css';
+import { TITLE_LINK } from '@/lib/styles';
 
 // MapLibre runs its worker from a separate file; this lets Next.js bundle it
 // as a hashed asset.
@@ -13,7 +14,7 @@ maplibregl.setWorkerUrl(
 /** One pin. Every map on the site passes these (via MapContainer). */
 export interface MapLocation {
     id: string;
-    /** The popup's title. */
+    /** The popup's title (the link, when there's an `href`). */
     name: string;
     latitude: number;
     longitude: number;
@@ -162,7 +163,8 @@ export default function MapView({ locations, highlightedId, showLocateButton }: 
                     map.addImage('pin-highlight', hlImg);
                     addLayers();
                 };
-                hlImg.src = pinDataUrl('#f59e0b', '#b45309');
+                // Brand yellow, with a teal edge so it shows on the yellow-ish basemap roads.
+                hlImg.src = pinDataUrl('#f7cf56', '#204045');
             };
             defaultImg.src = pinDataUrl('#8F2D24', '#6b1f18');
         });
@@ -217,25 +219,17 @@ export default function MapView({ locations, highlightedId, showLocateButton }: 
                 // Remove existing popup
                 popupRef.current?.remove();
 
+                // Like the cards: the name is the link (when there is one), the organization below.
+                const name = escapeHtml(props.name);
+                const title = props.href
+                    ? `<a href="${escapeHtml(props.href)}" class="popup-title ${TITLE_LINK}">${name}</a>`
+                    : `<p class="popup-title text-tertiary">${name}</p>`;
+                const org = props.orgName
+                    ? `<p class="popup-org">${escapeHtml(props.orgName)}</p>`
+                    : '';
                 const popup = new maplibregl.Popup({ offset: [0, -PIN_H] })
                     .setLngLat(coords)
-                    .setHTML(
-                        `
-                        <div class="popup-content">
-                            <h4 class="popup-title">${escapeHtml(props.name)}</h4>
-                            ${
-                                props.orgName
-                                    ? `<p class="popup-org">${escapeHtml(props.orgName)}</p>`
-                                    : ''
-                            }
-                            ${
-                                props.href
-                                    ? `<a href="${escapeHtml(props.href)}" class="popup-link">View resource details →</a>`
-                                    : ''
-                            }
-                        </div>
-                    `,
-                    )
+                    .setHTML(`<div class="popup-content">${title}${org}</div>`)
                     .addTo(map);
 
                 popupRef.current = popup;

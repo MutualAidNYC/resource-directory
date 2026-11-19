@@ -1,5 +1,4 @@
 import { Metadata } from 'next';
-import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { getMapData, getOrganization, organizationIds, servicesOf } from '@/lib/data';
 import { externalHref, formatAddress } from '@/lib/format';
@@ -8,7 +7,8 @@ import { MapContainer } from '@/components/map/MapContainer';
 import { WebsiteLink } from '@/components/ui/ExternalLink';
 import type { MapLocation } from '@/components/map/MapView';
 import { Icon } from '@/components/ui/Icon';
-import { CARD } from '@/lib/styles';
+import { BackLink } from '@/components/ui/BackLink';
+import { BRAND_LABEL, CARD, FRAME, PAGE } from '@/lib/styles';
 
 interface OrganizationDetailPageProps {
     params: Promise<{ id: string }>;
@@ -27,11 +27,19 @@ export function generateStaticParams() {
 export async function generateMetadata({ params }: OrganizationDetailPageProps): Promise<Metadata> {
     const { id } = await params;
     const organization = getOrganization(id);
-    if (!organization) return { title: 'Group Not Found' };
+    if (!organization) return { title: 'Group not found' };
     return {
         title: organization.name,
         description: organization.description || `Resources provided by ${organization.name}`,
     };
+}
+
+/** A service's first address, for its card (the build keeps link order). */
+function firstAddress(service: ReturnType<typeof servicesOf>[number]): string | undefined {
+    const address = service.service_at_locations
+        ?.flatMap((sal) => sal.location?.addresses ?? [])
+        .find((a) => formatAddress(a));
+    return address ? formatAddress(address) : undefined;
 }
 
 /**
@@ -62,7 +70,7 @@ export default async function OrganizationDetailPage({ params }: OrganizationDet
             longitude: s.longitude!,
             href: `/services/${s.id}`,
         }));
-    let mapLocationLabel = 'Resource Locations';
+    let mapLocationLabel = 'Resource locations';
 
     // Fallback: if none of its resources has a pin, pin the group's own locations.
     if (mapLocations.length === 0 && organization.locations?.length) {
@@ -75,33 +83,11 @@ export default async function OrganizationDetailPage({ params }: OrganizationDet
                 longitude: loc.longitude!,
             }));
         // Pins came from the group's address, not a specific resource
-        mapLocationLabel = 'Group Locations';
+        mapLocationLabel = 'Group locations';
     }
 
     return (
-        <div className="container mx-auto px-4 py-8">
-            {/* Breadcrumb */}
-            <nav className="mb-6 text-sm">
-                <ol className="flex items-center gap-2 text-muted">
-                    <li>
-                        <Link href="/" className="hover:text-foreground hover:underline">
-                            Home
-                        </Link>
-                    </li>
-                    <span>/</span>
-                    <li>
-                        <Link
-                            href="/organizations"
-                            className="hover:text-foreground hover:underline"
-                        >
-                            Groups
-                        </Link>
-                    </li>
-                    <span>/</span>
-                    <li className="text-foreground font-medium truncate">{organization.name}</li>
-                </ol>
-            </nav>
-
+        <div className={`${PAGE} pt-10 pb-16`}>
             {/* Two-Column Layout */}
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
                 {/* Left Column - Group Info and Resources */}
@@ -109,31 +95,40 @@ export default async function OrganizationDetailPage({ params }: OrganizationDet
                     {/* Group Header */}
                     <div>
                         {/* Name */}
-                        <h1 className="text-3xl mb-4">{organization.name}</h1>
+                        <p className={`${BRAND_LABEL} text-[15px] mb-2`}>Group</p>
+                        <h1 className="mb-4">{organization.name}</h1>
 
                         {/* Description */}
                         {organization.description && (
                             <section className="mb-8 mt-6">
-                                <h2 className="text-xl mb-4">Description</h2>
-                                <p className="whitespace-pre-wrap">{organization.description}</p>
+                                <h2 className="mb-4">Description</h2>
+                                <p className="max-w-prose text-lg whitespace-pre-wrap">
+                                    {organization.description}
+                                </p>
                             </section>
                         )}
                     </div>
 
                     {/* Resources Section */}
                     <section>
-                        <h2 className="text-2xl/[1.4] mb-6">
-                            Resources ({relatedServices.length})
-                        </h2>
+                        <h2 className="mb-6">Resources ({relatedServices.length})</h2>
 
                         {relatedServices.length > 0 ? (
-                            <div className="space-y-4">
+                            <div className="flex flex-col gap-4">
                                 {relatedServices.map((service) => (
-                                    <ServiceCard key={service.id} service={service} />
+                                    <ServiceCard
+                                        key={service.id}
+                                        id={service.id}
+                                        name={service.name}
+                                        description={service.description}
+                                        url={service.url}
+                                        address={firstAddress(service)}
+                                        phones={service.phones?.map((phone) => phone.number)}
+                                    />
                                 ))}
                             </div>
                         ) : (
-                            <div className="text-center py-12 bg-section-alt rounded-xl">
+                            <div className="text-center py-12 bg-section-alt">
                                 <p className="text-muted">
                                     No resources listed for this group yet.
                                 </p>
@@ -146,7 +141,7 @@ export default async function OrganizationDetailPage({ params }: OrganizationDet
                 <div className="lg:col-span-1">
                     <div className="sticky top-24 space-y-6">
                         {mapLocations.length > 0 ? (
-                            <div className={`${CARD} overflow-hidden`}>
+                            <div className={`overflow-hidden bg-card-bg ${FRAME}`}>
                                 <div className="p-4 border-b border-card-border">
                                     <h3>
                                         {mapLocationLabel} ({mapLocations.length})
@@ -157,7 +152,7 @@ export default async function OrganizationDetailPage({ params }: OrganizationDet
                                 </div>
                             </div>
                         ) : (
-                            <div className="rounded-xl border border-card-border bg-section-alt p-8 text-center">
+                            <div className="border border-card-border bg-section-alt p-8 text-center">
                                 <Icon name="pin" className="w-12 h-12 mx-auto text-muted mb-3" />
                                 <p className="text-muted">No location data available</p>
                             </div>
@@ -165,7 +160,7 @@ export default async function OrganizationDetailPage({ params }: OrganizationDet
 
                         {/* Contact Card */}
                         <div className={`${CARD} p-6`}>
-                            <h3 className="mb-4">Contact Information</h3>
+                            <h3 className="mb-4">Contact information</h3>
 
                             <div className="space-y-4">
                                 {website && (
@@ -217,10 +212,7 @@ export default async function OrganizationDetailPage({ params }: OrganizationDet
                         </div>
 
                         {/* Back Button */}
-                        <Link href="/organizations" className="btn btn-secondary w-full gap-2">
-                            <Icon name="chevron-left" className="w-4 h-4" />
-                            Back to Groups
-                        </Link>
+                        <BackLink list="/organizations">Back to groups</BackLink>
                     </div>
                 </div>
             </div>

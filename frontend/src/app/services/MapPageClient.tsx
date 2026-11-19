@@ -2,20 +2,17 @@
 
 import { useState, useMemo, useCallback, useRef } from 'react';
 import { useSearchParams } from 'next/navigation';
-import Link from 'next/link';
 import { MapContainer } from '@/components/map/MapContainer';
-import { TagLink } from '@/components/ui/TagLink';
-import { WebsiteLink } from '@/components/ui/ExternalLink';
-import { externalHref } from '@/lib/format';
+import { ServiceCard } from '@/components/services/ServiceCard';
+import { rememberOnDetailClick } from '@/lib/listUrl';
 import { search, SERVICE_FIELDS } from '@/lib/search';
 import { useDebounced } from '@/lib/useDebounced';
 import type { Category, MapService } from '@/lib/types';
-import { Icon } from '@/components/ui/Icon';
-import { CARD } from '@/lib/styles';
+import { FRAME } from '@/lib/styles';
 
-// The filter labels and fields.
-const LABEL = 'block text-sm font-medium opacity-80 mb-2';
-const FIELD = 'w-full rounded-lg border border-muted bg-card-bg px-3 py-2 text-sm';
+// The filter labels and fields: square, like the theme's fields. 16px, so phones don't zoom.
+const LABEL = 'block text-[15px] font-semibold mb-1.5';
+const FIELD = 'w-full border border-muted bg-card-bg px-3 py-2 text-base';
 
 interface MapPageClientProps {
     services: MapService[];
@@ -204,34 +201,39 @@ export default function MapPageClient({
     // narrow, short screens (high zoom) does the whole page scroll instead (WCAG 1.4.10);
     // the floating Filters button below uses the same condition.
     return (
-        <div className="flex flex-col md:flex-row md:h-[calc(100vh-64px)] md:overflow-hidden [@media(min-height:32rem)]:h-[calc(100vh-64px)] [@media(min-height:32rem)]:overflow-hidden">
+        <div
+            className="flex flex-col md:flex-row md:h-[calc(100vh-64px)] md:overflow-hidden [@media(min-height:32rem)]:h-[calc(100vh-64px)] [@media(min-height:32rem)]:overflow-hidden"
+            // So "Back to all resources" on a resource opened from here returns to this
+            // search and these filters (the cards and the map's popups).
+            onClickCapture={rememberOnDetailClick('/services')}
+        >
             <h1 className="sr-only">Resources</h1>
 
             {/* Mobile Action Bar */}
-            <div className="md:hidden flex items-center justify-between p-3 bg-section-alt border-b border-card-border flex-shrink-0 z-10 w-full shadow-sm">
+            <div className="md:hidden flex items-center justify-between p-3 bg-section-alt border-b border-card-border flex-shrink-0 z-10 w-full">
                 <button
                     onClick={() => setIsFiltersOpen(!isFiltersOpen)}
                     aria-expanded={isFiltersOpen}
                     aria-controls="filters-panel"
-                    className="flex items-center gap-2 px-3 py-1.5 rounded-lg border border-card-border bg-card-bg text-sm font-medium"
+                    className="flex items-center gap-2 px-3 py-1.5 border border-muted bg-card-bg font-medium"
                 >
                     {filterIcon}
-                    {isFiltersOpen ? 'Hide Filters' : 'Filters'}
+                    {isFiltersOpen ? 'Hide filters' : 'Filters'}
                     {activeFilterText}
                 </button>
 
-                <div className="flex items-center bg-card-bg rounded-lg border border-card-border p-0.5">
+                <div className="flex items-center bg-card-bg border border-muted">
                     <button
                         onClick={() => setViewMode('list')}
                         aria-pressed={viewMode === 'list'}
-                        className={`px-4 py-1.5 text-sm font-medium rounded-md transition-colors ${viewMode === 'list' ? 'bg-accent text-white shadow-sm' : 'text-muted hover:text-foreground'}`}
+                        className={`px-4 py-1.5 font-semibold ${viewMode === 'list' ? 'bg-secondary text-white' : 'text-secondary'}`}
                     >
                         List
                     </button>
                     <button
                         onClick={() => setViewMode('map')}
                         aria-pressed={viewMode === 'map'}
-                        className={`px-4 py-1.5 text-sm font-medium rounded-md transition-colors ${viewMode === 'map' ? 'bg-accent text-white shadow-sm' : 'text-muted hover:text-foreground'}`}
+                        className={`px-4 py-1.5 font-semibold ${viewMode === 'map' ? 'bg-secondary text-white' : 'text-secondary'}`}
                     >
                         Map
                     </button>
@@ -254,7 +256,7 @@ export default function MapPageClient({
                 id="filters-panel"
                 className={`${isFiltersOpen ? 'block' : 'hidden'} md:block w-full md:w-64 min-h-0 md:flex-shrink-0 bg-section-alt md:border-r border-b md:border-b-0 border-card-border p-4 overflow-y-auto scrollbar-thin`}
             >
-                <h2 ref={filtersHeadingRef} tabIndex={-1} className="text-lg/[1.4] mb-4">
+                <h2 ref={filtersHeadingRef} tabIndex={-1} className="text-xl mb-4">
                     Filters
                 </h2>
 
@@ -278,7 +280,7 @@ export default function MapPageClient({
                                     selectedArea,
                                 );
                             }}
-                            placeholder="Search resources..."
+                            placeholder="Search resources"
                             className={FIELD}
                         />
                     </form>
@@ -287,7 +289,7 @@ export default function MapPageClient({
                 {/* Need Category Filter */}
                 <div className="mb-6">
                     <label htmlFor="filter-need" className={LABEL}>
-                        Need Category
+                        Need category
                     </label>
                     <select
                         id="filter-need"
@@ -295,7 +297,7 @@ export default function MapPageClient({
                         onChange={(e) => handleNeedChange(e.target.value)}
                         className={FIELD}
                     >
-                        <option value="">All Categories</option>
+                        <option value="">All categories</option>
                         {needCategories.map((cat) => (
                             <option key={cat.name} value={cat.name}>
                                 {cat.name}
@@ -307,7 +309,7 @@ export default function MapPageClient({
                 {/* Community Focus Filter */}
                 <div className="mb-6">
                     <label htmlFor="filter-community" className={LABEL}>
-                        Community Focus
+                        Community focus
                     </label>
                     <select
                         id="filter-community"
@@ -315,7 +317,7 @@ export default function MapPageClient({
                         onChange={(e) => handleCommunityChange(e.target.value)}
                         className={FIELD}
                     >
-                        <option value="">All Communities</option>
+                        <option value="">All communities</option>
                         {communityCategories.map((cat) => (
                             <option key={cat.name} value={cat.name}>
                                 {cat.name}
@@ -327,7 +329,7 @@ export default function MapPageClient({
                 {/* Target Geographic Area Filter */}
                 <div className="mb-6">
                     <label htmlFor="filter-area" className={LABEL}>
-                        Target Geographic Area
+                        Target geographic area
                     </label>
                     <select
                         id="filter-area"
@@ -343,7 +345,7 @@ export default function MapPageClient({
                             </option>
                         ))}
                     </select>
-                    <p id="filter-area-help" className="mt-1 text-xs opacity-80">
+                    <p id="filter-area-help" className="mt-1 text-sm text-muted">
                         Where a resource is offered, not where it is located.
                     </p>
                 </div>
@@ -351,7 +353,7 @@ export default function MapPageClient({
                 {/* Clear Filters */}
                 {(searchQuery || selectedNeed || selectedCommunity || selectedArea) && (
                     <button onClick={handleClearFilters} className="btn btn-accent w-full">
-                        Clear All Filters
+                        Clear all filters
                     </button>
                 )}
             </div>
@@ -362,20 +364,32 @@ export default function MapPageClient({
             >
                 <div className="p-4 space-y-4">
                     <h2 className="sr-only">Results</h2>
-                    <p role="status" className="text-sm">
+                    <p role="status" className="font-header font-bold text-lg text-secondary">
                         {resultCount} {resultCount === 1 ? 'resource' : 'resources'} found
                     </p>
                     {filteredServices.length === 0 ? (
                         <div className="text-center py-8">No resources match your filters</div>
                     ) : (
                         filteredServices.map((service) => (
-                            <ResourceCard
+                            <ServiceCard
                                 key={service.id}
-                                service={service}
-                                onViewOnMap={(id) => {
-                                    setHoveredServiceId(id);
-                                    setViewMode('map');
-                                }}
+                                id={service.id}
+                                name={service.name}
+                                description={service.description}
+                                url={service.url}
+                                address={service.address}
+                                organizationName={service.organization_name}
+                                needFocus={service.needFocus}
+                                communityFocus={service.communityFocus}
+                                // Only with a pin to go to: a location can have an address but no coordinates.
+                                onViewOnMap={
+                                    service.latitude != null && service.longitude != null
+                                        ? () => {
+                                              setHoveredServiceId(service.id);
+                                              setViewMode('map');
+                                          }
+                                        : undefined
+                                }
                             />
                         ))
                     )}
@@ -386,7 +400,7 @@ export default function MapPageClient({
             <div
                 className={`${viewMode === 'map' ? 'block' : 'hidden'} md:block flex-1 relative h-full min-w-0 p-2`}
             >
-                <div className="w-full h-full rounded-xl overflow-hidden shadow-lg border border-card-border">
+                <div className={`w-full h-full overflow-hidden ${FRAME}`}>
                     <MapContainer
                         locations={mapLocations}
                         highlightedId={hoveredServiceId}
@@ -394,113 +408,6 @@ export default function MapPageClient({
                     />
                 </div>
             </div>
-        </div>
-    );
-}
-
-/**
- * Resource card component
- */
-function ResourceCard({
-    service,
-    onViewOnMap,
-}: {
-    service: MapService;
-    onViewOnMap: (id: string) => void;
-}) {
-    const website = externalHref(service.url);
-
-    return (
-        <div className={`${CARD} p-4`}>
-            <div className="flex items-start justify-between gap-2">
-                <h3 className="mb-2 line-clamp-2">
-                    <Link
-                        href={`/services/${service.id}`}
-                        className="text-foreground underline hover:no-underline hover:text-accent"
-                    >
-                        {service.name}
-                    </Link>
-                </h3>
-            </div>
-
-            {service.address && (
-                <div className="text-sm mb-2 flex items-start justify-between gap-2">
-                    <div className="flex items-start gap-2">
-                        <Icon name="pin" label="address" className="w-4 h-4 mt-0.5 flex-shrink-0" />
-                        <span className="line-clamp-2">{service.address}</span>
-                    </div>
-                    {/* Only offer the map view button when there is a pin with coordinates to jump to.
-                        A location can have an address but no coordinates. */}
-                    {service.latitude != null && service.longitude != null && (
-                        <button
-                            onClick={() => onViewOnMap(service.id)}
-                            className="flex-shrink-0 inline-flex items-center gap-1 px-2.5 py-1 rounded-md border border-card-border bg-section-alt text-xs font-medium hover:bg-accent hover:text-white transition-colors"
-                        >
-                            View on map
-                        </button>
-                    )}
-                </div>
-            )}
-
-            {service.phone && (
-                <p className="text-sm mb-1 flex items-center gap-2">
-                    <Icon name="phone" label="phone" className="w-4 h-4 flex-shrink-0" />
-                    <a
-                        href={`tel:${service.phone}`}
-                        className="underline hover:no-underline hover:text-accent"
-                    >
-                        {service.phone}
-                    </a>
-                </p>
-            )}
-
-            {website && (
-                <p className="text-sm mb-2 flex items-center gap-2">
-                    <Icon name="link" className="w-4 h-4 flex-shrink-0" />
-                    <WebsiteLink
-                        href={website}
-                        name={service.name}
-                        className="underline hover:no-underline text-accent"
-                        oneLine
-                    />
-                </p>
-            )}
-
-            {service.description && (
-                <p className="text-sm mb-3 line-clamp-2">{service.description}</p>
-            )}
-
-            {/* Need Category tags */}
-            {service.needFocus && service.needFocus.length > 0 && (
-                <div className="flex flex-wrap gap-1.5 mb-2">
-                    {service.needFocus.map((need, i) => (
-                        <TagLink
-                            key={`need-${i}`}
-                            colorScheme="coral"
-                            size="sm"
-                            href={`/services?category=${encodeURIComponent(need)}`}
-                        >
-                            {need}
-                        </TagLink>
-                    ))}
-                </div>
-            )}
-
-            {/* Community Focus tags */}
-            {service.communityFocus && service.communityFocus.length > 0 && (
-                <div className="flex flex-wrap gap-1.5 mb-3">
-                    {service.communityFocus.map((community, i) => (
-                        <TagLink
-                            key={`community-${i}`}
-                            colorScheme="olive"
-                            size="sm"
-                            href={`/services?community=${encodeURIComponent(community)}`}
-                        >
-                            {community}
-                        </TagLink>
-                    ))}
-                </div>
-            )}
         </div>
     );
 }

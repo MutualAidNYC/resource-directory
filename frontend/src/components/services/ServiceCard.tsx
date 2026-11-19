@@ -1,55 +1,134 @@
 import Link from 'next/link';
-import { formatAddress } from '@/lib/format';
-import type { Service, ServiceSummary } from '@/lib/types';
 import { Icon } from '@/components/ui/Icon';
-import { CARD } from '@/lib/styles';
+import { TagLink } from '@/components/ui/TagLink';
+import { WebsiteLink } from '@/components/ui/ExternalLink';
+import { externalHref } from '@/lib/format';
+import { CARD, TITLE_LINK } from '@/lib/styles';
 
 interface ServiceCardProps {
-    service: ServiceSummary & Pick<Service, 'service_at_locations'>;
+    id: string;
+    name: string;
+    description?: string;
+    url?: string;
+    address?: string;
+    /** The organization line; left out on organization pages, which already name it. */
+    organizationName?: string;
+    /** Phone numbers: organization pages only (the services list leaves them for the detail page). */
+    phones?: string[];
+    needFocus?: string[];
+    communityFocus?: string[];
+    /** Shows "View on map" (services list, services with a pin). */
+    onViewOnMap?: () => void;
 }
 
 /**
- * A resource in a group page's list: name, description and its first address.
- * No group line: the page it's on already names the group.
+ * A service in a list: the services list, or an organization's page (no organization
+ * line, tags or map button; phone numbers instead). Title → organization → address →
+ * website → phone → description → tags, which sit at the bottom so they line up
+ * across a row.
  */
-export function ServiceCard({ service }: ServiceCardProps) {
-    return (
-        <Link
-            href={`/services/${service.id}`}
-            className={`group block ${CARD} p-6 shadow-sm transition-all hover:border-accent/40 hover:shadow-md`}
-        >
-            <div className="flex items-start justify-between gap-4">
-                <div className="flex-1 min-w-0">
-                    {/* Service Name */}
-                    <h3 className="text-lg text-foreground group-hover:text-accent truncate">
-                        {service.name}
-                    </h3>
+export function ServiceCard({
+    id,
+    name,
+    description,
+    url,
+    address,
+    organizationName,
+    phones = [],
+    needFocus = [],
+    communityFocus = [],
+    onViewOnMap,
+}: ServiceCardProps) {
+    const website = externalHref(url);
 
-                    {/* Description */}
-                    {service.description && (
-                        <p className="mt-3 text-foreground line-clamp-2">{service.description}</p>
-                    )}
-                </div>
+    return (
+        <article className={`${CARD} @container flex flex-col p-5`}>
+            {/* The title wraps beside "View on map", which reads "Map" on narrow cards. */}
+            <div className="flex items-start justify-between gap-3">
+                <h3 className="min-w-0">
+                    <Link href={`/services/${id}`} className={TITLE_LINK}>
+                        {name}
+                    </Link>
+                </h3>
+                {onViewOnMap && (
+                    <button
+                        type="button"
+                        onClick={onViewOnMap}
+                        className="flex-none -mt-0.5 inline-flex items-center gap-1.5 border border-muted bg-card-bg px-3 py-1 text-[15px] text-secondary hover:bg-highlight-alt-border"
+                    >
+                        <Icon name="pin" className="w-[18px] h-[18px]" />
+                        <span className="@max-[420px]:hidden">View on map</span>
+                        <span className="hidden @max-[420px]:inline">Map</span>
+                        <span className="sr-only">: {name}</span>
+                    </button>
+                )}
             </div>
 
-            {/* Footer with address */}
-            {(() => {
-                const loc = service.service_at_locations?.find(
-                    (s) => s.location?.addresses?.length,
-                );
-                const addr = loc?.location?.addresses?.[0];
-                if (!addr) return null;
-                const text = formatAddress(addr);
-                if (!text) return null;
-                return (
-                    <div className="mt-4 pt-4 border-t border-card-border">
-                        <p className="text-sm text-foreground flex items-center gap-1">
-                            <Icon name="pin" label="address" className="w-4 h-4 shrink-0" />
-                            <span className="truncate">{text}</span>
+            {organizationName && <p className="mt-1 text-muted">{organizationName}</p>}
+
+            {address && (
+                <p className="mt-3 flex items-start gap-2 text-muted">
+                    <Icon
+                        name="pin"
+                        label="address"
+                        className="w-[18px] h-[18px] mt-0.5 shrink-0"
+                    />
+                    <span>{address}</span>
+                </p>
+            )}
+
+            {(website || phones.length > 0) && (
+                <div className="mt-3 flex flex-col gap-2">
+                    {website && (
+                        <p className="flex items-center gap-2 min-w-0">
+                            <Icon name="link" className="w-[18px] h-[18px] shrink-0" />
+                            <WebsiteLink
+                                href={website}
+                                name={name}
+                                className="underline hover:no-underline text-accent"
+                                oneLine
+                            />
                         </p>
-                    </div>
-                );
-            })()}
-        </Link>
+                    )}
+                    {phones.map((phone) => (
+                        <p key={phone} className="flex items-center gap-2">
+                            <Icon
+                                name="phone"
+                                label="phone"
+                                className="w-[18px] h-[18px] shrink-0"
+                            />
+                            <a href={`tel:${phone}`} className="underline hover:no-underline">
+                                {phone}
+                            </a>
+                        </p>
+                    ))}
+                </div>
+            )}
+
+            {description && <p className="mt-3 line-clamp-2">{description}</p>}
+
+            {needFocus.length + communityFocus.length > 0 && (
+                <div className="mt-auto pt-4 flex flex-wrap gap-1.5">
+                    {needFocus.map((need) => (
+                        <TagLink
+                            key={`need-${need}`}
+                            kind="need"
+                            href={`/services?category=${encodeURIComponent(need)}`}
+                        >
+                            {need}
+                        </TagLink>
+                    ))}
+                    {communityFocus.map((community) => (
+                        <TagLink
+                            key={`community-${community}`}
+                            kind="community"
+                            href={`/services?community=${encodeURIComponent(community)}`}
+                        >
+                            {community}
+                        </TagLink>
+                    ))}
+                </div>
+            )}
+        </article>
     );
 }
