@@ -9,7 +9,7 @@ Setup and running the build are in the [root README](../README.md). This file co
 - **Framework**: Next.js 16 (App Router), static export (`output: "export"`)
 - **Language**: TypeScript
 - **Styling**: Tailwind CSS v4. Colors are classes named as in the mutualaid.nyc theme. Shared class strings are in `src/lib/styles.ts`, icons in `src/components/ui/Icon.tsx` (the footer's social icons are inlined from Simple Icons, CC0).
-- **Maps**: MapLibre GL with the [OpenFreeMap](https://openfreemap.org/) bright basemap
+- **Maps**: MapLibre GL with the [OpenFreeMap](https://openfreemap.org/) positron basemap; nearby pins cluster (MapLibre built-in)
 - **Fonts**: Karla (body), Poppins (headings), and Francois One (short labels, `font-label`), loaded via `next/font/google`.
 
 ## Data

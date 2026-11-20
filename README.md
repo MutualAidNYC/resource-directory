@@ -216,7 +216,7 @@ Errors return JSON: `{"error": "…"}`. A request gets a 400 if it uses an HSDS 
 | Variable | Default | Description |
 |----------|---------|-------------|
 | `SITE_DATA_DIR` | `../dist` | The build's output folder, relative to `frontend/` |
-| `NEXT_PUBLIC_BASEMAP_STYLE_URL` | OpenFreeMap bright | The map's basemap style URL |
+| `NEXT_PUBLIC_BASEMAP_STYLE_URL` | OpenFreeMap positron | The map's basemap style URL |
 
 `NEXT_PUBLIC_` variables are public. Put secrets only in the root `.env`.
 
@@ -303,7 +303,7 @@ The site reads `dist/api/download.json` and `dist/site-data/map.json`. From the 
 
 ### Map pins are missing
 
-A service gets a pin from its first location with coordinates, found through `service_at_location`. There is no fallback.
+On the Resources map, a service gets a pin from its first location with coordinates, found through `service_at_location`; its own page pins each of them. There is no fallback.
 
 - **The location has no coordinates.** Add `latitude` and `longitude` to the location in Airtable. The build report lists locations with an address but no coordinates.
 - **The service has no location.** Link it to a location through `service_at_location`.
