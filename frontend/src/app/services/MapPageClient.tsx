@@ -1,18 +1,34 @@
 'use client';
 
-import { useState, useMemo, useCallback, useRef } from 'react';
+import { useState, useMemo, useRef } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { MapContainer } from '@/components/map/MapContainer';
 import { ServiceCard } from '@/components/services/ServiceCard';
+import { CountLine } from '@/components/ui/CountLine';
 import { rememberOnDetailClick } from '@/lib/listUrl';
 import { search, SERVICE_FIELDS } from '@/lib/search';
-import { useDebounced } from '@/lib/useDebounced';
 import type { Category, MapService } from '@/lib/types';
-import { FRAME } from '@/lib/styles';
+import { BAR, FRAME, PAGE, TEXT_BUTTON } from '@/lib/styles';
 
 // The filter labels and fields: square, like the theme's fields. 16px, so phones don't zoom.
 const LABEL = 'block text-[15px] font-semibold mb-1.5';
 const FIELD = 'w-full border border-muted bg-card-bg px-3 py-2 text-base';
+
+/** The URL's params, which are also the page's state: `/services?category=Food&view=map`. */
+const KEYS = ['q', 'category', 'community', 'area', 'view'] as const;
+type State = Record<(typeof KEYS)[number], string>;
+
+/** The dropdowns, with the names their chips use. */
+const FILTERS = [
+    { key: 'category', label: 'Type of help' },
+    { key: 'community', label: 'Community' },
+    { key: 'area', label: 'Area' },
+] as const;
+
+const fromParams = (params: URLSearchParams) =>
+    Object.fromEntries(KEYS.map((k) => [k, params.get(k) ?? ''])) as State;
+
+const resources = (n: number) => `${n.toLocaleString()} ${n === 1 ? 'resource' : 'resources'}`;
 
 interface MapPageClientProps {
     services: MapService[];
@@ -22,11 +38,9 @@ interface MapPageClientProps {
 }
 
 /**
- * Client component for interactive map page with URL-synced filters.
- *
- * Reads initial filter state from URL query params (?category=, ?community=, ?area=)
- * and pushes URL updates when the user changes filters, enabling sharable
- * filtered views like /services?category=Housing.
+ * The resources list with search and filters, or the same results on a map (the Map
+ * tab). Everything is in the URL (?q=, ?category=, ?community=, ?area=, ?view=map), so a
+ * filtered list or map can be shared.
  */
 export default function MapPageClient({
     services,
@@ -35,96 +49,74 @@ export default function MapPageClient({
     serviceAreas,
 }: MapPageClientProps) {
     const searchParams = useSearchParams();
-    const searchInputRef = useRef<HTMLInputElement>(null);
-    const filtersHeadingRef = useRef<HTMLHeadingElement>(null);
+    const countRef = useRef<HTMLParagraphElement>(null);
+    const chipsRef = useRef<HTMLDivElement>(null);
+    const mapNoteRef = useRef<HTMLParagraphElement>(null);
 
-    // Initialize state from URL query params
-    const [searchQuery, setSearchQuery] = useState<string>(searchParams.get('q') || '');
-    const [selectedNeed, setSelectedNeed] = useState<string>(searchParams.get('category') || '');
-    const [selectedCommunity, setSelectedCommunity] = useState<string>(
-        searchParams.get('community') || '',
-    );
-    const [selectedArea, setSelectedArea] = useState<string>(searchParams.get('area') || '');
-
-    const [hoveredServiceId, setHoveredServiceId] = useState<string | null>(null);
-
-    // Responsive state
+    const [state, setState] = useState(() => fromParams(searchParams));
+    const [highlightedId, setHighlightedId] = useState<string | null>(null);
     const [isFiltersOpen, setIsFiltersOpen] = useState(false);
-    const [viewMode, setViewMode] = useState<'map' | 'list'>('list');
 
     // Sync state when URL params change (e.g. header SearchBar navigation). Done
     // while rendering, not in an effect, so the page never renders with stale filters
     const [prevSearchParams, setPrevSearchParams] = useState(searchParams);
     if (searchParams !== prevSearchParams) {
         setPrevSearchParams(searchParams);
-        setSearchQuery(searchParams.get('q') || '');
-        setSelectedNeed(searchParams.get('category') || '');
-        setSelectedCommunity(searchParams.get('community') || '');
-        setSelectedArea(searchParams.get('area') || '');
+        setState(fromParams(searchParams));
     }
 
     /**
-     * Push filter state into the browser URL so that filtered views are
-     * bookmarkable and sharable (e.g. /services?category=Housing&q=food&area=Brooklyn).
-     * history.replaceState, not router.replace: the router would download the
+     * Change the state and put it in the URL, so filtered views are bookmarkable and
+     * sharable. history.replaceState, not router.replace: the router would download the
      * page's data again on every change; Next still updates useSearchParams.
      */
-    const syncUrl = useCallback((query: string, need: string, community: string, area: string) => {
+    const update = (changes: Partial<State>) => {
+        const next = { ...state, ...changes };
+        setState(next);
         const params = new URLSearchParams();
-        if (query) params.set('q', query);
-        if (need) params.set('category', need);
-        if (community) params.set('community', community);
-        if (area) params.set('area', area);
+        for (const k of KEYS) if (next[k]) params.set(k, next[k]);
         const qs = params.toString();
         window.history.replaceState(null, '', qs ? `/services?${qs}` : '/services');
-    }, []);
+    };
+
+    const showView = (view: '' | 'map') => {
+        setHighlightedId(null);
+        update({ view });
+    };
 
     // The list filters as you type and the URL is already up to date, so submitting
     // (Enter, or the phone keyboard's Search key) only closes the keyboard on touch
     // screens, so the results show. On a desktop, focus stays in the search box.
     const handleSearchSubmit = (e: React.FormEvent) => {
         e.preventDefault();
-        if (window.matchMedia('(pointer: coarse)').matches) searchInputRef.current?.blur();
+        if (window.matchMedia('(pointer: coarse)').matches) {
+            (document.activeElement as HTMLElement | null)?.blur();
+        }
     };
 
-    // Handle need category change
-    const handleNeedChange = (value: string) => {
-        setSelectedNeed(value);
-        syncUrl(searchQuery, value, selectedCommunity, selectedArea);
+    // A removed chip takes focus with it: once the page redraws, put it on the chip that
+    // took its place (or the one before), so several can go in a row; on the count when
+    // none are left.
+    const clear = (changes: Partial<State>, chip = 0) => {
+        update(changes);
+        requestAnimationFrame(() => {
+            const left = chipsRef.current?.querySelectorAll<HTMLElement>('[data-remove]') ?? [];
+            (left[Math.min(chip, left.length - 1)] ?? countRef.current)?.focus();
+        });
     };
-
-    // Handle community focus change
-    const handleCommunityChange = (value: string) => {
-        setSelectedCommunity(value);
-        syncUrl(searchQuery, selectedNeed, value, selectedArea);
-    };
-
-    // Handle service area change
-    const handleAreaChange = (value: string) => {
-        setSelectedArea(value);
-        syncUrl(searchQuery, selectedNeed, selectedCommunity, value);
-    };
-
-    // Clear all filters
-    const handleClearFilters = () => {
-        setSearchQuery('');
-        setSelectedNeed('');
-        setSelectedCommunity('');
-        setSelectedArea('');
-        syncUrl('', '', '', '');
-    };
+    const clearAll = () => clear({ q: '', category: '', community: '', area: '' });
 
     // Dropdown filters first (pass/fail), then search (lib/search.ts): every word
     // must match, best matches first.
     const filteredServices = useMemo(() => {
         const filtered = services.filter(
             (service) =>
-                (!selectedNeed || service.needFocus.includes(selectedNeed)) &&
-                (!selectedCommunity || service.communityFocus.includes(selectedCommunity)) &&
-                (!selectedArea || service.service_areas.includes(selectedArea)),
+                (!state.category || service.needFocus.includes(state.category)) &&
+                (!state.community || service.communityFocus.includes(state.community)) &&
+                (!state.area || service.service_areas.includes(state.area)),
         );
-        return search(filtered, searchQuery, SERVICE_FIELDS);
-    }, [services, searchQuery, selectedNeed, selectedCommunity, selectedArea]);
+        return search(filtered, state.q, SERVICE_FIELDS);
+    }, [services, state.q, state.category, state.community, state.area]);
 
     // Get locations for map
     const mapLocations = useMemo(() => {
@@ -162,252 +154,267 @@ export default function MapPageClient({
         });
     }, [filteredServices]);
 
-    const filterIcon = (
-        <svg
-            className="w-4 h-4"
-            aria-hidden="true"
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
-        >
-            <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"
-            />
-        </svg>
+    const searched = state.q.trim();
+    const applied = FILTERS.filter((f) => state[f.key]);
+    const isMap = state.view === 'map';
+    const total = filteredServices.length;
+    const unmapped = total - mapLocations.length;
+
+    const countText = `${resources(total)} ${searched ? `for “${searched}”` : 'found'}`;
+    const countStatus =
+        countText +
+        (applied.length
+            ? `, filtered by ${applied.map((f) => `${f.label}: ${state[f.key]}`).join(', ')}`
+            : '');
+
+    const searchInput = (id: string, className: string) => (
+        <input
+            id={id}
+            type="text"
+            value={state.q}
+            onChange={(e) => update({ q: e.target.value })}
+            placeholder="Search resources"
+            className={className}
+        />
     );
-    // Shown in the Filters buttons as text ("Filters (2)"), so it doesn't rely on color.
-    const activeFilterCount = [searchQuery, selectedNeed, selectedCommunity, selectedArea].filter(
-        Boolean,
-    ).length;
-    const activeFilterText = activeFilterCount > 0 ? ` (${activeFilterCount})` : '';
 
-    // Announced once typing stops, not after every key.
-    const resultCount = useDebounced(filteredServices.length);
+    const select = (
+        key: (typeof FILTERS)[number]['key'],
+        label: string,
+        all: string,
+        options: string[],
+        help?: string,
+    ) => (
+        <div className="mb-6 last:mb-0">
+            <label htmlFor={`filter-${key}`} className={LABEL}>
+                {label}
+            </label>
+            <select
+                id={`filter-${key}`}
+                aria-describedby={help ? `filter-${key}-help` : undefined}
+                value={state[key]}
+                onChange={(e) => update({ [key]: e.target.value })}
+                className={FIELD}
+            >
+                <option value="">{all}</option>
+                {options.map((option) => (
+                    <option key={option} value={option}>
+                        {option}
+                    </option>
+                ))}
+            </select>
+            {help && (
+                <p id={`filter-${key}-help`} className="mt-1 text-sm text-muted">
+                    {help}
+                </p>
+            )}
+        </div>
+    );
 
-    // Jump up to the filters (instant: the page is long) and move focus to their heading.
-    const openFiltersFromFloat = () => {
-        setIsFiltersOpen(true);
-        requestAnimationFrame(() => {
-            const heading = filtersHeadingRef.current;
-            heading?.scrollIntoView({ behavior: 'instant', block: 'start' });
-            heading?.focus({ preventScroll: true });
-        });
-    };
-
-    // Fills the screen with its own scroll areas when the screen is tall or wide. Only on
-    // narrow, short screens (high zoom) does the whole page scroll instead (WCAG 1.4.10);
-    // the floating Filters button below uses the same condition.
     return (
         <div
-            className="flex flex-col md:flex-row md:h-[calc(100vh-64px)] md:overflow-hidden [@media(min-height:32rem)]:h-[calc(100vh-64px)] [@media(min-height:32rem)]:overflow-hidden"
+            className={`${PAGE} pt-10 pb-16`}
             // So "Back to all resources" on a resource opened from here returns to this
             // search and these filters (the cards and the map's popups).
             onClickCapture={rememberOnDetailClick('/services')}
         >
-            <h1 className="sr-only">Resources</h1>
+            <div className={`${BAR} mb-4`} />
+            <h1 className="mb-6">Resources</h1>
 
-            {/* Mobile Action Bar */}
-            <div className="md:hidden flex items-center justify-between p-3 bg-section-alt border-b border-card-border flex-shrink-0 z-10 w-full">
+            {/* Phones: search on its own, then the Filters button for the dropdowns. */}
+            <div className="md:hidden mb-4 bg-section-alt p-3">
+                <form role="search" onSubmit={handleSearchSubmit}>
+                    <label htmlFor="search-resources-phone" className="sr-only">
+                        Search resources
+                    </label>
+                    {searchInput(
+                        'search-resources-phone',
+                        'w-full rounded-full border border-muted bg-card-bg px-4 py-2.5 text-base',
+                    )}
+                </form>
                 <button
                     onClick={() => setIsFiltersOpen(!isFiltersOpen)}
                     aria-expanded={isFiltersOpen}
                     aria-controls="filters-panel"
-                    className="flex items-center gap-2 px-3 py-1.5 border border-muted bg-card-bg font-medium"
+                    className="mt-2.5 px-3.5 py-2 border border-muted bg-card-bg"
                 >
-                    {filterIcon}
                     {isFiltersOpen ? 'Hide filters' : 'Filters'}
-                    {activeFilterText}
+                    {/* As text, so it doesn't rely on color. */}
+                    {applied.length > 0 && ` (${applied.length})`}
                 </button>
-
-                <div className="flex items-center bg-card-bg border border-muted">
-                    <button
-                        onClick={() => setViewMode('list')}
-                        aria-pressed={viewMode === 'list'}
-                        className={`px-4 py-1.5 font-semibold ${viewMode === 'list' ? 'bg-secondary text-white' : 'text-secondary'}`}
-                    >
-                        List
-                    </button>
-                    <button
-                        onClick={() => setViewMode('map')}
-                        aria-pressed={viewMode === 'map'}
-                        className={`px-4 py-1.5 font-semibold ${viewMode === 'map' ? 'bg-secondary text-white' : 'text-secondary'}`}
-                    >
-                        Map
-                    </button>
-                </div>
             </div>
 
-            {/* Short screens: the bar above scrolls away with the page, so a small Filters
-                button floats at the bottom right. It opens the filters and moves focus there. */}
-            <button
-                onClick={openFiltersFromFloat}
-                className="hidden [@media(width<48rem)_and_(height<32rem)]:flex fixed bottom-3 right-3 z-20 items-center gap-2 px-3 py-1.5 rounded-full border border-card-border bg-card-bg text-sm font-medium shadow-lg"
-            >
-                {filterIcon}
-                Filters
-                {activeFilterText}
-            </button>
-
-            {/* Left Column: Filters */}
-            <div
-                id="filters-panel"
-                className={`${isFiltersOpen ? 'block' : 'hidden'} md:block w-full md:w-64 min-h-0 md:flex-shrink-0 bg-section-alt md:border-r border-b md:border-b-0 border-card-border p-4 overflow-y-auto scrollbar-thin`}
-            >
-                <h2 ref={filtersHeadingRef} tabIndex={-1} className="text-xl mb-4">
-                    Filters
-                </h2>
-
-                {/* Search Input */}
-                <div className="mb-6">
-                    <label htmlFor="search-resources" className={LABEL}>
-                        Search
-                    </label>
-                    <form role="search" onSubmit={handleSearchSubmit}>
-                        <input
-                            ref={searchInputRef}
-                            id="search-resources"
-                            type="text"
-                            value={searchQuery}
-                            onChange={(e) => {
-                                setSearchQuery(e.target.value);
-                                syncUrl(
-                                    e.target.value,
-                                    selectedNeed,
-                                    selectedCommunity,
-                                    selectedArea,
-                                );
-                            }}
-                            placeholder="Search resources"
-                            className={FIELD}
-                        />
+            <div className="md:grid md:grid-cols-[16rem_minmax(0,1fr)] md:gap-8 md:items-start">
+                <div
+                    id="filters-panel"
+                    className={`${isFiltersOpen ? 'block' : 'hidden'} md:block mb-4 md:mb-0 bg-section-alt p-5 md:sticky md:top-4`}
+                >
+                    <h2 className="text-xl mb-4">Filters</h2>
+                    <form role="search" onSubmit={handleSearchSubmit} className="hidden md:block mb-6">
+                        <label htmlFor="search-resources" className={LABEL}>
+                            Search
+                        </label>
+                        {searchInput('search-resources', FIELD)}
                     </form>
-                </div>
-
-                {/* Need Category Filter */}
-                <div className="mb-6">
-                    <label htmlFor="filter-need" className={LABEL}>
-                        Need category
-                    </label>
-                    <select
-                        id="filter-need"
-                        value={selectedNeed}
-                        onChange={(e) => handleNeedChange(e.target.value)}
-                        className={FIELD}
-                    >
-                        <option value="">All categories</option>
-                        {needCategories.map((cat) => (
-                            <option key={cat.name} value={cat.name}>
-                                {cat.name}
-                            </option>
-                        ))}
-                    </select>
-                </div>
-
-                {/* Community Focus Filter */}
-                <div className="mb-6">
-                    <label htmlFor="filter-community" className={LABEL}>
-                        Community focus
-                    </label>
-                    <select
-                        id="filter-community"
-                        value={selectedCommunity}
-                        onChange={(e) => handleCommunityChange(e.target.value)}
-                        className={FIELD}
-                    >
-                        <option value="">All communities</option>
-                        {communityCategories.map((cat) => (
-                            <option key={cat.name} value={cat.name}>
-                                {cat.name}
-                            </option>
-                        ))}
-                    </select>
-                </div>
-
-                {/* Target Geographic Area Filter */}
-                <div className="mb-6">
-                    <label htmlFor="filter-area" className={LABEL}>
-                        Target geographic area
-                    </label>
-                    <select
-                        id="filter-area"
-                        aria-describedby="filter-area-help"
-                        value={selectedArea}
-                        onChange={(e) => handleAreaChange(e.target.value)}
-                        className={FIELD}
-                    >
-                        <option value="">All areas</option>
-                        {serviceAreas.map((a) => (
-                            <option key={a} value={a}>
-                                {a}
-                            </option>
-                        ))}
-                    </select>
-                    <p id="filter-area-help" className="mt-1 text-sm text-muted">
-                        Where a resource is offered, not where it is located.
-                    </p>
-                </div>
-
-                {/* Clear Filters */}
-                {(searchQuery || selectedNeed || selectedCommunity || selectedArea) && (
-                    <button onClick={handleClearFilters} className="btn btn-accent w-full">
-                        Clear all filters
-                    </button>
-                )}
-            </div>
-
-            {/* Middle Column: Resource Cards */}
-            <div
-                className={`${viewMode === 'list' ? 'block' : 'hidden'} md:block w-full md:w-[32rem] flex-1 flex-shrink-0 border-r border-card-border overflow-y-auto scrollbar-thin`}
-            >
-                <div className="p-4 space-y-4">
-                    <h2 className="sr-only">Results</h2>
-                    <p role="status" className="font-header font-bold text-lg text-secondary">
-                        {resultCount} {resultCount === 1 ? 'resource' : 'resources'} found
-                    </p>
-                    {filteredServices.length === 0 ? (
-                        <div className="text-center py-8">No resources match your filters</div>
-                    ) : (
-                        filteredServices.map((service) => (
-                            <ServiceCard
-                                key={service.id}
-                                id={service.id}
-                                name={service.name}
-                                description={service.description}
-                                url={service.url}
-                                address={service.address}
-                                organizationName={service.organization_name}
-                                needFocus={service.needFocus}
-                                communityFocus={service.communityFocus}
-                                // Only with a pin to go to: a location can have an address but no coordinates.
-                                onViewOnMap={
-                                    service.latitude != null && service.longitude != null
-                                        ? () => {
-                                              setHoveredServiceId(service.id);
-                                              setViewMode('map');
-                                          }
-                                        : undefined
-                                }
-                            />
-                        ))
+                    {select(
+                        'category',
+                        'Type of help',
+                        'All types',
+                        needCategories.map((c) => c.name),
                     )}
+                    {select(
+                        'community',
+                        'Community',
+                        'All communities',
+                        communityCategories.map((c) => c.name),
+                    )}
+                    {serviceAreas.length > 0 &&
+                        select(
+                            'area',
+                            'Who it’s for (area)',
+                            'All areas',
+                            serviceAreas,
+                            'Where a resource is offered, not where it is located.',
+                        )}
                 </div>
-            </div>
 
-            {/* Right Column: Map */}
-            <div
-                className={`${viewMode === 'map' ? 'block' : 'hidden'} md:block flex-1 relative h-full min-w-0 p-2`}
-            >
-                <div className={`w-full h-full overflow-hidden ${FRAME}`}>
-                    <MapContainer
-                        locations={mapLocations}
-                        highlightedId={hoveredServiceId}
-                        showLocateButton
-                    />
-                </div>
+                <section aria-labelledby="results-heading" className="min-w-0">
+                    <h2 id="results-heading" className="sr-only">
+                        Results
+                    </h2>
+                    <div className="mb-4 flex flex-wrap items-center justify-between gap-x-6 gap-y-3">
+                        <CountLine ref={countRef} text={countText} status={countStatus} />
+                        <div
+                            role="group"
+                            aria-label="Show results as"
+                            className="flex border border-muted bg-card-bg"
+                        >
+                            {(['', 'map'] as const).map((view) => (
+                                <button
+                                    key={view}
+                                    onClick={() => showView(view)}
+                                    aria-pressed={isMap === (view === 'map')}
+                                    className={`px-4.5 py-2 font-semibold ${isMap === (view === 'map') ? 'bg-secondary text-white' : 'text-secondary'}`}
+                                >
+                                    {view ? 'Map' : 'List'}
+                                </button>
+                            ))}
+                        </div>
+                    </div>
+
+                    {(applied.length > 0 || searched) && (
+                        <div
+                            ref={chipsRef}
+                            role="group"
+                            aria-label="Applied search and filters"
+                            className="mb-5 flex flex-wrap items-center gap-x-3 gap-y-2"
+                        >
+                            {applied.map((f, i) => (
+                                <Chip
+                                    key={f.key}
+                                    label={`${f.label}: ${state[f.key]}`}
+                                    onRemove={() => clear({ [f.key]: '' }, i)}
+                                />
+                            ))}
+                            {searched && (
+                                <Chip
+                                    label={`Search: “${searched}”`}
+                                    onRemove={() => clear({ q: '' }, applied.length)}
+                                />
+                            )}
+                            <button type="button" onClick={clearAll} className={TEXT_BUTTON}>
+                                Clear all
+                            </button>
+                        </div>
+                    )}
+
+                    {isMap ? (
+                        <>
+                            <p ref={mapNoteRef} tabIndex={-1} className="mb-3">
+                                Map showing {resources(mapLocations.length)}.
+                                {unmapped > 0 &&
+                                    ` ${unmapped.toLocaleString()} ${unmapped === 1 ? 'other has' : 'others have'} no address listed.`}
+                            </p>
+                            <div className={`h-[520px] md:h-[620px] ${FRAME}`}>
+                                <MapContainer
+                                    locations={mapLocations}
+                                    highlightedId={highlightedId}
+                                    showLocateButton
+                                    onUseList={() => showView('')}
+                                />
+                            </div>
+                        </>
+                    ) : total > 0 ? (
+                        <ResourceGrid
+                            services={filteredServices}
+                            onViewOnMap={(id) => {
+                                update({ view: 'map' });
+                                setHighlightedId(id);
+                                // The button is gone with the list: focus (and scroll) to the map's note.
+                                requestAnimationFrame(() => mapNoteRef.current?.focus());
+                            }}
+                        />
+                    ) : (
+                        <div className="py-10 text-center">
+                            <p>Try fewer filters or a different word.</p>
+                            <button type="button" onClick={clearAll} className="btn btn-secondary mt-3">
+                                Clear all
+                            </button>
+                        </div>
+                    )}
+                </section>
             </div>
+        </div>
+    );
+}
+
+/** An applied filter or search, with a button that removes it. */
+function Chip({ label, onRemove }: { label: string; onRemove: () => void }) {
+    return (
+        <span className="inline-flex items-center gap-1 rounded-full border border-muted bg-card-bg py-px pr-px pl-3 text-[15px] font-semibold text-secondary">
+            {label}
+            <button
+                type="button"
+                data-remove
+                onClick={onRemove}
+                aria-label={`Remove ${label}`}
+                className="w-7 h-7 rounded-full text-sm hover:bg-highlight-alt-border"
+            >
+                ✕
+            </button>
+        </span>
+    );
+}
+
+interface ResourceGridProps {
+    services: MapService[];
+    /** Shows "View on map" on cards with a pin; left out before JavaScript runs. */
+    onViewOnMap?: (id: string) => void;
+}
+
+/** The cards: two equal columns only when each card gets at least 20rem, otherwise one. */
+export function ResourceGrid({ services, onViewOnMap }: ResourceGridProps) {
+    return (
+        <div className="grid gap-4 grid-cols-[repeat(auto-fill,minmax(min(100%,20rem),1fr))]">
+            {services.map((service) => (
+                <ServiceCard
+                    key={service.id}
+                    id={service.id}
+                    name={service.name}
+                    description={service.description}
+                    url={service.url}
+                    address={service.address}
+                    organizationName={service.organization_name}
+                    needFocus={service.needFocus}
+                    communityFocus={service.communityFocus}
+                    // Only with a pin to go to: a location can have an address but no coordinates.
+                    onViewOnMap={
+                        onViewOnMap && service.latitude != null && service.longitude != null
+                            ? () => onViewOnMap(service.id)
+                            : undefined
+                    }
+                />
+            ))}
         </div>
     );
 }

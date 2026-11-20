@@ -4,7 +4,7 @@ import { FormEvent, MouseEventHandler, useMemo, useRef, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { OrganizationCard } from '@/components/organizations/OrganizationCard';
 import { ORGANIZATION_FIELDS, search } from '@/lib/search';
-import { useDebounced } from '@/lib/useDebounced';
+import { CountLine } from '@/components/ui/CountLine';
 import { rememberOnDetailClick } from '@/lib/listUrl';
 import type { OrganizationListItem } from '@/lib/types';
 import { BAR, PAGE } from '@/lib/styles';
@@ -147,23 +147,21 @@ export function OrganizationGrid({
     onClickCapture,
 }: OrganizationGridProps) {
     const total = organizations.length;
-    // Announced once typing stops, not after every key.
-    const status = useDebounced(
-        `${total.toLocaleString()} ${total === 1 ? 'group' : 'groups'}${searched && ` for “${searched}”`}`,
-    );
 
     return (
         <div className={`${PAGE} pt-10 pb-16`} onClickCapture={onClickCapture}>
-            {/* Page Header */}
-            <div className="mb-6">
-                <div className={`${BAR} mb-4`} />
-                <h1 className="mb-6">Groups</h1>
-                <p role="status" className="font-header font-bold text-lg text-secondary">
-                    {status}
-                </p>
-            </div>
+            <div className={`${BAR} mb-4`} />
+            <h1 className="mb-6">Groups</h1>
 
             {searchBox && <div className="mb-6">{searchBox}</div>}
+
+            {/* So the cards' h3s don't follow the h1 directly. */}
+            <h2 className="sr-only">All groups</h2>
+            <div className="mb-4">
+                <CountLine
+                    text={`${total.toLocaleString()} ${total === 1 ? 'group' : 'groups'}${searched && ` for “${searched}”`}`}
+                />
+            </div>
 
             {/* Groups Grid: equal columns, equal heights per row */}
             {total > 0 ? (
