@@ -250,7 +250,11 @@ export default function MapPageClient({
                     className={`${isFiltersOpen ? 'block' : 'hidden'} md:block mb-4 md:mb-0 bg-section-alt p-5 md:sticky md:top-4`}
                 >
                     <h2 className="text-xl mb-4">Filters</h2>
-                    <form role="search" onSubmit={handleSearchSubmit} className="hidden md:block mb-6">
+                    <form
+                        role="search"
+                        onSubmit={handleSearchSubmit}
+                        className="hidden md:block mb-6"
+                    >
                         <label htmlFor="search-resources" className={LABEL}>
                             Search
                         </label>
@@ -357,7 +361,11 @@ export default function MapPageClient({
                     ) : (
                         <div className="py-10 text-center">
                             <p>Try fewer filters or a different word.</p>
-                            <button type="button" onClick={clearAll} className="btn btn-secondary mt-3">
+                            <button
+                                type="button"
+                                onClick={clearAll}
+                                className="btn btn-secondary mt-3"
+                            >
                                 Clear all
                             </button>
                         </div>

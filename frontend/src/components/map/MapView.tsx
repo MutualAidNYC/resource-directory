@@ -106,7 +106,11 @@ function fitToLocations(map: maplibregl.Map, locations: MapLocation[]) {
  * Highlight a pin and zoom past the clusters to it. False (and no highlight) when there's
  * no id or its pin isn't among the locations.
  */
-function showHighlight(map: maplibregl.Map, id: string | null | undefined, locations: MapLocation[]) {
+function showHighlight(
+    map: maplibregl.Map,
+    id: string | null | undefined,
+    locations: MapLocation[],
+) {
     const loc = id ? locations.find((l) => l.id === id) : undefined;
     (map.getSource('pin-highlight') as maplibregl.GeoJSONSource).setData({
         type: 'FeatureCollection',

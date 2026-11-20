@@ -120,10 +120,15 @@ export default async function ServiceDetailPage({ params }: ServiceDetailPagePro
                             <div className="space-y-6">
                                 {needFocus.length > 0 && (
                                     <div>
-                                        <p className={`${BRAND_LABEL} text-sm mb-2`}>Type of help</p>
+                                        <p className={`${BRAND_LABEL} text-sm mb-2`}>
+                                            Type of help
+                                        </p>
                                         <TagList
                                             name={service.name}
-                                            tags={needFocus.map((tag) => ({ kind: 'need', name: tag }))}
+                                            tags={needFocus.map((tag) => ({
+                                                kind: 'need',
+                                                name: tag,
+                                            }))}
                                         />
                                     </div>
                                 )}

@@ -30,13 +30,21 @@ export function ContactList({ name, website, phones, email, locations }: Contact
         <dl className="mt-6 flex flex-wrap gap-x-12 gap-y-4 border-y border-card-border py-4">
             {website && (
                 <Entry label="Website">
-                    <WebsiteLink href={website} name={name} className="underline hover:no-underline" />
+                    <WebsiteLink
+                        href={website}
+                        name={name}
+                        className="underline hover:no-underline"
+                    />
                 </Entry>
             )}
             {phones.length > 0 && (
                 <Entry label="Phone">
                     {phones.map((phone) => (
-                        <a key={phone} href={`tel:${phone}`} className="block underline hover:no-underline">
+                        <a
+                            key={phone}
+                            href={`tel:${phone}`}
+                            className="block underline hover:no-underline"
+                        >
                             {phone}
                         </a>
                     ))}

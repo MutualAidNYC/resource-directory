@@ -17,7 +17,14 @@ const noSubscribe = () => () => {};
  * becomes "Show fewer". Before JavaScript runs (or without it) "+N more" is plain text,
  * not a button that does nothing.
  */
-export function TagList({ tags, name }: { tags: Tag[]; /** The resource, for the button's name. */ name: string }) {
+export function TagList({
+    tags,
+    name,
+}: {
+    tags: Tag[];
+    /** The resource, for the button's name. */
+    name: string;
+}) {
     const id = useId();
     const [open, setOpen] = useState(false);
     const hydrated = useSyncExternalStore(

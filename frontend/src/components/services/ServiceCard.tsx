@@ -113,7 +113,10 @@ export function ServiceCard({
                         name={name}
                         tags={[
                             ...needFocus.map((tag) => ({ kind: 'need' as const, name: tag })),
-                            ...communityFocus.map((tag) => ({ kind: 'community' as const, name: tag })),
+                            ...communityFocus.map((tag) => ({
+                                kind: 'community' as const,
+                                name: tag,
+                            })),
                         ]}
                     />
                 </div>
