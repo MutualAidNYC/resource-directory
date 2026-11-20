@@ -21,3 +21,6 @@ export const BRAND_LABEL = 'font-label uppercase tracking-[0.04em] text-secondar
 
 /** The short red bar above a list page's h1 (brand guide). */
 export const BAR = 'h-1.5 w-16 bg-accent-bright';
+
+/** A red underlined text button ("Clear all", "+3 more"). Add the size per use. */
+export const TEXT_BUTTON = 'min-h-6 px-1 text-accent underline hover:no-underline';

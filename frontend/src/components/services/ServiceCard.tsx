@@ -1,6 +1,6 @@
 import Link from 'next/link';
 import { Icon } from '@/components/ui/Icon';
-import { TagLink } from '@/components/ui/TagLink';
+import { TagList } from '@/components/ui/TagList';
 import { WebsiteLink } from '@/components/ui/ExternalLink';
 import { externalHref } from '@/lib/format';
 import { CARD, TITLE_LINK } from '@/lib/styles';
@@ -24,8 +24,8 @@ interface ServiceCardProps {
 /**
  * A service in a list: the services list, or an organization's page (no organization
  * line, tags or map button; phone numbers instead). Title → organization → address →
- * website → phone → description → tags, which sit at the bottom so they line up
- * across a row.
+ * website → phone → description → tags (3, then "+N more"), which sit at the bottom so
+ * they line up across a row.
  */
 export function ServiceCard({
     id,
@@ -108,25 +108,17 @@ export function ServiceCard({
             {description && <p className="mt-3 line-clamp-2">{description}</p>}
 
             {needFocus.length + communityFocus.length > 0 && (
-                <div className="mt-auto pt-4 flex flex-wrap gap-1.5">
-                    {needFocus.map((need) => (
-                        <TagLink
-                            key={`need-${need}`}
-                            kind="need"
-                            href={`/services?category=${encodeURIComponent(need)}`}
-                        >
-                            {need}
-                        </TagLink>
-                    ))}
-                    {communityFocus.map((community) => (
-                        <TagLink
-                            key={`community-${community}`}
-                            kind="community"
-                            href={`/services?community=${encodeURIComponent(community)}`}
-                        >
-                            {community}
-                        </TagLink>
-                    ))}
+                <div className="mt-auto pt-4">
+                    <TagList
+                        name={name}
+                        tags={[
+                            ...needFocus.map((tag) => ({ kind: 'need' as const, name: tag })),
+                            ...communityFocus.map((tag) => ({
+                                kind: 'community' as const,
+                                name: tag,
+                            })),
+                        ]}
+                    />
                 </div>
             )}
         </article>
