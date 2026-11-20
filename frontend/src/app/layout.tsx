@@ -1,8 +1,9 @@
 import type { Metadata } from 'next';
-import { Karla, Poppins } from 'next/font/google';
+import { Francois_One, Karla, Poppins } from 'next/font/google';
 import './globals.css';
 import { Header } from '@/components/ui/Header';
 import { Footer } from '@/components/ui/Footer';
+import { LibraryNav } from '@/components/ui/LibraryNav';
 
 const karla = Karla({
     variable: '--font-karla',
@@ -14,6 +15,13 @@ const poppins = Poppins({
     variable: '--font-poppins',
     subsets: ['latin'],
     weight: ['600', '700', '900'],
+});
+
+// Short labels above headings and beside values (brand guide).
+const francoisOne = Francois_One({
+    variable: '--font-francois',
+    subsets: ['latin'],
+    weight: '400',
 });
 
 export const metadata: Metadata = {
@@ -37,16 +45,17 @@ export default function RootLayout({
     return (
         <html lang="en">
             <body
-                className={`${karla.variable} ${poppins.variable} antialiased min-h-screen flex flex-col`}
+                className={`${karla.variable} ${poppins.variable} ${francoisOne.variable} antialiased min-h-screen flex flex-col`}
             >
                 <a
                     href="#main-content"
-                    className="absolute left-1 top-0 z-[100] bg-white transform -translate-y-full py-4 px-6 
+                    className="absolute left-1 top-0 z-[100] bg-white -translate-y-full py-4 px-6 
           font-bold underline focus:translate-y-1 transition"
                 >
                     Skip to main content
                 </a>
                 <Header />
+                <LibraryNav />
                 <main id="main-content" className="flex-1">
                     {children}
                 </main>

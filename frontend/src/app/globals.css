@@ -1,35 +1,45 @@
 @import 'tailwindcss';
 
+/*
+ * Colors. The first group uses the mutualaid.nyc original WordPress theme's names (its
+ * `--color-accent-text` is `accent` here), so `text-accent` means the same color in
+ * both. The second group is the directory's own. No dark mode: mutualaid.nyc is
+ * light-only.
+ */
+@theme {
+    --color-accent: #8f2d24;
+    --color-accent-hover: #7a2520;
+    --color-accent-border: #e6a290;
+    /* The brand guide's bright red: large text only on cream (4.37:1). */
+    --color-accent-bright: #c24532;
+    --color-secondary: #204045;
+    --color-secondary-border: #6b9495;
+    --color-tertiary: #47133d;
+    --color-tertiary-border: #a17193;
+    --color-highlight: #f7cf56;
+    --color-highlight-alt: #a4cacb;
+    --color-highlight-alt-border: #ebf3f3;
+
+    --color-background: #f5efe0;
+    --color-foreground: #000;
+    --color-card-bg: #fff;
+    --color-card-border: #e8e2da;
+    --color-muted: #586069;
+    --color-section-alt: #ede8e1;
+    --color-tag-purple-bg: #f3e9f0;
+    --color-tag-olive-bg: #ebf3f3;
+    --color-tag-olive-text: #204045;
+}
+
+/* Inline, so the font variable resolves where it's used (next/font sets it on body). */
+@theme inline {
+    /* Francois One: short labels above headings and beside values (brand guide). */
+    --font-label: var(--font-francois), sans-serif;
+}
+
 :root {
-    /* mutualaid.nyc palette */
-    --color-white: #ffffff;
-    --background: #f5efe0;
-    --foreground: #000000;
-    --primary: #8f2d24;
-    --primary-hover: #7a2520;
-    --secondary: #204045;
-    --secondary-hover: #1a343a;
-    --accent-border: #e6a290;
-    --tertiary: #47133d;
-    --tertiary-border: #a17193;
-    --highlight: #f7cf56;
-    --highlight-alt: #a4cacb;
-    --highlight-alt-bg: #ebf3f3;
-    --card-bg: var(--color-white);
-    --card-border: #e8e2da;
-    --muted: #586069;
-    --section-alt: #ede8e1;
-    --tag-coral-bg: #fce8e5;
-    --tag-coral-text: #8f2d24;
-    --tag-olive-bg: #ebf3f3;
-    --tag-olive-text: #204045;
-    --tag-blue-bg: #ebf3f3;
-    --tag-blue-text: #204045;
-    --tag-gold-bg: #fdf7e6;
-    --tag-gold-text: #6b5a1e;
-    --nav-bg: #204045;
-    --nav-text: var(--color-white);
-    --footer-social-bg: #c24532;
+    /* Theme layout values; Tailwind has no namespace for them, so use them with var(). */
+    --default-content-width: 70rem;
     --border-width: 4px;
 
     /* Baseline font variables — next/font overrides these on body via CSS class */
@@ -39,187 +49,171 @@
     --font-body: var(--font-karla), sans-serif;
 }
 
-@theme inline {
-    --color-background: var(--background);
-    --color-foreground: var(--foreground);
-    --color-primary: var(--primary);
-    --color-primary-hover: var(--primary-hover);
-    --color-secondary: var(--secondary);
-    --color-highlight: var(--highlight);
-    --color-highlight-alt: var(--highlight-alt);
-    --color-card-bg: var(--card-bg);
-    --color-card-border: var(--card-border);
-    --color-muted: var(--muted);
-    --color-section-alt: var(--section-alt);
-}
-
-/* No dark mode — matches mutualaid.nyc light-only design */
-
-body {
-    background: var(--background);
-    color: var(--foreground);
-    font-family: var(--font-body);
-    letter-spacing: -0.5px;
-}
-
-html {
-    scroll-behavior: smooth;
-}
-
-h1,
-h2,
-h3,
-h4,
-h5,
-h6 {
-    font-family: var(--font-header);
-    font-weight: 700;
-}
-
-h1 {
-    color: var(--secondary);
-}
-
-h2 {
-    color: var(--secondary);
-    line-height: 1.4;
-}
-
+/* Element defaults: in the base layer, so utility classes override them. */
 @layer base {
+    html {
+        scroll-behavior: smooth;
+    }
+
+    body {
+        background: var(--color-background);
+        color: var(--color-foreground);
+        font-family: var(--font-body);
+        letter-spacing: -0.5px;
+    }
+
+    h1,
+    h2,
+    h3,
+    h4,
+    h5,
+    h6 {
+        font-family: var(--font-header);
+        font-weight: 700;
+    }
+
+    h1,
+    h2 {
+        color: var(--color-secondary);
+    }
+
+    /* Poppins Black (brand guide); balanced, so no word sits alone on the last line. */
+    h1 {
+        font-weight: 900;
+        font-size: 34px;
+        line-height: 1.1;
+        text-wrap: balance;
+    }
+
+    @media (width >= 48rem) {
+        h1 {
+            font-size: 48px;
+        }
+    }
+
+    h2 {
+        font-size: 1.5rem;
+        line-height: 1.4;
+    }
+
+    /* Purple, as in the theme. */
+    h3 {
+        color: var(--color-tertiary);
+        font-size: 1.125rem;
+        line-height: 1.3;
+    }
+
     a {
-        color: var(--primary);
+        color: var(--color-accent);
+    }
+
+    /* Ensure sufficient WCAG color contrast */
+    ::placeholder {
+        color: var(--color-muted);
+        opacity: 1;
     }
 }
 
-/* Focus styles that work on all background colors and removes the default browser outline to prevent doubling */
+/*
+ * Unlayered on purpose, so it beats utility classes: the focus ring must always show.
+ * Works on any background, and replaces the browser outline so it isn't doubled.
+ */
 *:focus-visible {
     box-shadow:
-        0 0 0 2px var(--color-white),
-        0 0 0 4px var(--primary);
+        0 0 0 2px white,
+        0 0 0 4px var(--color-accent);
     outline: none;
 }
 
-.line-clamp-2 {
-    display: -webkit-box;
-    -webkit-line-clamp: 2;
-    -webkit-box-orient: vertical;
-    overflow: hidden;
-}
+@layer components {
+    /* Buttons — matches mutualaid.nyc style */
+    .btn {
+        font-family: var(--font-header);
+        font-weight: 600;
+        border-radius: 1000px;
+        padding: 0.75rem 1.5rem;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        transition: opacity 0.2s ease;
+        text-decoration: none;
+        cursor: pointer;
+        border: var(--border-width) solid transparent;
+        line-height: 1.2;
+    }
 
-.line-clamp-3 {
-    display: -webkit-box;
-    -webkit-line-clamp: 3;
-    -webkit-box-orient: vertical;
-    overflow: hidden;
-}
+    .btn:hover {
+        opacity: 0.7;
+        text-decoration: none;
+    }
 
-/* Custom scrollbar for service panels */
-.scrollbar-thin {
-    scrollbar-width: thin;
-    scrollbar-color: rgba(32, 64, 69, 0.2) transparent;
-}
+    /* Filled teal — "primary" action */
+    .btn-primary {
+        background-color: var(--color-secondary);
+        color: white;
+        border-color: var(--color-secondary);
+    }
 
-.scrollbar-thin::-webkit-scrollbar {
-    width: 6px;
-}
+    /* Outline purple — "secondary" action (the theme's outline style) */
+    .btn-secondary {
+        background-color: transparent;
+        color: var(--color-tertiary);
+        border-color: var(--color-tertiary-border);
+    }
 
-.scrollbar-thin::-webkit-scrollbar-track {
-    background: transparent;
-}
+    /* Light teal fill — "accent" action */
+    .btn-accent {
+        background-color: var(--color-highlight-alt);
+        color: var(--color-secondary);
+        border-color: var(--color-highlight-alt);
+    }
 
-.scrollbar-thin::-webkit-scrollbar-thumb {
-    background: rgba(32, 64, 69, 0.2);
-    border-radius: 3px;
-}
+    /* Nav link — shared style for header navigation links */
+    .nav-link {
+        font-size: 18px;
+        line-height: 1.4;
+        font-weight: 600;
+        color: white;
+    }
 
-.scrollbar-thin::-webkit-scrollbar-thumb:hover {
-    background: rgba(32, 64, 69, 0.35);
-}
-
-/* Buttons — matches mutualaid.nyc style */
-.btn {
-    font-family: var(--font-header);
-    font-weight: 600;
-    border-radius: 1000px;
-    padding: 0.75rem 1.5rem;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    transition: opacity 0.2s ease;
-    text-decoration: none;
-    cursor: pointer;
-    border: 2px solid transparent;
-    line-height: 1.2;
-}
-
-.btn:hover {
-    opacity: 0.7;
-    text-decoration: none;
-}
-
-/* Filled teal — "primary" action */
-.btn-primary {
-    background-color: var(--secondary);
-    color: var(--color-white);
-    border-color: var(--secondary);
-}
-
-/* Outline purple — "secondary" action */
-.btn-secondary {
-    background-color: transparent;
-    color: var(--tertiary);
-    border-color: var(--tertiary);
-}
-
-/* Light teal fill — "accent" action */
-.btn-accent {
-    background-color: var(--highlight-alt);
-    color: var(--secondary);
-    border-color: var(--highlight-alt);
-}
-
-/* Nav link — shared style for header navigation links */
-.nav-link {
-    font-size: 18px;
-    line-height: 1.4;
-    font-weight: 600;
-    color: var(--nav-text);
-}
-
-.nav-link:hover {
-    text-decoration: underline;
+    .nav-link:hover {
+        text-decoration: underline;
+    }
 }
 
 .maplibregl-popup-close-button {
-    font-size: 1.5rem;
-    margin: 0.25rem 0.25rem 0;
-    padding: 0.5rem;
+    /* 36×36: WCAG 2.5.8 needs at least 24×24; MapLibre's default is ~20×18. */
+    width: 36px;
+    height: 36px;
+    font-size: 24px;
+    line-height: 1;
+    color: var(--color-secondary);
+    border-radius: 0;
 }
 
-/* MapLibre popup content */
+.maplibregl-popup-close-button:hover {
+    background: var(--color-highlight-alt-border);
+}
+
+/* MapLibre popup content. The right padding keeps the title clear of the close button. */
 .popup-content {
-    padding: 8px;
-    max-width: 220px;
+    font-family: var(--font-body);
+    font-size: 15px;
+    line-height: 1.4;
+    letter-spacing: -0.5px;
+    padding: 2px 28px 0 0;
+    max-width: 260px;
 }
 
 .popup-title {
-    font-weight: 600;
+    display: block;
+    font-family: var(--font-header);
+    font-weight: 700;
+    font-size: 16px;
+    line-height: 1.3;
     margin-bottom: 4px;
-    color: var(--foreground);
-    font-size: 14px;
 }
 
 .popup-org {
-    color: var(--muted);
-    font-size: 13px;
-    font-weight: 500;
-    margin-bottom: 2px;
-}
-
-.popup-link {
-    color: var(--primary);
-    font-size: 12px;
-    text-decoration: underline;
-    display: inline-block;
-    margin-top: 4px;
+    color: var(--color-muted);
 }

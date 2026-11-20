@@ -1,10 +1,13 @@
 'use client';
 
-import { FormEvent, useMemo, useRef, useState } from 'react';
+import { FormEvent, MouseEventHandler, useMemo, useRef, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { OrganizationCard } from '@/components/organizations/OrganizationCard';
 import { ORGANIZATION_FIELDS, search } from '@/lib/search';
+import { CountLine } from '@/components/ui/CountLine';
+import { rememberOnDetailClick } from '@/lib/listUrl';
 import type { OrganizationListItem } from '@/lib/types';
+import { BAR, PAGE } from '@/lib/styles';
 
 interface OrganizationsPageClientProps {
     organizations: OrganizationListItem[];
@@ -18,6 +21,16 @@ export default function OrganizationsPageClient({ organizations }: Organizations
     const searchParams = useSearchParams();
     const inputRef = useRef<HTMLInputElement>(null);
     const [query, setQuery] = useState(searchParams.get('q') ?? '');
+
+    // A link to the list (the sub-nav's "Groups") clears the search. Done while rendering,
+    // not in an effect, so the page never renders with a stale query. Typing also changes
+    // the URL, with the query trimmed: keep what's typed then, or a space would vanish.
+    const [prevSearchParams, setPrevSearchParams] = useState(searchParams);
+    if (searchParams !== prevSearchParams) {
+        setPrevSearchParams(searchParams);
+        const q = searchParams.get('q') ?? '';
+        if (q !== query.trim()) setQuery(q);
+    }
 
     const results = useMemo(
         () => search(organizations, query, ORGANIZATION_FIELDS),
@@ -54,6 +67,8 @@ export default function OrganizationsPageClient({ organizations }: Organizations
         <OrganizationGrid
             organizations={results}
             searched={searched}
+            // So "Back to groups" on a group opened from here returns to this search.
+            onClickCapture={rememberOnDetailClick('/organizations')}
             searchBox={
                 // The list filters as you type, so submitting (Enter, or the phone keyboard's
                 // Search key) only closes the keyboard on touch screens, so the results show.
@@ -63,7 +78,7 @@ export default function OrganizationsPageClient({ organizations }: Organizations
                     </label>
                     <div className="relative flex items-center">
                         <svg
-                            className="absolute left-3 w-5 h-5 text-[var(--muted)]"
+                            className="absolute left-4 w-5 h-5 text-muted"
                             aria-hidden="true"
                             fill="none"
                             stroke="currentColor"
@@ -82,14 +97,14 @@ export default function OrganizationsPageClient({ organizations }: Organizations
                             type="text"
                             value={query}
                             onChange={(e) => updateQuery(e.target.value)}
-                            placeholder="Search groups..."
-                            className="w-full pl-10 pr-12 py-3 rounded-xl border border-[var(--card-border)] bg-[var(--card-bg)] text-[var(--foreground)] shadow-sm focus:border-[var(--primary)] focus:outline-none focus:ring-2 focus:ring-[var(--primary)]/20"
+                            placeholder="Search groups"
+                            className="w-full pl-11 pr-12 py-3 rounded-full border border-muted bg-card-bg text-lg"
                         />
                         {query && (
                             <button
                                 type="button"
                                 onClick={handleClear}
-                                className="absolute right-2 p-1.5 text-[var(--muted)] hover:text-[var(--foreground)]"
+                                className="absolute right-3 p-1.5 text-muted hover:text-foreground"
                                 aria-label="Clear search"
                             >
                                 <svg
@@ -121,6 +136,7 @@ interface OrganizationGridProps {
     searched?: string;
     /** The search box; left out while the page loads (no JavaScript yet). */
     searchBox?: React.ReactNode;
+    onClickCapture?: MouseEventHandler;
 }
 
 /** Page header, optional search box and the grid of group cards. */
@@ -128,35 +144,38 @@ export function OrganizationGrid({
     organizations,
     searched = '',
     searchBox,
+    onClickCapture,
 }: OrganizationGridProps) {
     const total = organizations.length;
 
     return (
-        <div className="container mx-auto px-4 py-8">
-            {/* Page Header */}
-            <div className="mb-8">
-                <h1 className="text-3xl font-bold text-[var(--foreground)] mb-4">Groups</h1>
-                <p className="text-[var(--foreground)]">
-                    {total.toLocaleString()} {total === 1 ? 'group' : 'groups'} providing community
-                    resources{searched && ` for search term "${searched}"`}
-                </p>
+        <div className={`${PAGE} pt-10 pb-16`} onClickCapture={onClickCapture}>
+            <div className={`${BAR} mb-4`} />
+            <h1 className="mb-6">Groups</h1>
+
+            {searchBox && <div className="mb-6">{searchBox}</div>}
+
+            {/* So the cards' h3s don't follow the h1 directly. */}
+            <h2 className="sr-only">All groups</h2>
+            <div className="mb-4">
+                <CountLine
+                    text={`${total.toLocaleString()} ${total === 1 ? 'group' : 'groups'}${searched && ` for “${searched}”`}`}
+                />
             </div>
 
-            {searchBox && <div className="mb-8">{searchBox}</div>}
-
-            {/* Groups Grid */}
+            {/* Groups Grid: equal columns, equal heights per row */}
             {total > 0 ? (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                     {organizations.map((org) => (
                         <OrganizationCard key={org.id} organization={org} />
                     ))}
                 </div>
             ) : (
                 <div className="text-center py-16">
-                    <h3 className="text-lg font-medium text-[var(--foreground)] mb-2">
+                    <h3 className="mb-2">
                         {searched ? `No results for "${searched}"` : 'No groups found'}
                     </h3>
-                    <p className="text-[var(--foreground)]">
+                    <p>
                         {searched
                             ? 'Try a different search term.'
                             : 'No groups are currently available.'}

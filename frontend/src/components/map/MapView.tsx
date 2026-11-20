@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from 'react';
 import * as maplibregl from 'maplibre-gl';
 import 'maplibre-gl/dist/maplibre-gl.css';
+import { TITLE_LINK } from '@/lib/styles';
 
 // MapLibre runs its worker from a separate file; this lets Next.js bundle it
 // as a hashed asset.
@@ -13,7 +14,7 @@ maplibregl.setWorkerUrl(
 /** One pin. Every map on the site passes these (via MapContainer). */
 export interface MapLocation {
     id: string;
-    /** The popup's title. */
+    /** The popup's title (the link, when there's an `href`). */
     name: string;
     latitude: number;
     longitude: number;
@@ -27,14 +28,21 @@ interface MapViewProps {
     locations: MapLocation[];
     /** ID of the currently highlighted service (e.g. from card hover). */
     highlightedId?: string | null;
+    /**
+     * Add MapLibre's "Show my location on the map" button (the /services map only). The
+     * browser asks for the location only when it's pressed; the location stays in the
+     * browser and isn't tracked as the visitor moves.
+     */
+    showLocateButton?: boolean;
+    /** Without WebGL, shows a "Use the list" button that calls this (the /services map). */
+    onUseList?: () => void;
 }
 
-/** Pin icon dimensions. */
-const PIN_W = 28;
-const PIN_H = 40;
+/** Past this zoom pins never cluster, so "View on map" zooms beyond it to show its pin. */
+const CLUSTER_MAX_ZOOM = 14;
 
 /**
- * Basemap style. Defaults to OpenFreeMap "bright" — a free, open vector
+ * Basemap style. Defaults to OpenFreeMap "positron" (muted, so the pins stand out) — a free, open vector
  * basemap built from OpenStreetMap data with no API key, no registration,
  * no user tracking, and no request limits.
  *
@@ -42,25 +50,7 @@ const PIN_H = 40;
  * point at our own instance (or an alternative style) without a code change.
  */
 const BASEMAP_STYLE_URL =
-    process.env.NEXT_PUBLIC_BASEMAP_STYLE_URL || 'https://tiles.openfreemap.org/styles/bright';
-
-/**
- * Generate an SVG pin image as a data URL for loading into the map sprite.
- * Uses a simple, clean teardrop shape with a dot highlight.
- */
-function pinDataUrl(fill: string, stroke: string): string {
-    const w = PIN_W;
-    const h = PIN_H;
-    const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${w}" height="${h}" viewBox="0 0 ${w} ${h}">
-      <path d="M${w / 2},${h - 2}
-        C${w / 2 - 2},${h * 0.6} 2,${h * 0.38} 2,${h * 0.33}
-        A${w / 2 - 2},${w / 2 - 2} 0 1,1 ${w - 2},${h * 0.33}
-        C${w - 2},${h * 0.38} ${w / 2 + 2},${h * 0.6} ${w / 2},${h - 2}Z"
-        fill="${fill}" stroke="${stroke}" stroke-width="1.5"/>
-      <circle cx="${w / 2}" cy="${h * 0.3}" r="${w * 0.14}" fill="white" opacity="0.5"/>
-    </svg>`;
-    return `data:image/svg+xml;charset=utf-8,${encodeURIComponent(svg)}`;
-}
+    process.env.NEXT_PUBLIC_BASEMAP_STYLE_URL || 'https://tiles.openfreemap.org/styles/positron';
 
 /** Escape text for the popup's HTML, which is built from Airtable data. */
 function escapeHtml(text: string): string {
@@ -113,17 +103,53 @@ function fitToLocations(map: maplibregl.Map, locations: MapLocation[]) {
 }
 
 /**
- * Interactive map using MapLibre GL with native symbol layers.
- *
- * Pins are rendered on the WebGL canvas (not DOM elements), so they
- * move perfectly in sync with the map during pan/zoom — no lag.
+ * Highlight a pin and zoom past the clusters to it. False (and no highlight) when there's
+ * no id or its pin isn't among the locations.
  */
-export default function MapView({ locations, highlightedId }: MapViewProps) {
+function showHighlight(
+    map: maplibregl.Map,
+    id: string | null | undefined,
+    locations: MapLocation[],
+) {
+    const loc = id ? locations.find((l) => l.id === id) : undefined;
+    (map.getSource('pin-highlight') as maplibregl.GeoJSONSource).setData({
+        type: 'FeatureCollection',
+        features: loc
+            ? [
+                  {
+                      type: 'Feature',
+                      geometry: { type: 'Point', coordinates: [loc.longitude, loc.latitude] },
+                      properties: {},
+                  },
+              ]
+            : [],
+    });
+    if (!loc) return false;
+    map.flyTo({
+        center: [loc.longitude, loc.latitude],
+        zoom: Math.max(map.getZoom(), CLUSTER_MAX_ZOOM + 1.5),
+        duration: 800,
+    });
+    return true;
+}
+
+/**
+ * Interactive map using MapLibre GL. Pins are circle layers on the WebGL canvas (not DOM
+ * elements), so they move in sync with the map; nearby pins cluster into a count.
+ * MapLibre's flyTo/easeTo already jump instead of animating under prefers-reduced-motion.
+ */
+export default function MapView({
+    locations,
+    highlightedId,
+    showLocateButton,
+    onUseList,
+}: MapViewProps) {
     const mapContainer = useRef<HTMLDivElement>(null);
     const mapRef = useRef<maplibregl.Map | null>(null);
     const popupRef = useRef<maplibregl.Popup | null>(null);
     // The latest pins, for when the map finishes loading.
     const locationsRef = useRef(locations);
+    const highlightedIdRef = useRef(highlightedId);
     const [canRender] = useState(supportsWebGL2);
 
     // Initialize map once; pin changes go through setData below, not a new map.
@@ -135,64 +161,85 @@ export default function MapView({ locations, highlightedId }: MapViewProps) {
             style: BASEMAP_STYLE_URL,
             center: [-74.006, 40.7128],
             zoom: 10,
+            locale: { 'GeolocateControl.FindMyLocation': 'Show my location on the map' },
         });
 
         map.addControl(new maplibregl.NavigationControl(), 'top-right');
+        // Defaults: one position per press, no tracking, accuracy circle on.
+        if (showLocateButton) map.addControl(new maplibregl.GeolocateControl({}), 'top-right');
         mapRef.current = map;
 
         map.on('load', () => {
-            // Load pin images into the map sprite
-            const defaultImg = new Image();
-            defaultImg.onload = () => {
-                if (mapRef.current !== map) return; // removed while loading
-                map.addImage('pin-default', defaultImg);
-
-                const hlImg = new Image();
-                hlImg.onload = () => {
-                    if (mapRef.current !== map) return;
-                    map.addImage('pin-highlight', hlImg);
-                    addLayers();
-                };
-                hlImg.src = pinDataUrl('#f59e0b', '#b45309');
-            };
-            defaultImg.src = pinDataUrl('#8F2D24', '#6b1f18');
-        });
-
-        function addLayers() {
-            // Main pins source
-            map.addSource('pins', { type: 'geojson', data: toGeoJSON(locationsRef.current) });
-
-            // Default pins layer
+            map.addSource('pins', {
+                type: 'geojson',
+                data: toGeoJSON(locationsRef.current),
+                cluster: true,
+                clusterRadius: 40,
+                clusterMaxZoom: CLUSTER_MAX_ZOOM,
+            });
             map.addLayer({
-                id: 'pins-layer',
-                type: 'symbol',
+                id: 'clusters',
+                type: 'circle',
                 source: 'pins',
-                layout: {
-                    'icon-image': 'pin-default',
-                    'icon-size': 1,
-                    'icon-anchor': 'bottom',
-                    'icon-allow-overlap': true,
-                    'icon-ignore-placement': true,
+                filter: ['has', 'point_count'],
+                paint: {
+                    'circle-color': '#204045',
+                    'circle-radius': ['step', ['get', 'point_count'], 14, 10, 18, 30, 24],
+                    'circle-stroke-width': 3,
+                    'circle-stroke-color': '#ffffff',
                 },
             });
-
-            // Highlighted pin source (single feature, updated on highlight change)
+            map.addLayer({
+                id: 'cluster-count',
+                type: 'symbol',
+                source: 'pins',
+                filter: ['has', 'point_count'],
+                layout: {
+                    'text-field': ['get', 'point_count_abbreviated'],
+                    'text-font': ['Noto Sans Bold'],
+                    'text-size': 13,
+                },
+                paint: { 'text-color': '#ffffff' },
+            });
+            map.addLayer({
+                id: 'pins-layer',
+                type: 'circle',
+                source: 'pins',
+                filter: ['!', ['has', 'point_count']],
+                paint: {
+                    'circle-color': '#8f2d24',
+                    'circle-radius': 8,
+                    'circle-stroke-width': 2,
+                    'circle-stroke-color': '#ffffff',
+                },
+            });
+            // Brand yellow, with a teal edge so it shows on the basemap.
             map.addSource('pin-highlight', {
                 type: 'geojson',
                 data: { type: 'FeatureCollection', features: [] },
             });
-
             map.addLayer({
                 id: 'pin-highlight-layer',
-                type: 'symbol',
+                type: 'circle',
                 source: 'pin-highlight',
-                layout: {
-                    'icon-image': 'pin-highlight',
-                    'icon-size': 1.25,
-                    'icon-anchor': 'bottom',
-                    'icon-allow-overlap': true,
-                    'icon-ignore-placement': true,
+                paint: {
+                    'circle-color': '#f7cf56',
+                    'circle-radius': 12,
+                    'circle-stroke-width': 3,
+                    'circle-stroke-color': '#204045',
                 },
+            });
+
+            // A cluster opens up to the zoom where it splits.
+            map.on('click', 'clusters', async (e) => {
+                const feature = e.features?.[0];
+                if (!feature) return;
+                const source = map.getSource('pins') as maplibregl.GeoJSONSource;
+                const zoom = await source.getClusterExpansionZoom(feature.properties.cluster_id);
+                map.easeTo({
+                    center: (feature.geometry as GeoJSON.Point).coordinates as [number, number],
+                    zoom,
+                });
             });
 
             // Click handler — show popup
@@ -208,112 +255,83 @@ export default function MapView({ locations, highlightedId }: MapViewProps) {
                 // Remove existing popup
                 popupRef.current?.remove();
 
-                const popup = new maplibregl.Popup({ offset: [0, -PIN_H] })
+                // Like the cards: the name is the link (when there is one), the organization below.
+                const name = escapeHtml(props.name);
+                const title = props.href
+                    ? `<a href="${escapeHtml(props.href)}" class="popup-title ${TITLE_LINK}">${name}</a>`
+                    : `<p class="popup-title text-tertiary">${name}</p>`;
+                const org = props.orgName
+                    ? `<p class="popup-org">${escapeHtml(props.orgName)}</p>`
+                    : '';
+                const popup = new maplibregl.Popup({ offset: 10 })
                     .setLngLat(coords)
-                    .setHTML(
-                        `
-                        <div class="popup-content">
-                            <h4 class="popup-title">${escapeHtml(props.name)}</h4>
-                            ${
-                                props.orgName
-                                    ? `<p class="popup-org">${escapeHtml(props.orgName)}</p>`
-                                    : ''
-                            }
-                            ${
-                                props.href
-                                    ? `<a href="${escapeHtml(props.href)}" class="popup-link">View resource details →</a>`
-                                    : ''
-                            }
-                        </div>
-                    `,
-                    )
+                    .setHTML(`<div class="popup-content">${title}${org}</div>`)
                     .addTo(map);
 
                 popupRef.current = popup;
             });
 
-            // Cursor pointer on hover
-            map.on('mouseenter', 'pins-layer', () => {
-                map.getCanvas().style.cursor = 'pointer';
-            });
-            map.on('mouseleave', 'pins-layer', () => {
-                map.getCanvas().style.cursor = '';
-            });
+            for (const layer of ['pins-layer', 'clusters']) {
+                map.on('mouseenter', layer, () => {
+                    map.getCanvas().style.cursor = 'pointer';
+                });
+                map.on('mouseleave', layer, () => {
+                    map.getCanvas().style.cursor = '';
+                });
+            }
 
-            fitToLocations(map, locationsRef.current);
-        }
+            // Opened from "View on map": go to that pin; otherwise show them all.
+            if (!showHighlight(map, highlightedIdRef.current, locationsRef.current)) {
+                fitToLocations(map, locationsRef.current);
+            }
+        });
 
         return () => {
             popupRef.current?.remove();
             map.remove();
             mapRef.current = null;
         };
-    }, [canRender]);
+    }, [canRender, showLocateButton]);
 
-    // New pins (search or filters): swap the data and zoom to fit, keeping the map.
+    // New pins (search or filters): swap the data and zoom to fit (or to the highlighted
+    // pin), keeping the map.
     useEffect(() => {
         locationsRef.current = locations;
         const map = mapRef.current;
         const pins = map?.getSource('pins') as maplibregl.GeoJSONSource | undefined;
-        if (!map || !pins) return; // not loaded yet: addLayers reads locationsRef
+        if (!map || !pins) return; // not loaded yet: the load handler reads locationsRef
         pins.setData(toGeoJSON(locations));
         // Zoom once typing pauses, so the map doesn't jump and reload tiles on every letter.
-        const timer = setTimeout(() => fitToLocations(map, locations), 500);
+        const timer = setTimeout(() => {
+            if (!showHighlight(map, highlightedIdRef.current, locations)) {
+                fitToLocations(map, locations);
+            }
+        }, 500);
         return () => clearTimeout(timer);
     }, [locations]);
 
-    // React to highlight changes
+    // "View on map" on another resource while the map is open.
     useEffect(() => {
+        highlightedIdRef.current = highlightedId;
         const map = mapRef.current;
-        if (!map || !map.isStyleLoaded()) return;
-
-        // Check that sources exist (layers loaded)
-        if (!map.getSource('pin-highlight')) return;
-
-        if (!highlightedId) {
-            // Clear highlight
-            (map.getSource('pin-highlight') as maplibregl.GeoJSONSource).setData({
-                type: 'FeatureCollection',
-                features: [],
-            });
-            return;
+        if (!map?.getSource('pin-highlight')) return; // not loaded yet: the load handler does it
+        if (!showHighlight(map, highlightedId, locationsRef.current)) {
+            fitToLocations(map, locationsRef.current);
         }
-
-        // Find the highlighted location
-        const loc = locations.find((l) => l.id === highlightedId);
-        if (!loc) {
-            // No matching pin — reset view
-            fitToLocations(map, locations);
-            return;
-        }
-
-        // Set highlight pin
-        (map.getSource('pin-highlight') as maplibregl.GeoJSONSource).setData({
-            type: 'FeatureCollection',
-            features: [
-                {
-                    type: 'Feature',
-                    geometry: { type: 'Point', coordinates: [loc.longitude, loc.latitude] },
-                    properties: { id: loc.id, name: loc.name },
-                },
-            ],
-        });
-
-        // Fly to highlighted pin
-        map.flyTo({
-            center: [loc.longitude, loc.latitude],
-            zoom: Math.max(map.getZoom(), 14),
-            duration: 800,
-        });
-    }, [highlightedId, locations]);
+    }, [highlightedId]);
 
     if (!canRender) {
         return (
-            <div className="w-full h-full min-h-[400px] bg-[var(--section-alt)] flex items-center justify-center p-4 text-center">
-                <p className="text-[var(--muted)]">This browser can&apos;t show the map.</p>
+            <div className="w-full h-full bg-section-alt flex flex-col items-center justify-center p-4 text-center">
+                <p className="text-muted">This browser can&apos;t show the map.</p>
+                {onUseList && (
+                    <button type="button" onClick={onUseList} className="btn btn-secondary mt-4">
+                        Use the list
+                    </button>
+                )}
             </div>
         );
     }
 
-    return <div ref={mapContainer} className="w-full h-full min-h-[400px]" />;
+    return <div ref={mapContainer} className="w-full h-full" />;
 }

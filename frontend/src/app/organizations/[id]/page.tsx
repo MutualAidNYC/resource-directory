@@ -1,11 +1,13 @@
 import { Metadata } from 'next';
-import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { getMapData, getOrganization, organizationIds, servicesOf } from '@/lib/data';
 import { externalHref, formatAddress } from '@/lib/format';
 import { ServiceCard } from '@/components/services/ServiceCard';
-import { MapContainer } from '@/components/map/MapContainer';
+import { MapAside } from '@/components/map/MapAside';
 import type { MapLocation } from '@/components/map/MapView';
+import { ContactList } from '@/components/ui/ContactList';
+import { BackLink } from '@/components/ui/BackLink';
+import { BRAND_LABEL, PAGE } from '@/lib/styles';
 
 interface OrganizationDetailPageProps {
     params: Promise<{ id: string }>;
@@ -24,16 +26,24 @@ export function generateStaticParams() {
 export async function generateMetadata({ params }: OrganizationDetailPageProps): Promise<Metadata> {
     const { id } = await params;
     const organization = getOrganization(id);
-    if (!organization) return { title: 'Group Not Found' };
+    if (!organization) return { title: 'Group not found' };
     return {
         title: organization.name,
         description: organization.description || `Resources provided by ${organization.name}`,
     };
 }
 
+/** A service's first address, for its card (the build keeps link order). */
+function firstAddress(service: ReturnType<typeof servicesOf>[number]): string | undefined {
+    const address = service.service_at_locations
+        ?.flatMap((sal) => sal.location?.addresses ?? [])
+        .find((a) => formatAddress(a));
+    return address ? formatAddress(address) : undefined;
+}
+
 /**
- * Group detail page showing group info and its resources.
- * Two-column layout: Left (info + resources), Right (multi-pin map)
+ * Group detail page: a full-width head (name, contact information with the group's own
+ * address), then "About this group" and its resources beside a map of them.
  */
 export default async function OrganizationDetailPage({ params }: OrganizationDetailPageProps) {
     const { id } = await params;
@@ -42,11 +52,6 @@ export default async function OrganizationDetailPage({ params }: OrganizationDet
     if (!organization) notFound();
 
     const relatedServices = servicesOf(id);
-    const website = externalHref(organization.website);
-    // The group's own addresses, listed as text in the contact card.
-    const addresses = (organization.locations ?? [])
-        .flatMap((loc) => loc.addresses ?? [])
-        .filter((address) => formatAddress(address));
 
     // Pins: the group's resources that have one on the main map.
     const serviceIds = new Set(relatedServices.map((s) => s.id));
@@ -59,7 +64,6 @@ export default async function OrganizationDetailPage({ params }: OrganizationDet
             longitude: s.longitude!,
             href: `/services/${s.id}`,
         }));
-    let mapLocationLabel = 'Resource Locations';
 
     // Fallback: if none of its resources has a pin, pin the group's own locations.
     if (mapLocations.length === 0 && organization.locations?.length) {
@@ -71,240 +75,65 @@ export default async function OrganizationDetailPage({ params }: OrganizationDet
                 latitude: loc.latitude!,
                 longitude: loc.longitude!,
             }));
-        // Pins came from the group's address, not a specific resource
-        mapLocationLabel = 'Group Locations';
     }
 
     return (
-        <div className="container mx-auto px-4 py-8">
-            {/* Breadcrumb */}
-            <nav className="mb-6 text-sm">
-                <ol className="flex items-center gap-2 text-[var(--muted)]">
-                    <li>
-                        <Link href="/" className="hover:text-[var(--foreground)] hover:underline">
-                            Home
-                        </Link>
-                    </li>
-                    <span>/</span>
-                    <li>
-                        <Link
-                            href="/organizations"
-                            className="hover:text-[var(--foreground)] hover:underline"
-                        >
-                            Groups
-                        </Link>
-                    </li>
-                    <span>/</span>
-                    <li className="text-[var(--foreground)] font-medium truncate">
-                        {organization.name}
-                    </li>
-                </ol>
-            </nav>
+        <div className={`${PAGE} pt-10 pb-16`}>
+            <p className={`${BRAND_LABEL} text-[15px] mb-2`}>Group</p>
+            <h1>{organization.name}</h1>
 
-            {/* Two-Column Layout */}
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-                {/* Left Column - Group Info and Resources */}
-                <div className="lg:col-span-2 space-y-8">
-                    {/* Group Header */}
-                    <div>
-                        {/* Name */}
-                        <h1 className="text-3xl font-bold text-[var(--foreground)] mb-4">
-                            {organization.name}
-                        </h1>
+            <ContactList
+                name={organization.name}
+                website={externalHref(organization.website)}
+                phones={(organization.phones ?? []).map((phone) => phone.number)}
+                email={organization.email}
+                // The group's own addresses only; never one borrowed from its resources.
+                locations={organization.locations ?? []}
+            />
 
-                        {/* Description */}
-                        {organization.description && (
-                            <section className="mb-8 mt-6">
-                                <h2 className="text-xl font-semibold text-[var(--foreground)] mb-4">
-                                    Description
-                                </h2>
-                                <div className="prose max-w-none">
-                                    <p className="text-[var(--foreground)] whitespace-pre-wrap">
-                                        {organization.description}
-                                    </p>
-                                </div>
-                            </section>
-                        )}
-                    </div>
+            <div
+                className={`mt-10 grid gap-10 ${mapLocations.length > 0 ? 'lg:grid-cols-[minmax(0,2fr)_minmax(0,1fr)] lg:gap-x-12' : ''}`}
+            >
+                <div className="space-y-10">
+                    {organization.description && (
+                        <section>
+                            <h2 className="mb-4">About this group</h2>
+                            <p className="max-w-prose text-lg whitespace-pre-wrap">
+                                {organization.description}
+                            </p>
+                        </section>
+                    )}
 
-                    {/* Resources Section */}
                     <section>
-                        <h2 className="text-2xl font-bold text-[var(--foreground)] mb-6">
-                            Resources ({relatedServices.length})
-                        </h2>
+                        <h2 className="mb-4">Resources ({relatedServices.length})</h2>
 
                         {relatedServices.length > 0 ? (
-                            <div className="space-y-4">
+                            <div className="flex flex-col gap-4">
                                 {relatedServices.map((service) => (
-                                    <ServiceCard key={service.id} service={service} />
+                                    <ServiceCard
+                                        key={service.id}
+                                        id={service.id}
+                                        name={service.name}
+                                        description={service.description}
+                                        url={service.url}
+                                        address={firstAddress(service)}
+                                        phones={service.phones?.map((phone) => phone.number)}
+                                    />
                                 ))}
                             </div>
                         ) : (
-                            <div className="text-center py-12 bg-[var(--section-alt)] rounded-xl">
-                                <p className="text-[var(--muted)]">
+                            <div className="text-center py-12 bg-section-alt">
+                                <p className="text-muted">
                                     No resources listed for this group yet.
                                 </p>
                             </div>
                         )}
                     </section>
+
+                    <BackLink list="/organizations">Back to groups</BackLink>
                 </div>
 
-                {/* Right Column - Map with all service locations */}
-                <div className="lg:col-span-1">
-                    <div className="sticky top-24 space-y-6">
-                        {mapLocations.length > 0 ? (
-                            <div className="rounded-xl border border-[var(--card-border)] bg-[var(--card-bg)] overflow-hidden">
-                                <div className="p-4 border-b border-[var(--card-border)]">
-                                    <h3 className="font-semibold text-[var(--foreground)]">
-                                        {mapLocationLabel} ({mapLocations.length})
-                                    </h3>
-                                </div>
-                                <div className="h-[300px]">
-                                    <MapContainer locations={mapLocations} />
-                                </div>
-                            </div>
-                        ) : (
-                            <div className="rounded-xl border border-[var(--card-border)] bg-[var(--section-alt)] p-8 text-center">
-                                <svg
-                                    className="w-12 h-12 mx-auto text-[var(--muted)] mb-3"
-                                    aria-hidden="true"
-                                    fill="none"
-                                    stroke="currentColor"
-                                    viewBox="0 0 24 24"
-                                >
-                                    <path
-                                        strokeLinecap="round"
-                                        strokeLinejoin="round"
-                                        strokeWidth={2}
-                                        d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"
-                                    />
-                                    <path
-                                        strokeLinecap="round"
-                                        strokeLinejoin="round"
-                                        strokeWidth={2}
-                                        d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"
-                                    />
-                                </svg>
-                                <p className="text-[var(--muted)]">No location data available</p>
-                            </div>
-                        )}
-
-                        {/* Contact Card */}
-                        <div className="rounded-xl border border-[var(--card-border)] bg-[var(--card-bg)] p-6">
-                            <h3 className="font-semibold text-[var(--foreground)] mb-4">
-                                Contact Information
-                            </h3>
-
-                            <div className="space-y-4">
-                                {website && (
-                                    <a
-                                        href={website}
-                                        target="_blank"
-                                        rel="noopener noreferrer"
-                                        className="flex items-center gap-3 text-[var(--primary)] hover:text-[var(--primary-hover)]"
-                                    >
-                                        <svg
-                                            className="w-5 h-5 shrink-0"
-                                            aria-hidden="true"
-                                            fill="none"
-                                            stroke="currentColor"
-                                            viewBox="0 0 24 24"
-                                        >
-                                            <path
-                                                strokeLinecap="round"
-                                                strokeLinejoin="round"
-                                                strokeWidth={2}
-                                                d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"
-                                            />
-                                        </svg>
-                                        <span className="truncate">Visit Website</span>
-                                    </a>
-                                )}
-
-                                {organization.email && (
-                                    <a
-                                        href={`mailto:${organization.email}`}
-                                        className="flex items-center gap-3 text-[var(--foreground)] hover:text-[var(--primary)]"
-                                    >
-                                        <svg
-                                            className="w-5 h-5 shrink-0"
-                                            role="img"
-                                            aria-label="email"
-                                            fill="none"
-                                            stroke="currentColor"
-                                            viewBox="0 0 24 24"
-                                        >
-                                            <path
-                                                strokeLinecap="round"
-                                                strokeLinejoin="round"
-                                                strokeWidth={2}
-                                                d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"
-                                            />
-                                        </svg>
-                                        <span className="truncate">{organization.email}</span>
-                                    </a>
-                                )}
-
-                                {addresses.map((address) => (
-                                    <div
-                                        key={address.id}
-                                        className="flex items-start gap-3 text-[var(--foreground)]"
-                                    >
-                                        <svg
-                                            className="w-5 h-5 shrink-0 mt-0.5"
-                                            role="img"
-                                            aria-label="address"
-                                            fill="none"
-                                            stroke="currentColor"
-                                            viewBox="0 0 24 24"
-                                        >
-                                            <path
-                                                strokeLinecap="round"
-                                                strokeLinejoin="round"
-                                                strokeWidth={2}
-                                                d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"
-                                            />
-                                            <path
-                                                strokeLinecap="round"
-                                                strokeLinejoin="round"
-                                                strokeWidth={2}
-                                                d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"
-                                            />
-                                        </svg>
-                                        <address className="not-italic">
-                                            {formatAddress(address)}
-                                        </address>
-                                    </div>
-                                ))}
-
-                                {!website && !organization.email && addresses.length === 0 && (
-                                    <p className="text-[var(--muted)] text-sm">
-                                        No contact information available.
-                                    </p>
-                                )}
-                            </div>
-                        </div>
-
-                        {/* Back Button */}
-                        <Link href="/organizations" className="btn btn-secondary w-full gap-2">
-                            <svg
-                                className="w-4 h-4"
-                                aria-hidden="true"
-                                fill="none"
-                                stroke="currentColor"
-                                viewBox="0 0 24 24"
-                            >
-                                <path
-                                    strokeLinecap="round"
-                                    strokeLinejoin="round"
-                                    strokeWidth={2}
-                                    d="M15 19l-7-7 7-7"
-                                />
-                            </svg>
-                            Back to Groups
-                        </Link>
-                    </div>
-                </div>
+                {mapLocations.length > 0 && <MapAside locations={mapLocations} />}
             </div>
         </div>
     );

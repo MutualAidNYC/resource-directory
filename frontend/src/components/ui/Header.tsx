@@ -7,7 +7,7 @@ import { NavSubmenu } from './NavSubmenu';
 
 const ABOUT_ITEMS = [
     { label: 'About Mutual Aid NYC', href: 'https://mutualaid.nyc/about/' },
-    { label: 'Guiding Principles', href: 'https://mutualaid.nyc/about/principles/' },
+    { label: 'Guiding principles', href: 'https://mutualaid.nyc/about/principles/' },
 ];
 
 /**
@@ -17,7 +17,7 @@ export function Header() {
     const [mobileOpen, setMobileOpen] = useState(false);
 
     return (
-        <header className="w-full bg-[var(--nav-bg)]">
+        <header className="w-full bg-secondary">
             {/* Wide margins only from md up: on phones they pushed the logo and menu button to the middle. */}
             <div className="w-full px-4 md:px-[50px]">
                 {/* ── Header row */}
@@ -36,7 +36,8 @@ export function Header() {
                     {/* Hamburger — mobile only */}
                     <button
                         aria-expanded={mobileOpen}
-                        aria-label="Toggle navigation"
+                        aria-controls={mobileOpen ? 'mobile-nav' : undefined}
+                        aria-label={mobileOpen ? 'Close menu' : 'Menu'}
                         onClick={() => setMobileOpen((v) => !v)}
                         className="xl:hidden text-white p-2 -mr-2"
                     >
@@ -69,9 +70,10 @@ export function Header() {
                         )}
                     </button>
 
-                    {/* Desktop nav — always visible at xl+ */}
+                    {/* Desktop nav — always visible at xl+. No wrapping: below xl the links
+                        would split onto two lines, so the menu button takes over there. */}
                     <nav className="hidden xl:flex" aria-label="Main navigation">
-                        <ul className="flex items-center gap-[19.2px] list-none m-0 p-0">
+                        <ul className="flex items-center gap-[19.2px] list-none m-0 p-0 whitespace-nowrap">
                             <li>
                                 <Link href="/" className="nav-link">
                                     Community Resources Library
@@ -108,6 +110,7 @@ export function Header() {
                 {/* ── Mobile nav panel */}
                 {mobileOpen && (
                     <nav
+                        id="mobile-nav"
                         aria-label="Mobile navigation"
                         className="xl:hidden py-4 border-t border-white/20"
                     >

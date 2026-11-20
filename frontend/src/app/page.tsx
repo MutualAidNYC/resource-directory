@@ -1,8 +1,10 @@
 import fs from 'node:fs';
 import path from 'node:path';
+import { Fragment } from 'react';
 import Link from 'next/link';
 import { SearchBar } from '@/components/ui/SearchBar';
 import { counts, getMapData } from '@/lib/data';
+import { BAR, FRAME, PAGE } from '@/lib/styles';
 
 /** Category icons live in the repo, not Airtable — see that folder's README. */
 const ICON_DIR = 'icons/need_categories';
@@ -13,6 +15,20 @@ function iconSlug(name: string): string {
         .toLowerCase()
         .replace(/[^a-z0-9]+/g, '-')
         .replace(/^-|-$/g, '');
+}
+
+/** A category name that may break after each "/" ("Delivery/Transport"), not mid-word. */
+function breakAfterSlashes(name: string) {
+    return name.split('/').map((part, i) => (
+        <Fragment key={i}>
+            {i > 0 && (
+                <>
+                    /<wbr />
+                </>
+            )}
+            {part}
+        </Fragment>
+    ));
 }
 
 /**
@@ -35,40 +51,33 @@ export default function Home() {
     return (
         <div className="flex flex-col">
             {/* Hero Section */}
-            <section className="pt-10 pb-12 md:py-28 px-4 bg-[var(--background)]">
-                <div className="container mx-auto">
-                    <div className="max-w-5xl mx-auto text-center">
-                        <h1 className="font-black text-4xl md:text-6xl text-[var(--secondary)] mb-6">
-                            Community Resources Library
-                        </h1>
-                    </div>
-                    <div className="max-w-3xl mb-10 mx-auto">
-                        <p className="text-2xl font-bold text-[var(--primary)] mb-4">
-                            Our community-sourced, volunteer-curated library is a collection of the
-                            many resources available to New Yorkers.
-                        </p>
-                    </div>
-                    <div className="max-w-3xl mx-auto text-center">
-                        <p className="text-xl mb-5">
-                            Search the directory of {stats.resources.toLocaleString()} resources
-                            from {stats.groups.toLocaleString()} groups
-                        </p>
-                    </div>
+            <section className="py-10 md:pt-24 md:pb-16 bg-background">
+                <div className={`${PAGE} text-center`}>
+                    <div className={`${BAR} mx-auto mb-5`} />
+                    <h1>Community Resources Library</h1>
+                    <p className="mx-auto mt-5 max-w-[46rem] font-header text-lg md:text-[22px] font-bold tracking-[-0.04em] text-accent text-balance">
+                        Resources for New Yorkers, shared by the community and organized by
+                        volunteers.
+                    </p>
+                    <p className="mt-7 mb-3 text-lg">
+                        Search {stats.resources.toLocaleString()} resources from{' '}
+                        {stats.groups.toLocaleString()} groups
+                    </p>
                     <div className="flex justify-center">
-                        <SearchBar placeholder="Search resources..." />
+                        <SearchBar placeholder="Search resources" />
                     </div>
-                    <div className="flex justify-center gap-4 mt-10">
+                    <div className="flex flex-wrap justify-center gap-4 mt-8">
                         <a
                             href="https://mutualaid.nyc/submit-a-resource/"
-                            className="btn btn-primary"
+                            className="btn btn-secondary flex-1 sm:flex-none"
                         >
-                            Submit a Resource
+                            Submit a resource
                         </a>
                         <a
                             href="https://mutualaid.nyc/suggest-a-change/"
-                            className="btn btn-primary"
+                            className="btn btn-secondary flex-1 sm:flex-none"
                         >
-                            Suggest a Change
+                            Suggest a change
                         </a>
                     </div>
                 </div>
@@ -76,28 +85,27 @@ export default function Home() {
 
             {/* Resource Categories  */}
             {categories.length > 0 && (
-                <section className="pt-10 pb-16 px-4 bg-[var(--section-alt)]">
-                    <div className="container mx-auto">
-                        <div className="flex items-center justify-between mb-8">
-                            <h2 className="text-2xl font-bold text-[var(--foreground)]">
-                                Browse By Category
-                            </h2>
+                <section className="pt-12 pb-16 bg-section-alt">
+                    <div className={PAGE}>
+                        {/* On phones the link goes under the heading, so its arrow can't wrap alone. */}
+                        <div className="flex flex-col items-start gap-3 sm:flex-row sm:items-baseline sm:justify-between mb-6">
+                            <h2>Browse by category</h2>
                             <Link
                                 href="/services"
-                                className="text-[var(--primary)] hover:text-[var(--primary-hover)] font-medium transition-colors underline hover:no-underline"
+                                className="text-accent hover:text-accent-hover font-medium transition-colors underline hover:no-underline"
                             >
                                 View all resources →
                             </Link>
                         </div>
-                        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
+                        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2.5 md:gap-4">
                             {categories.map((category) => {
                                 return (
                                     <Link
                                         key={category.name}
                                         href={`/services?category=${encodeURIComponent(category.name)}`}
-                                        className="group flex items-center gap-3 p-5 rounded-2xl bg-card-bg border border-[var(--card-border)] hover:shadow-md transition-all"
+                                        className={`flex items-center gap-2.5 md:gap-3.5 p-3 md:p-4 bg-card-bg ${FRAME} text-foreground no-underline hover:bg-highlight-alt-border`}
                                     >
-                                        <span className="flex-shrink-0 w-8 h-8 flex items-center justify-center">
+                                        <span className="flex-shrink-0 w-8 h-8 md:w-10 md:h-10 flex items-center justify-center">
                                             {iconFiles.has(`${iconSlug(category.name)}.png`) ? (
                                                 <img
                                                     src={`/${ICON_DIR}/${iconSlug(category.name)}.png`}
@@ -106,11 +114,11 @@ export default function Home() {
                                                     loading="lazy"
                                                 />
                                             ) : (
-                                                <span className="w-6 h-6 rounded-full bg-black/10 block" />
+                                                <span className="w-full h-full rounded-full bg-section-alt block" />
                                             )}
                                         </span>
-                                        <span className="text-sm font-semibold text-foreground">
-                                            {category.name}
+                                        <span className="min-w-0 [overflow-wrap:break-word] text-[15px] md:text-base font-semibold">
+                                            {breakAfterSlashes(category.name)}
                                         </span>
                                     </Link>
                                 );

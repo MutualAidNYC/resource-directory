@@ -3,25 +3,24 @@ import Link from 'next/link';
 interface TagLinkProps {
     href: string;
     children: React.ReactNode;
-    colorScheme?: 'coral' | 'olive';
-    size?: 'sm' | 'md';
+    /** Need tags are purple, community tags teal. */
+    kind: 'need' | 'community';
 }
 
 /**
- * Standardized pill-shaped tag link used for taxonomic categories
- * like Need Focus (coral) and Community Focus (olive).
+ * A pill-shaped category link. The 1px border in the text color is what makes it read as
+ * a link: the tint fills are barely different from white or cream.
  */
-export function TagLink({ href, children, colorScheme = 'coral', size = 'md' }: TagLinkProps) {
-    const sizeClasses = size === 'sm' ? 'px-2 py-0.5 text-xs' : 'px-3 py-1 text-sm';
+export function TagLink({ href, children, kind }: TagLinkProps) {
     const colorClasses =
-        colorScheme === 'coral'
-            ? 'bg-[var(--tag-coral-bg)] text-[var(--tag-coral-text)] border border-[var(--tag-coral-text)]'
-            : 'bg-[var(--tag-olive-bg)] text-[var(--tag-olive-text)] border border-[var(--tag-olive-text)]';
+        kind === 'need'
+            ? 'bg-tag-purple-bg text-tertiary border-tertiary'
+            : 'bg-tag-olive-bg text-tag-olive-text border-tag-olive-text';
 
     return (
         <Link
             href={href}
-            className={`inline-flex items-center rounded-full font-medium transition-opacity hover:opacity-80 ${sizeClasses} ${colorClasses}`}
+            className={`inline-flex items-center rounded-full border px-2.5 py-0.5 text-sm font-medium no-underline hover:underline ${colorClasses}`}
         >
             {children}
         </Link>
