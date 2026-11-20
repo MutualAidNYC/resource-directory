@@ -13,7 +13,7 @@ interface BackLinkProps {
 export function BackLink({ list, children }: BackLinkProps) {
     const href = useListUrl(list);
     return (
-        <Link href={href} className="btn btn-secondary w-full gap-2">
+        <Link href={href} className="btn btn-secondary gap-2">
             <Icon name="chevron-left" className="w-4 h-4" />
             {children}
         </Link>

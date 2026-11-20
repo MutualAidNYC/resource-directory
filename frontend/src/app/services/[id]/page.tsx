@@ -2,13 +2,14 @@ import { Metadata } from 'next';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { getMapService, getOrganization, getService, serviceIds } from '@/lib/data';
-import { externalHref, formatAddress } from '@/lib/format';
-import { MapContainer } from '@/components/map/MapContainer';
-import { ExternalLink, WebsiteLink } from '@/components/ui/ExternalLink';
-import { TagLink } from '@/components/ui/TagLink';
+import { externalHref } from '@/lib/format';
+import { MapAside } from '@/components/map/MapAside';
+import type { MapLocation } from '@/components/map/MapView';
+import { ContactList } from '@/components/ui/ContactList';
+import { TagList } from '@/components/ui/TagList';
 import { Icon } from '@/components/ui/Icon';
 import { BackLink } from '@/components/ui/BackLink';
-import { BRAND_LABEL, CARD, FRAME, PAGE } from '@/lib/styles';
+import { BRAND_LABEL, PAGE } from '@/lib/styles';
 
 interface ServiceDetailPageProps {
     params: Promise<{ id: string }>;
@@ -35,10 +36,9 @@ export async function generateMetadata({ params }: ServiceDetailPageProps): Prom
 }
 
 /**
- * Service detail page showing full service information.
- *
- * The map pin is the first of the service's locations with coordinates (the same
- * pin as on the main map). Categories come from the site's map data.
+ * Service detail page: a full-width head (name, organization, contact information), then
+ * "About this resource" and "Who it's for" beside a map of its locations. Services with
+ * no location (hotlines, online, citywide) get no map and one column.
  */
 export default async function ServiceDetailPage({ params }: ServiceDetailPageProps) {
     const { id } = await params;
@@ -49,231 +49,110 @@ export default async function ServiceDetailPage({ params }: ServiceDetailPagePro
     const categories = getMapService(id);
     const needFocus = categories?.needFocus ?? [];
     const communityFocus = categories?.communityFocus ?? [];
+    const areas = categories?.service_areas ?? [];
     const organization = service.organization_id
         ? getOrganization(service.organization_id)
         : undefined;
-    const website = externalHref(service.url);
 
-    // The Locations list: locations with a name or an address. (The build already
-    // leaves out service_at_locations that link no location.)
-    const places = (service.service_at_locations ?? []).flatMap((sal) => {
-        if (!sal.location) return [];
-        const addresses = (sal.location.addresses ?? [])
-            .map((address) => ({ id: address.id, text: formatAddress(address) }))
-            .filter((address) => address.text);
-        const name = sal.location.name;
-        return name || addresses.length > 0 ? [{ id: sal.id, name, addresses }] : [];
-    });
-
-    let mapCoords: { latitude: number; longitude: number; name: string; address?: string } | null =
-        null;
-    const pinned = service.service_at_locations?.find(
-        (sal) => sal.location?.latitude && sal.location?.longitude,
-    )?.location;
-    if (pinned?.latitude && pinned.longitude) {
-        const addr = pinned.addresses?.[0];
-        mapCoords = {
-            latitude: pinned.latitude,
-            longitude: pinned.longitude,
-            name: pinned.name || service.name,
-            address: addr ? formatAddress(addr) || undefined : undefined,
-        };
-    }
+    // Every location in link order (the build leaves out service_at_locations that
+    // link no location), for the addresses and a pin for each with coordinates.
+    const locations = (service.service_at_locations ?? []).flatMap((sal) =>
+        sal.location ? [sal.location] : [],
+    );
+    const pins: MapLocation[] = locations.flatMap((loc) =>
+        loc.latitude && loc.longitude
+            ? [
+                  {
+                      id: loc.id,
+                      name: loc.name || service.name,
+                      latitude: loc.latitude,
+                      longitude: loc.longitude,
+                  },
+              ]
+            : [],
+    );
 
     return (
         <div className={`${PAGE} pt-10 pb-16`}>
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-                {/* Main Content */}
-                <div className="lg:col-span-2 space-y-8">
-                    {/* Header */}
-                    <div>
-                        <p className={`${BRAND_LABEL} text-[15px] mb-2`}>Resource</p>
-                        <h1 className="mb-4">{service.name}</h1>
+            <p className={`${BRAND_LABEL} text-[15px] mb-2`}>Resource</p>
+            <h1>{service.name}</h1>
 
-                        {/* Group, linked to its page */}
-                        {organization && (
-                            <p className="text-lg mb-4 flex items-start gap-2">
-                                <Icon name="group" className="w-5 h-5 mt-1 shrink-0" />
-                                <span>
-                                    Group:{' '}
-                                    <Link
-                                        href={`/organizations/${organization.id}`}
-                                        className="text-accent hover:text-accent-hover underline hover:no-underline"
-                                    >
-                                        {organization.name}
-                                    </Link>
-                                </span>
-                            </p>
-                        )}
+            {/* Group, linked to its page */}
+            {organization && (
+                <p className="mt-4 text-lg flex items-start gap-2">
+                    <Icon name="group" className="w-5 h-5 mt-1 shrink-0" />
+                    <span>
+                        Group:{' '}
+                        <Link
+                            href={`/organizations/${organization.id}`}
+                            className="text-accent hover:text-accent-hover underline hover:no-underline"
+                        >
+                            {organization.name}
+                        </Link>
+                    </span>
+                </p>
+            )}
 
-                        {/* Need Categories */}
-                        {needFocus.length > 0 && (
-                            <div className="mb-4">
-                                <p className={`${BRAND_LABEL} text-sm mb-2`}>Type of help</p>
-                                <div className="flex flex-wrap gap-2">
-                                    {needFocus.map((need, index) => (
-                                        <TagLink
-                                            key={`need-${index}`}
-                                            href={`/services?category=${encodeURIComponent(need)}`}
-                                            kind="need"
-                                        >
-                                            {need}
-                                        </TagLink>
-                                    ))}
-                                </div>
-                            </div>
-                        )}
+            <ContactList
+                name={service.name}
+                website={externalHref(service.url)}
+                phones={(service.phones ?? []).map((phone) => phone.number)}
+                email={service.email}
+                locations={locations}
+            />
 
-                        {/* Community Focus */}
-                        {communityFocus.length > 0 && (
-                            <div className="mb-4">
-                                <p className={`${BRAND_LABEL} text-sm mb-2`}>Community</p>
-                                <div className="flex flex-wrap gap-2">
-                                    {communityFocus.map((community, index) => (
-                                        <TagLink
-                                            key={`community-${index}`}
-                                            href={`/services?community=${encodeURIComponent(community)}`}
-                                            kind="community"
-                                        >
-                                            {community}
-                                        </TagLink>
-                                    ))}
-                                </div>
-                            </div>
-                        )}
-                    </div>
-
-                    {/* Description */}
+            <div
+                className={`mt-10 grid gap-10 ${pins.length > 0 ? 'lg:grid-cols-[minmax(0,2fr)_minmax(0,1fr)] lg:gap-x-12' : ''}`}
+            >
+                <div className="space-y-10">
                     {service.description && (
                         <section>
-                            <h2 className="mb-4">Description</h2>
+                            <h2 className="mb-4">About this resource</h2>
                             <p className="max-w-prose text-lg whitespace-pre-wrap">
                                 {service.description}
                             </p>
                         </section>
                     )}
 
-                    {/* Locations */}
-                    {places.length > 0 && (
+                    {needFocus.length + communityFocus.length + areas.length > 0 && (
                         <section>
-                            <h2 className="mb-4">Locations</h2>
-                            <div className="space-y-4">
-                                {places.map(({ id, name, addresses }) => (
-                                    <div key={id} className="border border-card-border p-4">
-                                        {name && <h3 className="mb-2">{name}</h3>}
-                                        {addresses.length > 0 && (
-                                            <div>
-                                                {addresses.map((address) => (
-                                                    <p key={address.id}>{address.text}</p>
-                                                ))}
-                                            </div>
-                                        )}
+                            <h2 className="mb-4">Who it&apos;s for</h2>
+                            <div className="space-y-6">
+                                {needFocus.length > 0 && (
+                                    <div>
+                                        <p className={`${BRAND_LABEL} text-sm mb-2`}>Type of help</p>
+                                        <TagList
+                                            name={service.name}
+                                            tags={needFocus.map((tag) => ({ kind: 'need', name: tag }))}
+                                        />
                                     </div>
-                                ))}
+                                )}
+                                {communityFocus.length > 0 && (
+                                    <div>
+                                        <p className={`${BRAND_LABEL} text-sm mb-2`}>Community</p>
+                                        <TagList
+                                            name={service.name}
+                                            tags={communityFocus.map((tag) => ({
+                                                kind: 'community',
+                                                name: tag,
+                                            }))}
+                                        />
+                                    </div>
+                                )}
+                                {areas.length > 0 && (
+                                    <div>
+                                        <p className={`${BRAND_LABEL} text-sm mb-2`}>Area</p>
+                                        <p>{areas.join(', ')}</p>
+                                    </div>
+                                )}
                             </div>
                         </section>
                     )}
+
+                    <BackLink list="/services">Back to all resources</BackLink>
                 </div>
 
-                {/* Sidebar */}
-                <div className="lg:col-span-1">
-                    <div className="sticky top-24 space-y-6">
-                        {/* Map Card - show if service has geocoded coordinates */}
-                        {mapCoords && (
-                            <div className={`overflow-hidden bg-card-bg ${FRAME}`}>
-                                <div className="h-64 overflow-hidden">
-                                    <MapContainer
-                                        locations={[
-                                            {
-                                                id: service.id,
-                                                name: mapCoords.name,
-                                                latitude: mapCoords.latitude,
-                                                longitude: mapCoords.longitude,
-                                            },
-                                        ]}
-                                    />
-                                </div>
-                                {mapCoords.address && (
-                                    <div className="p-4 border-t border-card-border">
-                                        <p className="text-sm mb-2">{mapCoords.address}</p>
-                                        <ExternalLink
-                                            href={`https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(mapCoords.address)}`}
-                                            className="inline-flex items-center gap-1.5 text-sm font-medium text-accent hover:text-accent-hover"
-                                        >
-                                            <Icon name="pin" className="w-4 h-4" />
-                                            Get directions
-                                        </ExternalLink>
-                                    </div>
-                                )}
-                            </div>
-                        )}
-
-                        {/* Contact Card */}
-                        <div className={`${CARD} p-6`}>
-                            <h3 className="mb-4">Contact information</h3>
-
-                            <div className="space-y-4">
-                                {website && (
-                                    <div className="flex items-center gap-3">
-                                        <Icon name="link" className="w-5 h-5 shrink-0" />
-                                        <span className="min-w-0">
-                                            <WebsiteLink
-                                                href={website}
-                                                name={service.name}
-                                                className="text-accent hover:text-accent-hover underline hover:no-underline"
-                                            />
-                                        </span>
-                                    </div>
-                                )}
-
-                                {service.email && (
-                                    <a
-                                        href={`mailto:${service.email}`}
-                                        className="flex items-center gap-3 text-foreground hover:text-accent"
-                                    >
-                                        <Icon
-                                            name="email"
-                                            label="email"
-                                            className="w-5 h-5 shrink-0"
-                                        />
-                                        <span className="truncate underline hover:no-underline">
-                                            {service.email}
-                                        </span>
-                                    </a>
-                                )}
-
-                                {service.phones?.map((phone) => (
-                                    <div key={phone.id} className="flex items-center gap-3">
-                                        <Icon
-                                            name="phone"
-                                            label="phone"
-                                            className="w-5 h-5 shrink-0"
-                                        />
-                                        <span>
-                                            <a
-                                                href={`tel:${phone.number}`}
-                                                className="hover:text-foreground underline hover:no-underline"
-                                            >
-                                                {phone.number}
-                                            </a>
-                                        </span>
-                                    </div>
-                                ))}
-
-                                {!website &&
-                                    !service.email &&
-                                    (service.phones?.length ?? 0) === 0 && (
-                                        <p className="text-muted text-sm">
-                                            No contact information available.
-                                        </p>
-                                    )}
-                            </div>
-                        </div>
-
-                        {/* Back Button */}
-                        <BackLink list="/services">Back to all resources</BackLink>
-                    </div>
-                </div>
+                {pins.length > 0 && <MapAside locations={pins} />}
             </div>
         </div>
     );
