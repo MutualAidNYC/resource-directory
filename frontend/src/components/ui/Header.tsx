@@ -21,8 +21,8 @@ export function Header() {
                     {/* Logo */}
                     <a href={site.owner.url} className="flex items-center gap-3">
                         <Image
-                            src={site.logo}
-                            alt={`${site.owner.name} logo`}
+                            src="/logo.png"
+                            alt={site.owner.name}
                             width={130}
                             height={130}
                             className="w-[60px] h-[60px] xl:w-[120px] xl:h-[120px]"

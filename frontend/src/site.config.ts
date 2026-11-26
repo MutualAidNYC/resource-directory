@@ -16,11 +16,9 @@ export type NavEntry = SiteLink | { label: string; items: SiteLink[] };
 export interface SiteConfig {
     /** The directory's name: home page heading, nav links and page titles. */
     name: string;
-    /** The group running the directory. `name` starts the home page title and the logo's alt
-     * text; the logo links to `url`. */
+    /** The group running the directory. `name` starts the home page title and is the logo's alt
+     * text; the logo (`public/logo.png`) links to `url`. */
     owner: { name: string; url: string };
-    /** Square image in `public/`. */
-    logo: string;
     /** Under the home page heading. */
     tagline: string;
     /** Search-result descriptions: the home page's, and the services list's. */
@@ -51,7 +49,6 @@ const SITE_LINKS: SiteLink[] = [
 export const site: SiteConfig = {
     name: 'Community Resources Library',
     owner: { name: 'Mutual Aid NYC', url: 'https://mutualaid.nyc' },
-    logo: '/logo.png',
     tagline: 'Resources for New Yorkers, shared by the community and organized by volunteers.',
     description:
         'Find food, housing, legal help, social services, and other community resources for New Yorkers. Free and low-cost, community-sourced and volunteer-curated.',
