@@ -1,9 +1,9 @@
-import Link from 'next/link';
+import { DetailsLink } from '@/components/ui/DetailsLink';
 import { Icon } from '@/components/ui/Icon';
 import { TagList } from '@/components/ui/TagList';
 import { WebsiteLink } from '@/components/ui/ExternalLink';
 import { externalHref } from '@/lib/format';
-import { CARD, TITLE_LINK } from '@/lib/styles';
+import { CARD } from '@/lib/styles';
 
 interface ServiceCardProps {
     id: string;
@@ -23,9 +23,7 @@ interface ServiceCardProps {
 
 /**
  * A service in a list: the services list, or an organization's page (no organization
- * line, tags or map button; phone numbers instead). Title → organization → address →
- * website → phone → description → tags (3, then "+N more"), which sit at the bottom so
- * they line up across a row.
+ * line, tags or map button; phone numbers instead).
  */
 export function ServiceCard({
     id,
@@ -45,16 +43,12 @@ export function ServiceCard({
         <article className={`${CARD} @container flex flex-col p-5`}>
             {/* The title wraps beside "View on map", which reads "Map" on narrow cards. */}
             <div className="flex items-start justify-between gap-3">
-                <h3 className="min-w-0">
-                    <Link href={`/services/${id}`} className={TITLE_LINK}>
-                        {name}
-                    </Link>
-                </h3>
+                <h3 className="min-w-0">{name}</h3>
                 {onViewOnMap && (
                     <button
                         type="button"
                         onClick={onViewOnMap}
-                        className="flex-none -mt-0.5 inline-flex items-center gap-1.5 border border-muted bg-card-bg px-3 py-1 text-[15px] text-secondary hover:bg-highlight-alt-border"
+                        className="flex-none -mt-0.5 inline-flex items-center gap-1.5 rounded-full border border-muted bg-card-bg px-3 py-1 text-[15px] text-secondary hover:bg-highlight-alt-border"
                     >
                         <Icon name="pin" className="w-[18px] h-[18px]" />
                         <span className="@max-[420px]:hidden">View on map</span>
@@ -107,8 +101,8 @@ export function ServiceCard({
 
             {description && <p className="mt-3 line-clamp-2">{description}</p>}
 
-            {needFocus.length + communityFocus.length > 0 && (
-                <div className="mt-auto pt-4">
+            <div className="mt-auto pt-4 flex flex-col gap-4">
+                {needFocus.length + communityFocus.length > 0 && (
                     <TagList
                         name={name}
                         tags={[
@@ -119,8 +113,9 @@ export function ServiceCard({
                             })),
                         ]}
                     />
-                </div>
-            )}
+                )}
+                <DetailsLink href={`/services/${id}`} name={name} />
+            </div>
         </article>
     );
 }

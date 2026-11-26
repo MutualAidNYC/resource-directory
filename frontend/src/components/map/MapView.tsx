@@ -255,7 +255,7 @@ export default function MapView({
                 // Remove existing popup
                 popupRef.current?.remove();
 
-                // Like the cards: the name is the link (when there is one), the organization below.
+                // The title links only when there's an href.
                 const name = escapeHtml(props.name);
                 const title = props.href
                     ? `<a href="${escapeHtml(props.href)}" class="popup-title ${TITLE_LINK}">${name}</a>`
