@@ -2,9 +2,10 @@ import Link from 'next/link';
 import { Icon } from './Icon';
 import { PAGE } from '@/lib/styles';
 
-const LINK = 'font-header font-semibold text-sm text-foreground no-underline hover:underline';
+const LINK =
+    'font-header text-[15px] min-[980px]:text-lg min-[980px]:font-semibold text-foreground no-underline hover:underline';
 
-// The same places as the header and mutualaid.nyc's footer, plus the library's lists.
+// The same places as the header and mutualaid.nyc's footer.
 const SITE_LINKS = [
     { label: 'Mutual aid groups', href: 'https://mutualaid.nyc/mutual-aid-groups/' },
     { label: 'For groups + organizers', href: 'https://mutualaid.nyc/for-groups-organizers/' },
@@ -31,16 +32,6 @@ export function Footer() {
                                     Community Resources Library
                                 </Link>
                             </li>
-                            <li>
-                                <Link href="/services" className={LINK}>
-                                    Resources
-                                </Link>
-                            </li>
-                            <li>
-                                <Link href="/organizations" className={LINK}>
-                                    Groups
-                                </Link>
-                            </li>
                             {SITE_LINKS.map(({ label, href }) => (
                                 <li key={href}>
                                     <a href={href} className={LINK}>
@@ -50,7 +41,7 @@ export function Footer() {
                             ))}
                         </ul>
                     </nav>
-                    <p className="mt-5 text-[15px]">
+                    <p className="mt-5 text-lg">
                         <a
                             href="https://mutualaidnyc.substack.com"
                             className="underline hover:no-underline"
@@ -65,9 +56,9 @@ export function Footer() {
                             <a
                                 href={href}
                                 aria-label={`Mutual Aid NYC on ${label}`}
-                                className="grid place-items-center w-10 h-10 rounded-full bg-accent-bright text-white"
+                                className="grid place-items-center w-[45px] h-[45px] rounded-full bg-accent-bright text-white"
                             >
-                                <Icon name={name} className="w-5 h-5" />
+                                <Icon name={name} className="w-6 h-6" />
                             </a>
                         </li>
                     ))}
