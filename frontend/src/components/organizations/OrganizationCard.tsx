@@ -17,7 +17,7 @@ export function OrganizationCard({ organization }: OrganizationCardProps) {
             )}
             <div className="mt-auto pt-4 flex flex-wrap items-center justify-between gap-3">
                 {count > 0 && (
-                    <p className="text-muted">
+                    <p className="text-secondary">
                         {count} {count === 1 ? 'resource' : 'resources'}
                     </p>
                 )}

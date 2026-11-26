@@ -58,10 +58,19 @@ export function ServiceCard({
                 )}
             </div>
 
-            {organizationName && <p className="mt-1 text-muted">{organizationName}</p>}
+            {organizationName && (
+                <p className="mt-1 flex items-start gap-2 text-secondary">
+                    <Icon
+                        name="group"
+                        label="group"
+                        className="w-[18px] h-[18px] mt-0.5 shrink-0"
+                    />
+                    <span>{organizationName}</span>
+                </p>
+            )}
 
             {address && (
-                <p className="mt-3 flex items-start gap-2 text-muted">
+                <p className="mt-3 flex items-start gap-2 text-secondary">
                     <Icon
                         name="pin"
                         label="address"
