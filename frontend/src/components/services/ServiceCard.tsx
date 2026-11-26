@@ -74,13 +74,13 @@ export function ServiceCard({
             {(website || phones.length > 0) && (
                 <div className="mt-3 flex flex-col gap-2">
                     {website && (
-                        <p className="flex items-center gap-2 min-w-0">
+                        <p className="flex items-center gap-2">
                             <Icon name="link" className="w-[18px] h-[18px] shrink-0" />
                             <WebsiteLink
                                 href={website}
                                 name={name}
                                 className="underline hover:no-underline text-accent"
-                                oneLine
+                                linkOnly
                             />
                         </p>
                     )}
