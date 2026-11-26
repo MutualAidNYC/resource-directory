@@ -5,6 +5,7 @@ import { useSearchParams } from 'next/navigation';
 import { MapContainer } from '@/components/map/MapContainer';
 import { ServiceCard } from '@/components/services/ServiceCard';
 import { CountLine } from '@/components/ui/CountLine';
+import { Pagination, PerPage, paginate } from '@/components/ui/Pagination';
 import { rememberOnDetailClick } from '@/lib/listUrl';
 import { search, SERVICE_FIELDS } from '@/lib/search';
 import type { Category, MapService } from '@/lib/types';
@@ -15,8 +16,15 @@ const LABEL = 'block text-[15px] font-semibold mb-1.5';
 const FIELD = 'w-full border border-muted bg-card-bg px-3 py-2 text-base';
 
 /** The URL's params, which are also the page's state: `/services?category=Food&view=map`. */
-const KEYS = ['q', 'category', 'community', 'area', 'view'] as const;
+const KEYS = ['q', 'category', 'community', 'area', 'view', 'page', 'per'] as const;
 type State = Record<(typeof KEYS)[number], string>;
+
+const urlFor = (state: State) => {
+    const params = new URLSearchParams();
+    for (const k of KEYS) if (state[k]) params.set(k, state[k]);
+    const qs = params.toString();
+    return qs ? `/services?${qs}` : '/services';
+};
 
 /** The dropdowns, with the names their chips use. */
 const FILTERS = [
@@ -39,8 +47,9 @@ interface MapPageClientProps {
 
 /**
  * The resources list with search and filters, or the same results on a map (the Map
- * tab). Everything is in the URL (?q=, ?category=, ?community=, ?area=, ?view=map), so a
- * filtered list or map can be shared.
+ * tab). Everything is in the URL (?q=, ?category=, ?community=, ?area=, ?view=map, and
+ * the list's ?page= and ?per=), so a filtered list or map can be shared, and a back link
+ * returns to the same page of results.
  */
 export default function MapPageClient({
     services,
@@ -68,15 +77,14 @@ export default function MapPageClient({
     /**
      * Change the state and put it in the URL, so filtered views are bookmarkable and
      * sharable. history.replaceState, not router.replace: the router would download the
-     * page's data again on every change; Next still updates useSearchParams.
+     * page's data again on every change; Next still updates useSearchParams. A new search,
+     * filter or page size starts at page 1; switching List/Map keeps the page.
      */
     const update = (changes: Partial<State>) => {
-        const next = { ...state, ...changes };
+        const keepPage = 'page' in changes || 'view' in changes;
+        const next = { ...state, page: keepPage ? state.page : '', ...changes };
         setState(next);
-        const params = new URLSearchParams();
-        for (const k of KEYS) if (next[k]) params.set(k, next[k]);
-        const qs = params.toString();
-        window.history.replaceState(null, '', qs ? `/services?${qs}` : '/services');
+        window.history.replaceState(null, '', urlFor(next));
     };
 
     const showView = (view: '' | 'map') => {
@@ -159,8 +167,17 @@ export default function MapPageClient({
     const isMap = state.view === 'map';
     const total = filteredServices.length;
     const unmapped = total - mapLocations.length;
+    // The list is paged; the map shows every result.
+    const { shown, page, pageCount, range, perPage } = paginate(
+        filteredServices,
+        state.page,
+        state.per,
+    );
 
-    const countText = `${resources(total)} ${searched ? `for “${searched}”` : 'found'}`;
+    const countText =
+        !isMap && pageCount > 1
+            ? `Showing ${range} of ${resources(total)}${searched ? ` for “${searched}”` : ''}`
+            : `${resources(total)} ${searched ? `for “${searched}”` : 'found'}`;
     const countStatus =
         countText +
         (applied.length
@@ -286,23 +303,34 @@ export default function MapPageClient({
                     <h2 id="results-heading" className="sr-only">
                         Results
                     </h2>
-                    <div className="mb-4 flex flex-wrap items-center justify-between gap-x-6 gap-y-3">
+                    {/* The count, then Per page and List/Map, which wrap together; List/Map stays at the right. */}
+                    <div className="mb-4 flex flex-wrap items-center gap-x-6 gap-y-3">
                         <CountLine ref={countRef} text={countText} status={countStatus} />
-                        <div
-                            role="group"
-                            aria-label="Show results as"
-                            className="flex border border-muted bg-card-bg"
-                        >
-                            {(['', 'map'] as const).map((view) => (
-                                <button
-                                    key={view}
-                                    onClick={() => showView(view)}
-                                    aria-pressed={isMap === (view === 'map')}
-                                    className={`px-4.5 py-2 font-semibold ${isMap === (view === 'map') ? 'bg-secondary text-white' : 'text-secondary'}`}
-                                >
-                                    {view ? 'Map' : 'List'}
-                                </button>
-                            ))}
+                        <div className="flex flex-auto flex-wrap items-center gap-x-6 gap-y-3">
+                            {/* The map shows every result, so no page size there. */}
+                            {!isMap && (
+                                <PerPage
+                                    total={total}
+                                    per={perPage}
+                                    onPer={(per) => update({ per })}
+                                />
+                            )}
+                            <div
+                                role="group"
+                                aria-label="Show results as"
+                                className="ml-auto flex border border-muted bg-card-bg"
+                            >
+                                {(['', 'map'] as const).map((view) => (
+                                    <button
+                                        key={view}
+                                        onClick={() => showView(view)}
+                                        aria-pressed={isMap === (view === 'map')}
+                                        className={`px-4.5 py-2 font-semibold ${isMap === (view === 'map') ? 'bg-secondary text-white' : 'text-secondary'}`}
+                                    >
+                                        {view ? 'Map' : 'List'}
+                                    </button>
+                                ))}
+                            </div>
                         </div>
                     </div>
 
@@ -349,15 +377,27 @@ export default function MapPageClient({
                             </div>
                         </>
                     ) : total > 0 ? (
-                        <ResourceGrid
-                            services={filteredServices}
-                            onViewOnMap={(id) => {
-                                update({ view: 'map' });
-                                setHighlightedId(id);
-                                // The button is gone with the list: focus (and scroll) to the map's note.
-                                requestAnimationFrame(() => mapNoteRef.current?.focus());
-                            }}
-                        />
+                        <>
+                            <ResourceGrid
+                                services={shown}
+                                onViewOnMap={(id) => {
+                                    update({ view: 'map' });
+                                    setHighlightedId(id);
+                                    // The button is gone with the list: focus (and scroll) to the map's note.
+                                    requestAnimationFrame(() => mapNoteRef.current?.focus());
+                                }}
+                            />
+                            <Pagination
+                                page={page}
+                                pageCount={pageCount}
+                                href={(page) => urlFor({ ...state, page, per: perPage })}
+                                onPage={(page) => {
+                                    update({ page, per: perPage });
+                                    // The links are gone with the page: focus (and scroll) to "Showing x–y of n".
+                                    requestAnimationFrame(() => countRef.current?.focus());
+                                }}
+                            />
+                        </>
                     ) : (
                         <div className="py-10 text-center">
                             <p>Try fewer filters or a different word.</p>
