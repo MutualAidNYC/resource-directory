@@ -2,11 +2,13 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { Fragment } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { SearchBar } from '@/components/ui/SearchBar';
 import { counts, getMapData } from '@/lib/data';
 import { BAR, FRAME, PAGE } from '@/lib/styles';
+import { site } from '@/site.config';
 
-/** Category icons live in the repo, not Airtable — see that folder's README. */
+/** Category icons live in the repo, not Airtable: see "Your own site" in the frontend README. */
 const ICON_DIR = 'icons/need_categories';
 
 /** Category name to icon filename: lowercase, non-alphanumeric runs to "-". */
@@ -54,10 +56,9 @@ export default function Home() {
             <section className="py-10 md:pt-24 md:pb-16 bg-background">
                 <div className={`${PAGE} text-center`}>
                     <div className={`${BAR} mx-auto mb-5`} />
-                    <h1>Community Resources Library</h1>
+                    <h1>{site.name}</h1>
                     <p className="mx-auto mt-5 max-w-[46rem] font-header text-lg md:text-[22px] font-bold tracking-[-0.04em] text-accent text-balance">
-                        Resources for New Yorkers, shared by the community and organized by
-                        volunteers.
+                        {site.tagline}
                     </p>
                     <p className="mt-7 mb-3 text-lg">
                         Search {stats.resources.toLocaleString()} resources from{' '}
@@ -66,20 +67,26 @@ export default function Home() {
                     <div className="flex justify-center">
                         <SearchBar placeholder="Search resources" />
                     </div>
-                    <div className="flex flex-wrap justify-center gap-4 mt-8">
-                        <a
-                            href="https://mutualaid.nyc/submit-a-resource/"
-                            className="btn btn-secondary flex-1 sm:flex-none"
-                        >
-                            Submit a resource
-                        </a>
-                        <a
-                            href="https://mutualaid.nyc/suggest-a-change/"
-                            className="btn btn-secondary flex-1 sm:flex-none"
-                        >
-                            Suggest a change
-                        </a>
-                    </div>
+                    {(site.submitUrl || site.suggestUrl) && (
+                        <div className="flex flex-wrap justify-center gap-4 mt-8">
+                            {site.submitUrl && (
+                                <a
+                                    href={site.submitUrl}
+                                    className="btn btn-secondary flex-1 sm:flex-none"
+                                >
+                                    Submit a resource
+                                </a>
+                            )}
+                            {site.suggestUrl && (
+                                <a
+                                    href={site.suggestUrl}
+                                    className="btn btn-secondary flex-1 sm:flex-none"
+                                >
+                                    Suggest a change
+                                </a>
+                            )}
+                        </div>
+                    )}
                 </div>
             </section>
 
@@ -107,11 +114,12 @@ export default function Home() {
                                     >
                                         <span className="flex-shrink-0 w-8 h-8 md:w-10 md:h-10 flex items-center justify-center">
                                             {iconFiles.has(`${iconSlug(category.name)}.png`) ? (
-                                                <img
+                                                <Image
                                                     src={`/${ICON_DIR}/${iconSlug(category.name)}.png`}
                                                     alt=""
+                                                    width={60}
+                                                    height={60}
                                                     className="w-full h-full object-contain"
-                                                    loading="lazy"
                                                 />
                                             ) : (
                                                 <span className="w-full h-full rounded-full bg-section-alt block" />

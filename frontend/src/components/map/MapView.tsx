@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from 'react';
 import * as maplibregl from 'maplibre-gl';
 import 'maplibre-gl/dist/maplibre-gl.css';
 import { TITLE_LINK } from '@/lib/styles';
+import { site } from '@/site.config';
 
 // MapLibre runs its worker from a separate file; this lets Next.js bundle it
 // as a hashed asset.
@@ -159,8 +160,8 @@ export default function MapView({
         const map = new maplibregl.Map({
             container: mapContainer.current,
             style: BASEMAP_STYLE_URL,
-            center: [-74.006, 40.7128],
-            zoom: 10,
+            center: site.map.center,
+            zoom: site.map.zoom,
             locale: { 'GeolocateControl.FindMyLocation': 'Show my location on the map' },
         });
 
