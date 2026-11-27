@@ -1,5 +1,6 @@
 import { Metadata } from 'next';
 import { apiDocs, type Endpoint, type Field } from '@/lib/openapi';
+import { CARD } from '@/lib/styles';
 
 export const metadata: Metadata = {
     title: 'API',
@@ -8,8 +9,8 @@ export const metadata: Metadata = {
 };
 
 // The offset keeps underscores in linked names (`service_list`) visible.
-const LINK = 'hover:text-[var(--primary-hover)] underline underline-offset-4 hover:no-underline';
-const CODE = 'text-sm bg-[var(--section-alt)] rounded px-1';
+const LINK = 'hover:text-accent-hover underline underline-offset-4 hover:no-underline';
+const CODE = 'text-sm bg-section-alt rounded px-1';
 
 /**
  * API docs, built from the OpenAPI description (`lib/openapi.ts`). Not at
@@ -22,7 +23,7 @@ export default function ApiDocsPage() {
     return (
         <div className="mx-auto max-w-3xl px-4 py-8 space-y-10">
             <div className="space-y-4">
-                <h1 className="text-3xl">{docs.title}</h1>
+                <h1>{docs.title}</h1>
                 <p>
                     The resources and groups in this directory, as a read-only API in the{' '}
                     <a href="https://docs.openreferral.org/" className={LINK}>
@@ -50,10 +51,7 @@ export default function ApiDocsPage() {
                 </ul>
             </div>
 
-            <nav
-                aria-label="On this page"
-                className="rounded-xl border border-[var(--card-border)] bg-[var(--card-bg)] p-6"
-            >
+            <nav aria-label="On this page" className={`${CARD} p-6`}>
                 <h2 className="text-xl mb-4">On this page</h2>
                 <ul className="list-disc pl-6 space-y-1">
                     <li>
@@ -135,7 +133,7 @@ export default function ApiDocsPage() {
             </section>
 
             {/* Required by the license of static_build/openapi.json, which this page adapts. */}
-            <p className="text-sm text-[var(--muted)]">
+            <p className="text-sm text-muted">
                 Adapted from Open Referral&apos;s HSDS OpenAPI description, © Open Referral,{' '}
                 <a href="https://creativecommons.org/licenses/by-sa/4.0/" className={LINK}>
                     CC BY-SA 4.0
@@ -148,7 +146,7 @@ export default function ApiDocsPage() {
 
 function EndpointSection({ endpoint: e }: { endpoint: Endpoint }) {
     return (
-        <section className="rounded-xl border border-[var(--card-border)] bg-[var(--card-bg)] p-6 space-y-4">
+        <section className={`${CARD} p-6 space-y-4`}>
             <h3 id={e.anchor} className="text-lg wrap-anywhere">
                 <code>GET {e.path}</code>
             </h3>
@@ -162,7 +160,7 @@ function EndpointSection({ endpoint: e }: { endpoint: Endpoint }) {
                             <div key={p.name}>
                                 <dt>
                                     <code className={CODE}>{p.name}</code>{' '}
-                                    <span className="text-sm text-[var(--muted)]">
+                                    <span className="text-sm text-muted">
                                         {[
                                             p.in,
                                             p.type,
@@ -214,7 +212,7 @@ function Fields({ fields }: { fields: Field[] }) {
                 <div key={f.name}>
                     <dt>
                         <code className={CODE}>{f.name}</code>{' '}
-                        <span className="text-sm text-[var(--muted)]">{f.type}</span>
+                        <span className="text-sm text-muted">{f.type}</span>
                     </dt>
                     {f.description && <dd className="pl-4">{f.description}</dd>}
                     {f.fields && (

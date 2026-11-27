@@ -1,49 +1,56 @@
 import Link from 'next/link';
+import { Icon } from './Icon';
+import { PAGE } from '@/lib/styles';
+import { site } from '@/site.config';
 
-/**
- * Site footer with warm navy background and cream text.
- */
+const LINK =
+    'font-header text-[15px] min-[980px]:text-lg min-[980px]:font-semibold text-foreground no-underline hover:underline';
+
+/** Site footer: the site's links, the newsletter and social links. */
 export function Footer() {
     return (
-        <footer className="border-t border-[var(--card-border)] bg-[var(--nav-bg)]">
-            <div className="container mx-auto px-4 py-8">
-                <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-                    {/* Branding */}
-                    <div className="flex items-center gap-2">
-                        <span className="text-lg font-bold text-[var(--nav-text)]">
-                            Mutual Aid <span className="text-[var(--highlight)]">NYC</span>
-                        </span>
-                    </div>
-
-                    {/* Links */}
-                    <nav className="flex flex-wrap gap-6 text-sm">
-                        <Link
-                            href="/services"
-                            className="text-[var(--nav-text)] underline hover:no-underline"
-                        >
-                            Resources
-                        </Link>
-                        <Link
-                            href="/organizations"
-                            className="text-[var(--nav-text)] underline hover:no-underline"
-                        >
-                            Groups
-                        </Link>
+        <footer className="bg-card-bg">
+            <div className={`${PAGE} grid gap-6 pt-12 pb-8 md:grid-cols-[1fr_auto]`}>
+                <div>
+                    <nav aria-label="Footer">
+                        <ul className="flex flex-wrap gap-x-[22px] gap-y-2 list-none m-0 p-0">
+                            <li>
+                                <Link href="/" className={LINK}>
+                                    {site.name}
+                                </Link>
+                            </li>
+                            {site.footerLinks.map(({ label, href }) => (
+                                <li key={href}>
+                                    <a href={href} className={LINK}>
+                                        {label}
+                                    </a>
+                                </li>
+                            ))}
+                        </ul>
                     </nav>
-
-                    {/* Attribution */}
-                    <p className="text-sm text-[var(--nav-text)]">
-                        Powered by{' '}
-                        <a
-                            href="https://openreferral.org"
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="hover:no-underline underline transition-opacity text-inherit"
-                        >
-                            Open Referral HSDS
-                        </a>
-                    </p>
+                    {site.newsletterUrl && (
+                        <p className="mt-5 text-lg">
+                            <a href={site.newsletterUrl} className="underline hover:no-underline">
+                                Subscribe to our newsletter
+                            </a>
+                        </p>
+                    )}
                 </div>
+                {site.social.length > 0 && (
+                    <ul className="flex gap-2.5 list-none m-0 p-0">
+                        {site.social.map(({ icon, label, href }) => (
+                            <li key={href}>
+                                <a
+                                    href={href}
+                                    aria-label={`${site.owner.name} on ${label}`}
+                                    className="grid place-items-center w-[45px] h-[45px] rounded-full bg-accent-bright text-white"
+                                >
+                                    <Icon name={icon} className="w-6 h-6" />
+                                </a>
+                            </li>
+                        ))}
+                    </ul>
+                )}
             </div>
         </footer>
     );

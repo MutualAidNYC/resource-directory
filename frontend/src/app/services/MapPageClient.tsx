@@ -1,26 +1,42 @@
 'use client';
 
-import { useState, useMemo, useCallback, useRef, useEffect, useEffectEvent } from 'react';
+import { useState, useMemo, useRef } from 'react';
 import { useSearchParams } from 'next/navigation';
-import Link from 'next/link';
 import { MapContainer } from '@/components/map/MapContainer';
-import { TagLink } from '@/components/ui/TagLink';
-import { externalHref } from '@/lib/format';
+import { ServiceCard } from '@/components/services/ServiceCard';
+import { CountLine } from '@/components/ui/CountLine';
+import { Pagination, PerPage, paginate } from '@/components/ui/Pagination';
+import { rememberOnDetailClick } from '@/lib/listUrl';
 import { search, SERVICE_FIELDS } from '@/lib/search';
 import type { Category, MapService } from '@/lib/types';
+import { BAR, FRAME, PAGE, TEXT_BUTTON } from '@/lib/styles';
 
-/** Haversine distance in miles between two lat/lng points. */
-function haversineDistance(lat1: number, lng1: number, lat2: number, lng2: number): number {
-    const R = 3958.8; // Earth radius in miles
-    const dLat = ((lat2 - lat1) * Math.PI) / 180;
-    const dLng = ((lng2 - lng1) * Math.PI) / 180;
-    const a =
-        Math.sin(dLat / 2) ** 2 +
-        Math.cos((lat1 * Math.PI) / 180) *
-            Math.cos((lat2 * Math.PI) / 180) *
-            Math.sin(dLng / 2) ** 2;
-    return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-}
+// The filter labels and fields: square, like the theme's fields. 16px, so phones don't zoom.
+const LABEL = 'block text-[15px] font-semibold mb-1.5';
+const FIELD = 'w-full border border-muted bg-card-bg px-3 py-2 text-base';
+
+/** The URL's params, which are also the page's state: `/services?category=Food&view=map`. */
+const KEYS = ['q', 'category', 'community', 'area', 'view', 'page', 'per'] as const;
+type State = Record<(typeof KEYS)[number], string>;
+
+const urlFor = (state: State) => {
+    const params = new URLSearchParams();
+    for (const k of KEYS) if (state[k]) params.set(k, state[k]);
+    const qs = params.toString();
+    return qs ? `/services?${qs}` : '/services';
+};
+
+/** The dropdowns, with the names their chips use. */
+const FILTERS = [
+    { key: 'category', label: 'Type of help' },
+    { key: 'community', label: 'Community' },
+    { key: 'area', label: 'Area' },
+] as const;
+
+const fromParams = (params: URLSearchParams) =>
+    Object.fromEntries(KEYS.map((k) => [k, params.get(k) ?? ''])) as State;
+
+const resources = (n: number) => `${n.toLocaleString()} ${n === 1 ? 'resource' : 'resources'}`;
 
 interface MapPageClientProps {
     services: MapService[];
@@ -30,11 +46,10 @@ interface MapPageClientProps {
 }
 
 /**
- * Client component for interactive map page with URL-synced filters.
- *
- * Reads initial filter state from URL query params (?category=, ?community=, ?area=)
- * and pushes URL updates when the user changes filters, enabling sharable
- * filtered views like /services?category=Housing.
+ * The resources list with search and filters, or the same results on a map (the Map
+ * tab). Everything is in the URL (?q=, ?category=, ?community=, ?area=, ?view=map, and
+ * the list's ?page= and ?per=), so a filtered list or map can be shared, and a back link
+ * returns to the same page of results.
  */
 export default function MapPageClient({
     services,
@@ -43,144 +58,73 @@ export default function MapPageClient({
     serviceAreas,
 }: MapPageClientProps) {
     const searchParams = useSearchParams();
-    const searchInputRef = useRef<HTMLInputElement>(null);
-    const filtersHeadingRef = useRef<HTMLHeadingElement>(null);
+    const countRef = useRef<HTMLParagraphElement>(null);
+    const chipsRef = useRef<HTMLDivElement>(null);
+    const mapNoteRef = useRef<HTMLParagraphElement>(null);
 
-    // Initialize state from URL query params
-    const [searchQuery, setSearchQuery] = useState<string>(searchParams.get('q') || '');
-    const [selectedNeed, setSelectedNeed] = useState<string>(searchParams.get('category') || '');
-    const [selectedCommunity, setSelectedCommunity] = useState<string>(
-        searchParams.get('community') || '',
-    );
-    const [selectedArea, setSelectedArea] = useState<string>(searchParams.get('area') || '');
-
-    // Kept in memory only, never in the URL.
-    const [userLocation, setUserLocation] = useState<{ lat: number; lng: number } | null>(null);
-    // The home page's location button opens /services?near=1. This page renders only in the
-    // browser (useSearchParams under Suspense), so navigator is defined here.
-    const near = searchParams.get('near') === '1';
-    const [locationStatus, setLocationStatus] = useState<'idle' | 'loading' | 'error'>(() =>
-        !near ? 'idle' : navigator.geolocation ? 'loading' : 'error',
-    );
-    const [hoveredServiceId, setHoveredServiceId] = useState<string | null>(null);
-
-    // Responsive state
+    const [state, setState] = useState(() => fromParams(searchParams));
+    const [highlightedId, setHighlightedId] = useState<string | null>(null);
     const [isFiltersOpen, setIsFiltersOpen] = useState(false);
-    const [viewMode, setViewMode] = useState<'map' | 'list'>('list');
 
     // Sync state when URL params change (e.g. header SearchBar navigation). Done
     // while rendering, not in an effect, so the page never renders with stale filters
     const [prevSearchParams, setPrevSearchParams] = useState(searchParams);
     if (searchParams !== prevSearchParams) {
         setPrevSearchParams(searchParams);
-        setSearchQuery(searchParams.get('q') || '');
-        setSelectedNeed(searchParams.get('category') || '');
-        setSelectedCommunity(searchParams.get('community') || '');
-        setSelectedArea(searchParams.get('area') || '');
+        setState(fromParams(searchParams));
     }
 
     /**
-     * Push filter state into the browser URL so that filtered views are
-     * bookmarkable and sharable (e.g. /services?category=Housing&q=food&area=Brooklyn).
-     * history.replaceState, not router.replace: the router would download the
-     * page's data again on every change; Next still updates useSearchParams.
+     * Change the state and put it in the URL, so filtered views are bookmarkable and
+     * sharable. history.replaceState, not router.replace: the router would download the
+     * page's data again on every change; Next still updates useSearchParams. A new search,
+     * filter or page size starts at page 1; switching List/Map keeps the page.
      */
-    const syncUrl = useCallback((query: string, need: string, community: string, area: string) => {
-        const params = new URLSearchParams();
-        if (query) params.set('q', query);
-        if (need) params.set('category', need);
-        if (community) params.set('community', community);
-        if (area) params.set('area', area);
-        const qs = params.toString();
-        window.history.replaceState(null, '', qs ? `/services?${qs}` : '/services');
-    }, []);
+    const update = (changes: Partial<State>) => {
+        const keepPage = 'page' in changes || 'view' in changes;
+        const next = { ...state, page: keepPage ? state.page : '', ...changes };
+        setState(next);
+        window.history.replaceState(null, '', urlFor(next));
+    };
+
+    const showView = (view: '' | 'map') => {
+        setHighlightedId(null);
+        update({ view });
+    };
 
     // The list filters as you type and the URL is already up to date, so submitting
     // (Enter, or the phone keyboard's Search key) only closes the keyboard on touch
     // screens, so the results show. On a desktop, focus stays in the search box.
     const handleSearchSubmit = (e: React.FormEvent) => {
         e.preventDefault();
-        if (window.matchMedia('(pointer: coarse)').matches) searchInputRef.current?.blur();
+        if (window.matchMedia('(pointer: coarse)').matches) {
+            (document.activeElement as HTMLElement | null)?.blur();
+        }
     };
 
-    // Handle need category change
-    const handleNeedChange = (value: string) => {
-        setSelectedNeed(value);
-        syncUrl(searchQuery, value, selectedCommunity, selectedArea);
+    // A removed chip takes focus with it: once the page redraws, put it on the chip that
+    // took its place (or the one before), so several can go in a row; on the count when
+    // none are left.
+    const clear = (changes: Partial<State>, chip = 0) => {
+        update(changes);
+        requestAnimationFrame(() => {
+            const left = chipsRef.current?.querySelectorAll<HTMLElement>('[data-remove]') ?? [];
+            (left[Math.min(chip, left.length - 1)] ?? countRef.current)?.focus();
+        });
     };
-
-    // Handle community focus change
-    const handleCommunityChange = (value: string) => {
-        setSelectedCommunity(value);
-        syncUrl(searchQuery, selectedNeed, value, selectedArea);
-    };
-
-    // Handle service area change
-    const handleAreaChange = (value: string) => {
-        setSelectedArea(value);
-        syncUrl(searchQuery, selectedNeed, selectedCommunity, value);
-    };
-
-    // Ask the browser for the location; state changes only in its callbacks.
-    const requestLocation = () => {
-        navigator.geolocation?.getCurrentPosition(
-            (pos) => {
-                setUserLocation({ lat: pos.coords.latitude, lng: pos.coords.longitude });
-                setLocationStatus('idle');
-            },
-            () => setLocationStatus('error'),
-            { enableHighAccuracy: true, timeout: 10000 },
-        );
-    };
-
-    const handleUseLocation = () => {
-        setLocationStatus(navigator.geolocation ? 'loading' : 'error');
-        requestLocation();
-    };
-
-    // Status for near=1 is set in its initial state above, so the effect sets none.
-    const locateOnArrival = useEffectEvent(requestLocation);
-    useEffect(() => {
-        if (near) locateOnArrival();
-    }, [near]);
-
-    const handleClearLocation = () => {
-        setUserLocation(null);
-        setLocationStatus('idle');
-    };
-
-    // Clear all filters
-    const handleClearFilters = () => {
-        setSearchQuery('');
-        setSelectedNeed('');
-        setSelectedCommunity('');
-        setSelectedArea('');
-        setUserLocation(null);
-        setLocationStatus('idle');
-        syncUrl('', '', '', '');
-    };
+    const clearAll = () => clear({ q: '', category: '', community: '', area: '' });
 
     // Dropdown filters first (pass/fail), then search (lib/search.ts): every word
     // must match, best matches first.
     const filteredServices = useMemo(() => {
         const filtered = services.filter(
             (service) =>
-                (!selectedNeed || service.needFocus.includes(selectedNeed)) &&
-                (!selectedCommunity || service.communityFocus.includes(selectedCommunity)) &&
-                (!selectedArea || service.service_areas.includes(selectedArea)),
+                (!state.category || service.needFocus.includes(state.category)) &&
+                (!state.community || service.communityFocus.includes(state.community)) &&
+                (!state.area || service.service_areas.includes(state.area)),
         );
-        const results = search(filtered, searchQuery, SERVICE_FIELDS);
-
-        // With a location, nearest first; the sort is stable, so ties keep the search order.
-        if (userLocation) {
-            const distance = (s: MapService) =>
-                s.latitude && s.longitude
-                    ? haversineDistance(userLocation.lat, userLocation.lng, s.latitude, s.longitude)
-                    : Infinity;
-            results.sort((a, b) => distance(a) - distance(b));
-        }
-        return results;
-    }, [services, searchQuery, selectedNeed, selectedCommunity, selectedArea, userLocation]);
+        return search(filtered, state.q, SERVICE_FIELDS);
+    }, [services, state.q, state.category, state.community, state.area]);
 
     // Get locations for map
     const mapLocations = useMemo(() => {
@@ -218,483 +162,306 @@ export default function MapPageClient({
         });
     }, [filteredServices]);
 
-    const filterIcon = (
-        <svg
-            className="w-4 h-4"
-            aria-hidden="true"
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
-        >
-            <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"
-            />
-        </svg>
-    );
-    const activeFilterDot = (searchQuery || selectedNeed || selectedCommunity || selectedArea) && (
-        <span className="w-2 h-2 rounded-full bg-[var(--highlight)] flex-shrink-0"></span>
+    const searched = state.q.trim();
+    const applied = FILTERS.filter((f) => state[f.key]);
+    const isMap = state.view === 'map';
+    const total = filteredServices.length;
+    const unmapped = total - mapLocations.length;
+    // The list is paged; the map shows every result.
+    const { shown, page, pageCount, range, perPage } = paginate(
+        filteredServices,
+        state.page,
+        state.per,
     );
 
-    // Jump up to the filters (instant: the page is long) and move focus to their heading.
-    const openFiltersFromFloat = () => {
-        setIsFiltersOpen(true);
-        requestAnimationFrame(() => {
-            const heading = filtersHeadingRef.current;
-            heading?.scrollIntoView({ behavior: 'instant', block: 'start' });
-            heading?.focus({ preventScroll: true });
-        });
-    };
+    const countText =
+        !isMap && pageCount > 1
+            ? `Showing ${range} of ${resources(total)}${searched ? ` for “${searched}”` : ''}`
+            : `${resources(total)} ${searched ? `for “${searched}”` : 'found'}`;
+    const countStatus =
+        countText +
+        (applied.length
+            ? `, filtered by ${applied.map((f) => `${f.label}: ${state[f.key]}`).join(', ')}`
+            : '');
 
-    // Fills the screen with its own scroll areas when the screen is tall or wide. Only on
-    // narrow, short screens (high zoom) does the whole page scroll instead (WCAG 1.4.10);
-    // the floating Filters button below uses the same condition.
+    const searchInput = (id: string, className: string) => (
+        <input
+            id={id}
+            type="text"
+            value={state.q}
+            onChange={(e) => update({ q: e.target.value })}
+            placeholder="Search resources"
+            className={className}
+        />
+    );
+
+    const select = (
+        key: (typeof FILTERS)[number]['key'],
+        label: string,
+        all: string,
+        options: string[],
+        help?: string,
+    ) => (
+        <div className="mb-6 last:mb-0">
+            <label htmlFor={`filter-${key}`} className={LABEL}>
+                {label}
+            </label>
+            <select
+                id={`filter-${key}`}
+                aria-describedby={help ? `filter-${key}-help` : undefined}
+                value={state[key]}
+                onChange={(e) => update({ [key]: e.target.value })}
+                className={FIELD}
+            >
+                <option value="">{all}</option>
+                {options.map((option) => (
+                    <option key={option} value={option}>
+                        {option}
+                    </option>
+                ))}
+            </select>
+            {help && (
+                <p id={`filter-${key}-help`} className="mt-1 text-sm text-muted">
+                    {help}
+                </p>
+            )}
+        </div>
+    );
+
     return (
-        <div className="flex flex-col md:flex-row md:h-[calc(100vh-64px)] md:overflow-hidden [@media(min-height:32rem)]:h-[calc(100vh-64px)] [@media(min-height:32rem)]:overflow-hidden">
-            {/* Mobile Action Bar */}
-            <div className="md:hidden flex items-center justify-between p-3 bg-[var(--section-alt)] border-b border-[var(--card-border)] flex-shrink-0 z-10 w-full shadow-sm">
+        <div
+            className={`${PAGE} pt-10 pb-16`}
+            // So "Back to all resources" on a resource opened from here returns to this
+            // search and these filters (the cards and the map's popups).
+            onClickCapture={rememberOnDetailClick('/services')}
+        >
+            <div className={`${BAR} mb-4`} />
+            <h1 className="mb-6">Resources</h1>
+
+            {/* Phones: search on its own, then the Filters button for the dropdowns. */}
+            <div className="md:hidden mb-4 bg-section-alt p-3">
+                <form role="search" onSubmit={handleSearchSubmit}>
+                    <label htmlFor="search-resources-phone" className="sr-only">
+                        Search resources
+                    </label>
+                    {searchInput(
+                        'search-resources-phone',
+                        'w-full rounded-full border border-muted bg-card-bg px-4 py-2.5 text-base',
+                    )}
+                </form>
                 <button
                     onClick={() => setIsFiltersOpen(!isFiltersOpen)}
-                    className="flex items-center gap-2 px-3 py-1.5 rounded-lg border border-[var(--card-border)] bg-[var(--card-bg)] text-sm font-medium text-[var(--foreground)]"
+                    aria-expanded={isFiltersOpen}
+                    aria-controls="filters-panel"
+                    className="mt-2.5 px-3.5 py-2 border border-muted bg-card-bg"
                 >
-                    {filterIcon}
-                    {isFiltersOpen ? 'Hide Filters' : 'Filters'}
-                    {activeFilterDot}
+                    {isFiltersOpen ? 'Hide filters' : 'Filters'}
+                    {/* As text, so it doesn't rely on color. */}
+                    {applied.length > 0 && ` (${applied.length})`}
                 </button>
-
-                <div className="flex items-center bg-[var(--card-bg)] rounded-lg border border-[var(--card-border)] p-0.5">
-                    <button
-                        onClick={() => setViewMode('list')}
-                        className={`px-4 py-1.5 text-sm font-medium rounded-md transition-colors ${viewMode === 'list' ? 'bg-[var(--primary)] text-white shadow-sm' : 'text-[var(--muted)] hover:text-[var(--foreground)]'}`}
-                    >
-                        List
-                    </button>
-                    <button
-                        onClick={() => setViewMode('map')}
-                        className={`px-4 py-1.5 text-sm font-medium rounded-md transition-colors ${viewMode === 'map' ? 'bg-[var(--primary)] text-white shadow-sm' : 'text-[var(--muted)] hover:text-[var(--foreground)]'}`}
-                    >
-                        Map
-                    </button>
-                </div>
             </div>
 
-            {/* Short screens: the bar above scrolls away with the page, so a small Filters
-                button floats at the bottom right. It opens the filters and moves focus there. */}
-            <button
-                onClick={openFiltersFromFloat}
-                className="hidden [@media(width<48rem)_and_(height<32rem)]:flex fixed bottom-3 right-3 z-20 items-center gap-2 px-3 py-1.5 rounded-full border border-[var(--card-border)] bg-[var(--card-bg)] text-sm font-medium text-[var(--foreground)] shadow-lg"
-            >
-                {filterIcon}
-                Filters
-                {activeFilterDot}
-            </button>
-
-            {/* Left Column: Filters */}
-            <div
-                className={`${isFiltersOpen ? 'block' : 'hidden'} md:block w-full md:w-64 min-h-0 md:flex-shrink-0 bg-[var(--section-alt)] md:border-r border-b md:border-b-0 border-[var(--card-border)] p-4 overflow-y-auto scrollbar-thin`}
-            >
-                <h2
-                    ref={filtersHeadingRef}
-                    tabIndex={-1}
-                    className="text-lg font-semibold text-[var(--foreground)] mb-4"
+            <div className="md:grid md:grid-cols-[16rem_minmax(0,1fr)] md:gap-8 md:items-start">
+                <div
+                    id="filters-panel"
+                    className={`${isFiltersOpen ? 'block' : 'hidden'} md:block mb-4 md:mb-0 bg-section-alt p-5 md:sticky md:top-4`}
                 >
-                    Filters
-                </h2>
-
-                {/* Search Input */}
-                <div className="mb-6">
-                    <label
-                        htmlFor="search-resources"
-                        className="block text-sm font-medium text-[var(--foreground)] opacity-80 mb-2"
+                    <h2 className="text-xl mb-4">Filters</h2>
+                    <form
+                        role="search"
+                        onSubmit={handleSearchSubmit}
+                        className="hidden md:block mb-6"
                     >
-                        Search
-                    </label>
-                    <form role="search" onSubmit={handleSearchSubmit}>
-                        <input
-                            ref={searchInputRef}
-                            id="search-resources"
-                            type="text"
-                            value={searchQuery}
-                            onChange={(e) => {
-                                setSearchQuery(e.target.value);
-                                syncUrl(
-                                    e.target.value,
-                                    selectedNeed,
-                                    selectedCommunity,
-                                    selectedArea,
-                                );
-                            }}
-                            placeholder="Search resources..."
-                            className="w-full rounded-lg border border-[var(--card-border)] bg-[var(--card-bg)] px-3 py-2 text-sm text-[var(--foreground)] focus:ring-2 focus:ring-[var(--primary)] focus:border-transparent"
-                        />
+                        <label htmlFor="search-resources" className={LABEL}>
+                            Search
+                        </label>
+                        {searchInput('search-resources', FIELD)}
                     </form>
+                    {select(
+                        'category',
+                        'Type of help',
+                        'All types',
+                        needCategories.map((c) => c.name),
+                    )}
+                    {select(
+                        'community',
+                        'Community',
+                        'All communities',
+                        communityCategories.map((c) => c.name),
+                    )}
+                    {serviceAreas.length > 0 &&
+                        select(
+                            'area',
+                            'Who it’s for (area)',
+                            'All areas',
+                            serviceAreas,
+                            'Where a resource is offered, not where it is located.',
+                        )}
                 </div>
 
-                {/* Use My Location */}
-                <div className="mb-6">
-                    {!userLocation ? (
-                        <button
-                            onClick={handleUseLocation}
-                            disabled={locationStatus === 'loading'}
-                            className="w-full flex items-center justify-center gap-2 px-4 py-2 text-sm font-medium rounded-lg border border-[var(--card-border)] bg-[var(--card-bg)] text-[var(--foreground)] hover:bg-[var(--section-alt)] transition-colors disabled:opacity-50"
+                <section aria-labelledby="results-heading" className="min-w-0">
+                    <h2 id="results-heading" className="sr-only">
+                        Results
+                    </h2>
+                    <div className="mb-4 flex flex-wrap items-center justify-between gap-x-6 gap-y-3">
+                        <CountLine ref={countRef} text={countText} status={countStatus} />
+                        <div className="flex flex-wrap items-center gap-x-6 gap-y-3">
+                            {/* The map shows every result, so no page size there. */}
+                            {!isMap && (
+                                <PerPage
+                                    total={total}
+                                    per={perPage}
+                                    onPer={(per) => update({ per })}
+                                />
+                            )}
+                            <div
+                                role="group"
+                                aria-label="Show results as"
+                                className="flex border border-muted bg-card-bg"
+                            >
+                                {(['', 'map'] as const).map((view) => (
+                                    <button
+                                        key={view}
+                                        onClick={() => showView(view)}
+                                        aria-pressed={isMap === (view === 'map')}
+                                        className={`px-4.5 py-2 font-semibold ${isMap === (view === 'map') ? 'bg-secondary text-white' : 'text-secondary'}`}
+                                    >
+                                        {view ? 'Map' : 'List'}
+                                    </button>
+                                ))}
+                            </div>
+                        </div>
+                    </div>
+
+                    {(applied.length > 0 || searched) && (
+                        <div
+                            ref={chipsRef}
+                            role="group"
+                            aria-label="Applied search and filters"
+                            className="mb-5 flex flex-wrap items-center gap-x-3 gap-y-2"
                         >
-                            <svg
-                                className="w-4 h-4"
-                                aria-hidden="true"
-                                fill="none"
-                                stroke="currentColor"
-                                viewBox="0 0 24 24"
-                            >
-                                <path
-                                    strokeLinecap="round"
-                                    strokeLinejoin="round"
-                                    strokeWidth={2}
-                                    d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"
+                            {applied.map((f, i) => (
+                                <Chip
+                                    key={f.key}
+                                    label={`${f.label}: ${state[f.key]}`}
+                                    onRemove={() => clear({ [f.key]: '' }, i)}
                                 />
-                                <path
-                                    strokeLinecap="round"
-                                    strokeLinejoin="round"
-                                    strokeWidth={2}
-                                    d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"
+                            ))}
+                            {searched && (
+                                <Chip
+                                    label={`Search: “${searched}”`}
+                                    onRemove={() => clear({ q: '' }, applied.length)}
                                 />
-                            </svg>
-                            {locationStatus === 'loading' ? 'Locating...' : 'Use My Location'}
-                        </button>
-                    ) : (
-                        <div className="flex items-center justify-between px-3 py-2 rounded-lg bg-[var(--tag-olive-bg)] border border-[var(--secondary)]/30">
-                            <span className="text-sm text-[var(--tag-olive-text)] font-medium">
-                                📍 Sorting by distance
-                            </span>
-                            <button
-                                onClick={handleClearLocation}
-                                className="text-xs text-[var(--tag-olive-text)] hover:opacity-70"
-                            >
-                                ✕
+                            )}
+                            <button type="button" onClick={clearAll} className={TEXT_BUTTON}>
+                                Clear all
                             </button>
                         </div>
                     )}
-                    {locationStatus === 'error' && (
-                        <p className="text-xs text-red-500 mt-1">
-                            Location access denied or unavailable.
-                        </p>
-                    )}
-                </div>
 
-                {/* Need Category Filter */}
-                <div className="mb-6">
-                    <label
-                        htmlFor="filter-need"
-                        className="block text-sm font-medium text-[var(--foreground)] opacity-80 mb-2"
-                    >
-                        Need Category
-                    </label>
-                    <select
-                        id="filter-need"
-                        value={selectedNeed}
-                        onChange={(e) => handleNeedChange(e.target.value)}
-                        className="w-full rounded-lg border border-[var(--card-border)] bg-[var(--card-bg)] px-3 py-2 text-sm text-[var(--foreground)] focus:ring-2 focus:ring-[var(--primary)] focus:border-transparent"
-                    >
-                        <option value="">All Categories</option>
-                        {needCategories.map((cat) => (
-                            <option key={cat.name} value={cat.name}>
-                                {cat.name}
-                            </option>
-                        ))}
-                    </select>
-                </div>
-
-                {/* Community Focus Filter */}
-                <div className="mb-6">
-                    <label
-                        htmlFor="filter-community"
-                        className="block text-sm font-medium text-[var(--foreground)] opacity-80 mb-2"
-                    >
-                        Community Focus
-                    </label>
-                    <select
-                        id="filter-community"
-                        value={selectedCommunity}
-                        onChange={(e) => handleCommunityChange(e.target.value)}
-                        className="w-full rounded-lg border border-[var(--card-border)] bg-[var(--card-bg)] px-3 py-2 text-sm text-[var(--foreground)] focus:ring-2 focus:ring-[var(--primary)] focus:border-transparent"
-                    >
-                        <option value="">All Communities</option>
-                        {communityCategories.map((cat) => (
-                            <option key={cat.name} value={cat.name}>
-                                {cat.name}
-                            </option>
-                        ))}
-                    </select>
-                </div>
-
-                {/* Target Geographic Area Filter */}
-                <div className="mb-6">
-                    <label
-                        htmlFor="filter-area"
-                        className="block text-sm font-medium text-[var(--foreground)] opacity-80 mb-2"
-                    >
-                        Target Geographic Area
-                    </label>
-                    <select
-                        id="filter-area"
-                        aria-describedby="filter-area-help"
-                        value={selectedArea}
-                        onChange={(e) => handleAreaChange(e.target.value)}
-                        className="w-full rounded-lg border border-[var(--card-border)] bg-[var(--card-bg)] px-3 py-2 text-sm text-[var(--foreground)] focus:ring-2 focus:ring-[var(--primary)] focus:border-transparent"
-                    >
-                        <option value="">All areas</option>
-                        {serviceAreas.map((a) => (
-                            <option key={a} value={a}>
-                                {a}
-                            </option>
-                        ))}
-                    </select>
-                    <p
-                        id="filter-area-help"
-                        className="mt-1 text-xs text-[var(--foreground)] opacity-80"
-                    >
-                        Where a resource is offered, not where it is located.
-                    </p>
-                </div>
-
-                {/* Clear Filters */}
-                {(searchQuery || selectedNeed || selectedCommunity || selectedArea) && (
-                    <button onClick={handleClearFilters} className="btn btn-accent w-full">
-                        Clear All Filters
-                    </button>
-                )}
-
-                {/* Results count */}
-                <div className="mt-4 text-sm text-[var(--foreground)]">
-                    {filteredServices.length} resources found
-                </div>
-            </div>
-
-            {/* Middle Column: Resource Cards */}
-            <div
-                className={`${viewMode === 'list' ? 'block' : 'hidden'} md:block w-full md:w-[32rem] flex-1 flex-shrink-0 border-r border-[var(--card-border)] overflow-y-auto scrollbar-thin`}
-            >
-                <div className="p-4 space-y-4">
-                    {filteredServices.length === 0 ? (
-                        <div className="text-center py-8 text-[var(--foreground)]">
-                            No resources match your filters
-                        </div>
-                    ) : (
-                        filteredServices.map((service) => (
-                            <ResourceCard
-                                key={service.id}
-                                service={service}
-                                userLocation={userLocation}
+                    {isMap ? (
+                        <>
+                            <p ref={mapNoteRef} tabIndex={-1} className="mb-3">
+                                Map showing {resources(mapLocations.length)}.
+                                {unmapped > 0 &&
+                                    ` ${unmapped.toLocaleString()} ${unmapped === 1 ? 'other has' : 'others have'} no address listed.`}
+                            </p>
+                            <div className={`h-[520px] md:h-[620px] ${FRAME}`}>
+                                <MapContainer
+                                    locations={mapLocations}
+                                    highlightedId={highlightedId}
+                                    showLocateButton
+                                    onUseList={() => showView('')}
+                                />
+                            </div>
+                        </>
+                    ) : total > 0 ? (
+                        <>
+                            <ResourceGrid
+                                services={shown}
                                 onViewOnMap={(id) => {
-                                    setHoveredServiceId(id);
-                                    setViewMode('map');
+                                    update({ view: 'map' });
+                                    setHighlightedId(id);
+                                    // The button is gone with the list: focus (and scroll) to the map's note.
+                                    requestAnimationFrame(() => mapNoteRef.current?.focus());
                                 }}
                             />
-                        ))
+                            <Pagination
+                                page={page}
+                                pageCount={pageCount}
+                                href={(page) => urlFor({ ...state, page, per: perPage })}
+                                onPage={(page) => {
+                                    update({ page, per: perPage });
+                                    // The links are gone with the page: focus (and scroll) to "Showing x–y of n".
+                                    requestAnimationFrame(() => countRef.current?.focus());
+                                }}
+                            />
+                        </>
+                    ) : (
+                        <div className="py-10 text-center">
+                            <p>Try fewer filters or a different word.</p>
+                            <button
+                                type="button"
+                                onClick={clearAll}
+                                className="btn btn-secondary mt-3"
+                            >
+                                Clear all
+                            </button>
+                        </div>
                     )}
-                </div>
-            </div>
-
-            {/* Right Column: Map */}
-            <div
-                className={`${viewMode === 'map' ? 'block' : 'hidden'} md:block flex-1 relative h-full min-w-0 p-2 md:p-2`}
-            >
-                <div className="w-full h-full rounded-xl overflow-hidden shadow-lg border border-[var(--card-border)]">
-                    <MapContainer locations={mapLocations} highlightedId={hoveredServiceId} />
-                </div>
+                </section>
             </div>
         </div>
     );
 }
 
-/**
- * Resource card component
- */
-function ResourceCard({
-    service,
-    userLocation,
-    onViewOnMap,
-}: {
-    service: MapService;
-    userLocation: { lat: number; lng: number } | null;
-    onViewOnMap: (id: string) => void;
-}) {
-    const distance =
-        userLocation && service.latitude && service.longitude
-            ? haversineDistance(
-                  userLocation.lat,
-                  userLocation.lng,
-                  service.latitude,
-                  service.longitude,
-              )
-            : null;
-    const website = externalHref(service.url);
-
+/** An applied filter or search, with a button that removes it. */
+function Chip({ label, onRemove }: { label: string; onRemove: () => void }) {
     return (
-        <div className="bg-[var(--card-bg)] rounded-xl border border-[var(--card-border)] p-4">
-            <div className="flex items-start justify-between gap-2">
-                <h3 className="font-semibold text-[var(--foreground)] mb-2 line-clamp-2">
-                    {service.name}
-                </h3>
-                {distance !== null && (
-                    <span className="flex-shrink-0 text-xs font-medium text-[var(--secondary)] bg-[var(--tag-blue-bg)] border border-[var(--tag-blue-text)] px-2 py-0.5 rounded-full whitespace-nowrap">
-                        {distance < 0.1 ? '< 0.1' : distance.toFixed(1)} mi
-                    </span>
-                )}
-            </div>
-
-            {service.address && (
-                <div className="text-sm text-[var(--foreground)] mb-2 flex items-start justify-between gap-2">
-                    <div className="flex items-start gap-2">
-                        <svg
-                            className="w-4 h-4 mt-0.5 flex-shrink-0"
-                            role="img"
-                            aria-label="address"
-                            fill="none"
-                            stroke="currentColor"
-                            viewBox="0 0 24 24"
-                        >
-                            <path
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                                strokeWidth={2}
-                                d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"
-                            />
-                            <path
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                                strokeWidth={2}
-                                d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"
-                            />
-                        </svg>
-                        <span className="line-clamp-2">{service.address}</span>
-                    </div>
-                    {/* Only offer the map view button when there is a pin with coordinates to jump to.
-                        A location can have an address but no coordinates. */}
-                    {service.latitude != null && service.longitude != null && (
-                        <button
-                            onClick={() => onViewOnMap(service.id)}
-                            className="flex-shrink-0 inline-flex items-center gap-1 px-2.5 py-1 rounded-md border border-[var(--card-border)] bg-[var(--section-alt)] text-xs font-medium text-[var(--foreground)] hover:bg-[var(--primary)] hover:text-white transition-colors"
-                        >
-                            View on map
-                        </button>
-                    )}
-                </div>
-            )}
-
-            {service.phone && (
-                <p className="text-sm text-[var(--foreground)] mb-1 flex items-center gap-2">
-                    <svg
-                        className="w-4 h-4 flex-shrink-0"
-                        role="img"
-                        aria-label="phone"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                    >
-                        <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            strokeWidth={2}
-                            d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"
-                        />
-                    </svg>
-                    <a
-                        href={`tel:${service.phone}`}
-                        className="underline hover:no-underline hover:text-[var(--primary)]"
-                    >
-                        {service.phone}
-                    </a>
-                </p>
-            )}
-
-            {website && (
-                <p className="text-sm text-[var(--foreground)] mb-2 flex items-center gap-2">
-                    <svg
-                        className="w-4 h-4 flex-shrink-0"
-                        role="img"
-                        aria-label="website"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                    >
-                        <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            strokeWidth={2}
-                            d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"
-                        />
-                    </svg>
-                    <a
-                        href={website}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="underline hover:no-underline text-[var(--primary)] truncate"
-                    >
-                        {new URL(website).host}
-                    </a>
-                </p>
-            )}
-
-            {service.description && (
-                <p className="text-sm text-[var(--foreground)] mb-3 line-clamp-2">
-                    {service.description}
-                </p>
-            )}
-
-            {/* Need Category tags */}
-            {service.needFocus && service.needFocus.length > 0 && (
-                <div className="flex flex-wrap gap-1.5 mb-2">
-                    {service.needFocus.map((need, i) => (
-                        <TagLink
-                            key={`need-${i}`}
-                            colorScheme="coral"
-                            size="sm"
-                            href={`/services?category=${encodeURIComponent(need)}`}
-                        >
-                            {need}
-                        </TagLink>
-                    ))}
-                </div>
-            )}
-
-            {/* Community Focus tags */}
-            {service.communityFocus && service.communityFocus.length > 0 && (
-                <div className="flex flex-wrap gap-1.5 mb-3">
-                    {service.communityFocus.map((community, i) => (
-                        <TagLink
-                            key={`community-${i}`}
-                            colorScheme="olive"
-                            size="sm"
-                            href={`/services?community=${encodeURIComponent(community)}`}
-                        >
-                            {community}
-                        </TagLink>
-                    ))}
-                </div>
-            )}
-
-            <Link
-                href={`/services/${service.id}`}
-                className="inline-flex items-center gap-1 text-sm font-medium text-[var(--primary)] hover:text-[var(--primary-hover)] underline hover:no-underline"
+        <span className="inline-flex items-center gap-1 rounded-full border border-muted bg-card-bg py-px pr-px pl-3 text-[15px] font-semibold text-secondary">
+            {label}
+            <button
+                type="button"
+                data-remove
+                onClick={onRemove}
+                aria-label={`Remove ${label}`}
+                className="w-7 h-7 rounded-full text-sm hover:bg-highlight-alt-border"
             >
-                More Details
-                <svg
-                    className="w-4 h-4"
-                    aria-hidden="true"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                >
-                    <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M9 5l7 7-7 7"
-                    />
-                </svg>
-            </Link>
+                ✕
+            </button>
+        </span>
+    );
+}
+
+interface ResourceGridProps {
+    services: MapService[];
+    /** Shows "View on map" on cards with a pin; left out before JavaScript runs. */
+    onViewOnMap?: (id: string) => void;
+}
+
+/** The cards: two equal columns only when each card gets at least 20rem, otherwise one. */
+export function ResourceGrid({ services, onViewOnMap }: ResourceGridProps) {
+    return (
+        <div className="grid gap-4 grid-cols-[repeat(auto-fill,minmax(min(100%,20rem),1fr))]">
+            {services.map((service) => (
+                <ServiceCard
+                    key={service.id}
+                    id={service.id}
+                    name={service.name}
+                    description={service.description}
+                    url={service.url}
+                    address={service.address}
+                    organizationName={service.organization_name}
+                    needFocus={service.needFocus}
+                    communityFocus={service.communityFocus}
+                    // Only with a pin to go to: a location can have an address but no coordinates.
+                    onViewOnMap={
+                        onViewOnMap && service.latitude != null && service.longitude != null
+                            ? () => onViewOnMap(service.id)
+                            : undefined
+                    }
+                />
+            ))}
         </div>
     );
 }

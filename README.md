@@ -165,6 +165,7 @@ The base needs:
 1. Copy `airtable.toml`. For each table, set `id` to its Airtable table id (`tbl…`, under **Help → API documentation**), or leave `id` out if the Airtable table has the same name as the section (for example `services`). List the fields to read and set the filters. If your category fields or taxonomies have other names, see **Categories** above.
 2. In `.env`, set `AIRTABLE_BASE_ID`, and `AIRTABLE_CONFIG` to your copy's path.
 3. Run `python build_dataset.py` and fix what the build report lists.
+4. For the site's name, links, logo, icons and colors, see "Your own site" in the [frontend README](frontend/README.md#your-own-site).
 
 ## API
 
@@ -200,6 +201,7 @@ Errors return JSON: `{"error": "…"}`. A request gets a 400 if it uses an HSDS 
 |------|---------|-----------|
 | `.env` (repo root) | `build_dataset.py` | No: it holds your Airtable token |
 | `airtable.toml` | `build_dataset.py` | Yes |
+| `frontend/src/site.config.ts` | The site's build: names, copy, links, the map's starting view | Yes |
 | `frontend/.env.local` | `npm run dev` and `npm run build` in `frontend/`. Optional. | No |
 | `worker/wrangler.jsonc` | wrangler: `npm run dev` in `worker/`, and deploys | Yes |
 
@@ -216,7 +218,7 @@ Errors return JSON: `{"error": "…"}`. A request gets a 400 if it uses an HSDS 
 | Variable | Default | Description |
 |----------|---------|-------------|
 | `SITE_DATA_DIR` | `../dist` | The build's output folder, relative to `frontend/` |
-| `NEXT_PUBLIC_BASEMAP_STYLE_URL` | OpenFreeMap bright | The map's basemap style URL |
+| `NEXT_PUBLIC_BASEMAP_STYLE_URL` | OpenFreeMap positron | The map's basemap style URL |
 
 `NEXT_PUBLIC_` variables are public. Put secrets only in the root `.env`.
 
@@ -303,7 +305,7 @@ The site reads `dist/api/download.json` and `dist/site-data/map.json`. From the 
 
 ### Map pins are missing
 
-A service gets a pin from its first location with coordinates, found through `service_at_location`. There is no fallback.
+On the Resources map, a service gets a pin from its first location with coordinates, found through `service_at_location`; its own page pins each of them. There is no fallback.
 
 - **The location has no coordinates.** Add `latitude` and `longitude` to the location in Airtable. The build report lists locations with an address but no coordinates.
 - **The service has no location.** Link it to a location through `service_at_location`.
