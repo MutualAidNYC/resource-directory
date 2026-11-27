@@ -9,10 +9,7 @@ export const CARD = 'border border-card-border bg-card-bg';
 /** A featured block's frame (category tiles, maps): 4px teal tint, decorative. */
 export const FRAME = 'border-4 border-secondary-border';
 
-/**
- * A card or popup title link: purple, always underlined, so it reads as a link and not
- * as the theme's purple heading. The line turns solid purple on hover.
- */
+/** A map popup's title link. */
 export const TITLE_LINK =
     'text-tertiary underline decoration-tertiary-border decoration-2 underline-offset-4 hover:decoration-tertiary';
 

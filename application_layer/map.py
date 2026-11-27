@@ -75,8 +75,8 @@ def map_data(dataset: Dataset, published: Published, terms: Terms) -> MapData:
     area_names = {a for s in services for a in s.service_areas}
     return MapData(
         services=services,
-        needCategories=[Category(name=n) for n in sorted(needs)],
-        communityCategories=[Category(name=c) for c in sorted(communities)],
+        needCategories=[Category(name=n) for n in sorted(needs, key=str.casefold)],
+        communityCategories=[Category(name=c) for c in sorted(communities, key=str.casefold)],
         serviceAreas=sorted(area_names, key=area_order),
     )
 

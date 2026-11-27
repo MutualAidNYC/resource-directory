@@ -303,10 +303,9 @@ export default function MapPageClient({
                     <h2 id="results-heading" className="sr-only">
                         Results
                     </h2>
-                    {/* The count, then Per page and List/Map, which wrap together; List/Map stays at the right. */}
-                    <div className="mb-4 flex flex-wrap items-center gap-x-6 gap-y-3">
+                    <div className="mb-4 flex flex-wrap items-center justify-between gap-x-6 gap-y-3">
                         <CountLine ref={countRef} text={countText} status={countStatus} />
-                        <div className="flex flex-auto flex-wrap items-center gap-x-6 gap-y-3">
+                        <div className="flex flex-wrap items-center gap-x-6 gap-y-3">
                             {/* The map shows every result, so no page size there. */}
                             {!isMap && (
                                 <PerPage
@@ -318,7 +317,7 @@ export default function MapPageClient({
                             <div
                                 role="group"
                                 aria-label="Show results as"
-                                className="ml-auto flex border border-muted bg-card-bg"
+                                className="flex border border-muted bg-card-bg"
                             >
                                 {(['', 'map'] as const).map((view) => (
                                     <button

@@ -28,40 +28,22 @@ interface WebsiteLinkProps {
     /** The resource or group the website belongs to. */
     name: string;
     className?: string;
-    /**
-     * Keep it on one line (cards): the link never breaks and a long domain is cut with
-     * "…". Use as a flex item; screen readers still get the whole domain.
-     */
-    oneLine?: boolean;
+    /** Leave out the domain or handle (cards). */
+    linkOnly?: boolean;
 }
 
 /**
  * A website link that says what it does: "Visit website ↗ · example.org", or
  * "Instagram ↗ · @handle". The domain or handle is plain text, not part of the link.
  */
-export function WebsiteLink({ href, name, className = '', oneLine = false }: WebsiteLinkProps) {
+export function WebsiteLink({ href, name, className, linkOnly = false }: WebsiteLinkProps) {
     const { text, detail } = websiteLabel(href);
-    const link = (
-        <ExternalLink
-            href={href}
-            context={`for ${name}`}
-            className={oneLine ? `${className} flex-none whitespace-nowrap` : className}
-        >
-            {text}
-        </ExternalLink>
-    );
-    if (!oneLine) {
-        return (
-            <>
-                {link}
-                {detail && <span className="text-muted"> · {detail}</span>}
-            </>
-        );
-    }
     return (
-        <span className="flex items-baseline gap-1.5 min-w-0">
-            {link}
-            {detail && <span className="min-w-0 truncate text-muted">· {detail}</span>}
-        </span>
+        <>
+            <ExternalLink href={href} context={`for ${name}`} className={className}>
+                {text}
+            </ExternalLink>
+            {!linkOnly && detail && <span className="text-muted"> · {detail}</span>}
+        </>
     );
 }

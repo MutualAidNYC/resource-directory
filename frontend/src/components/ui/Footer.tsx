@@ -3,9 +3,10 @@ import { Icon } from './Icon';
 import { PAGE } from '@/lib/styles';
 import { site } from '@/site.config';
 
-const LINK = 'font-header font-semibold text-sm text-foreground no-underline hover:underline';
+const LINK =
+    'font-header text-[15px] min-[980px]:text-lg min-[980px]:font-semibold text-foreground no-underline hover:underline';
 
-/** Site footer: the library's lists, the site's links, the newsletter and social links. */
+/** Site footer: the site's links, the newsletter and social links. */
 export function Footer() {
     return (
         <footer className="bg-card-bg">
@@ -18,16 +19,6 @@ export function Footer() {
                                     {site.name}
                                 </Link>
                             </li>
-                            <li>
-                                <Link href="/services" className={LINK}>
-                                    Resources
-                                </Link>
-                            </li>
-                            <li>
-                                <Link href="/organizations" className={LINK}>
-                                    Groups
-                                </Link>
-                            </li>
                             {site.footerLinks.map(({ label, href }) => (
                                 <li key={href}>
                                     <a href={href} className={LINK}>
@@ -38,7 +29,7 @@ export function Footer() {
                         </ul>
                     </nav>
                     {site.newsletterUrl && (
-                        <p className="mt-5 text-[15px]">
+                        <p className="mt-5 text-lg">
                             <a href={site.newsletterUrl} className="underline hover:no-underline">
                                 Subscribe to our newsletter
                             </a>
@@ -52,9 +43,9 @@ export function Footer() {
                                 <a
                                     href={href}
                                     aria-label={`${site.owner.name} on ${label}`}
-                                    className="grid place-items-center w-10 h-10 rounded-full bg-accent-bright text-white"
+                                    className="grid place-items-center w-[45px] h-[45px] rounded-full bg-accent-bright text-white"
                                 >
-                                    <Icon name={icon} className="w-5 h-5" />
+                                    <Icon name={icon} className="w-6 h-6" />
                                 </a>
                             </li>
                         ))}
