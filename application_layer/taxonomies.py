@@ -55,13 +55,13 @@ class Terms:
 
     def names(self, service: ServiceResponse) -> dict[str, list[str]]:
         """The service's category names by field (`need_focus`, `community_focus`), for the
-        site. Only names that match a term, each once, in value order: "-Not Listed" and
+        site. Only names that match a term, each once, A to Z: "-Not Listed" and
         unmatched names are left out, so the site and the API's attributes always agree."""
-        found: dict[str, list[str]] = {field: [] for field in CATEGORY_TAXONOMIES}
+        found: dict[str, set[str]] = {field: set() for field in CATEGORY_TAXONOMIES}
         for field, _, term in self._match(service):
-            if term is not None and term.name not in found[field]:
-                found[field].append(term.name)
-        return found
+            if term is not None:
+                found[field].add(term.name)
+        return {field: sorted(names, key=str.casefold) for field, names in found.items()}
 
     def unmatched(self, service: ServiceResponse) -> list[str]:
         """The service's category names that match no term (build report)."""

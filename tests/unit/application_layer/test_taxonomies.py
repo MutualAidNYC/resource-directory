@@ -54,6 +54,18 @@ def test_names_are_the_matched_terms_by_field(dataset: Dataset, terms: Terms):
     assert terms.names(hotline) == {"need_focus": [], "community_focus": []}
 
 
+def test_names_are_sorted_a_to_z():
+    raw = pull()
+    for service in raw["services"]:
+        if service["id"] == FRIDGE:
+            service["fields"].update(needFocus=["Legal", "Food", "Legal"])
+    dataset = Dataset.from_pull(raw)
+
+    fridge = dataset.services.get(FRIDGE)
+    assert fridge is not None
+    assert Terms.from_dataset(dataset).names(fridge)["need_focus"] == ["Food", "Legal"]
+
+
 def test_unknown_category_names_are_reported(published: Published, terms: Terms):
     assert unmatched_categories(published, terms) == {HOTLINE: ["Mystery"]}
 
