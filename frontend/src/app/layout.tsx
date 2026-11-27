@@ -4,6 +4,7 @@ import './globals.css';
 import { Header } from '@/components/ui/Header';
 import { Footer } from '@/components/ui/Footer';
 import { LibraryNav } from '@/components/ui/LibraryNav';
+import { site } from '@/site.config';
 
 const karla = Karla({
     variable: '--font-karla',
@@ -26,11 +27,10 @@ const francoisOne = Francois_One({
 
 export const metadata: Metadata = {
     title: {
-        default: 'Mutual Aid NYC Community Resources Library',
-        template: '%s | Community Resources Library',
+        default: `${site.owner.name} ${site.name}`,
+        template: `%s | ${site.name}`,
     },
-    description:
-        'Find food, housing, legal help, social services, and other community resources for New Yorkers. Free and low-cost, community-sourced and volunteer-curated.',
+    description: site.description,
     // TODO: add open graph metadata
     // TODO: Site under development should not be in search results. Delete this line when
     // the site is in production at resources.mutualaid.nyc.

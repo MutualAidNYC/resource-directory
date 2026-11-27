@@ -3,10 +3,11 @@ import { Metadata } from 'next';
 import { getMapData } from '@/lib/data';
 import MapPageClient, { ResourceGrid } from './MapPageClient';
 import { BAR, PAGE } from '@/lib/styles';
+import { site } from '@/site.config';
 
 export const metadata: Metadata = {
     title: 'Resources',
-    description: 'Search community resources in New York, as a list or on a map.',
+    description: site.servicesDescription,
 };
 
 /**

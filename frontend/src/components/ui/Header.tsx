@@ -1,17 +1,13 @@
 'use client';
 
-import { useState } from 'react';
+import { Fragment, useState } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { NavSubmenu } from './NavSubmenu';
-
-const ABOUT_ITEMS = [
-    { label: 'About Mutual Aid NYC', href: 'https://mutualaid.nyc/about/' },
-    { label: 'Guiding principles', href: 'https://mutualaid.nyc/about/principles/' },
-];
+import { site } from '@/site.config';
 
 /**
- * Site header that matches mutualaid.nyc.
+ * Site header: the owner's logo and the links in `site.config.ts`.
  */
 export function Header() {
     const [mobileOpen, setMobileOpen] = useState(false);
@@ -23,10 +19,10 @@ export function Header() {
                 {/* ── Header row */}
                 <div className="flex h-[80px] xl:h-[160px] items-center justify-between md:mx-[42.36px]">
                     {/* Logo */}
-                    <a href="https://mutualaid.nyc" className="flex items-center gap-3">
+                    <a href={site.owner.url} className="flex items-center gap-3">
                         <Image
                             src="/logo.png"
-                            alt="Mutual Aid NYC logo"
+                            alt={site.owner.name}
                             width={130}
                             height={130}
                             className="w-[60px] h-[60px] xl:w-[120px] xl:h-[120px]"
@@ -76,33 +72,20 @@ export function Header() {
                         <ul className="flex items-center gap-[19.2px] list-none m-0 p-0 whitespace-nowrap">
                             <li>
                                 <Link href="/" className="nav-link">
-                                    Community Resources Library
+                                    {site.name}
                                 </Link>
                             </li>
-                            <li>
-                                <a
-                                    href="https://mutualaid.nyc/mutual-aid-groups/"
-                                    className="nav-link"
-                                >
-                                    Mutual aid groups
-                                </a>
-                            </li>
-                            <li>
-                                <a
-                                    href="https://mutualaid.nyc/for-groups-organizers/"
-                                    className="nav-link"
-                                >
-                                    For groups + organizers
-                                </a>
-                            </li>
-                            <li>
-                                <a href="https://mutualaid.nyc/get-involved/" className="nav-link">
-                                    Volunteer
-                                </a>
-                            </li>
-                            <li>
-                                <NavSubmenu label="About" items={ABOUT_ITEMS} />
-                            </li>
+                            {site.nav.map((entry) => (
+                                <li key={entry.label}>
+                                    {'items' in entry ? (
+                                        <NavSubmenu label={entry.label} items={entry.items} />
+                                    ) : (
+                                        <a href={entry.href} className="nav-link">
+                                            {entry.label}
+                                        </a>
+                                    )}
+                                </li>
+                            ))}
                         </ul>
                     </nav>
                 </div>
@@ -121,44 +104,35 @@ export function Header() {
                                     className="nav-link block py-2"
                                     onClick={() => setMobileOpen(false)}
                                 >
-                                    Community Resources Library
+                                    {site.name}
                                 </Link>
                             </li>
-                            <li>
-                                <a
-                                    href="https://mutualaid.nyc/mutual-aid-groups/"
-                                    className="nav-link block py-2"
-                                >
-                                    Mutual aid groups
-                                </a>
-                            </li>
-                            <li>
-                                <a
-                                    href="https://mutualaid.nyc/for-groups-organizers/"
-                                    className="nav-link block py-2"
-                                >
-                                    For groups + organizers
-                                </a>
-                            </li>
-                            <li>
-                                <a
-                                    href="https://mutualaid.nyc/get-involved/"
-                                    className="nav-link block py-2"
-                                >
-                                    Volunteer
-                                </a>
-                            </li>
-                            {/* About items shown flat on mobile — no hover submenu */}
-                            <li className="text-white/60 text-sm font-semibold tracking-tight pt-3 pb-1">
-                                About
-                            </li>
-                            {ABOUT_ITEMS.map((item) => (
-                                <li key={item.href}>
-                                    <a href={item.href} className="nav-link block py-2 pl-3">
-                                        {item.label}
-                                    </a>
-                                </li>
-                            ))}
+                            {site.nav.map((entry) =>
+                                'items' in entry ? (
+                                    // Submenus shown flat on mobile, under their label: no hover submenu.
+                                    <Fragment key={entry.label}>
+                                        <li className="text-white/60 text-sm font-semibold tracking-tight pt-3 pb-1">
+                                            {entry.label}
+                                        </li>
+                                        {entry.items.map((item) => (
+                                            <li key={item.href}>
+                                                <a
+                                                    href={item.href}
+                                                    className="nav-link block py-2 pl-3"
+                                                >
+                                                    {item.label}
+                                                </a>
+                                            </li>
+                                        ))}
+                                    </Fragment>
+                                ) : (
+                                    <li key={entry.label}>
+                                        <a href={entry.href} className="nav-link block py-2">
+                                            {entry.label}
+                                        </a>
+                                    </li>
+                                ),
+                            )}
                         </ul>
                     </nav>
                 )}
